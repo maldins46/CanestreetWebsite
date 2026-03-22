@@ -27,10 +27,6 @@
   /* Typography utilities */
   .font-display { font-family: var(--font-display); }
 
-  .heading-hero {
-    @apply font-display font-extrabold uppercase tracking-tight leading-none;
-  }
-
   .heading-section {
     @apply font-display font-bold uppercase tracking-wide text-2xl;
   }
@@ -73,7 +69,6 @@
 }
 
 @layer utilities {
-  .text-balance { text-wrap: balance; }
   .orange-glow { text-shadow: 0 0 60px theme('colors.brand.orange / 50%'); }
 
   .hero-watermark {
