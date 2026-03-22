@@ -8,7 +8,6 @@ import clsx from 'clsx'
 
 const links = [
   { href: '/',             label: 'Home' },
-  { href: '/standings',    label: 'Classifica' },
   { href: '/news',         label: 'News' },
   { href: '/editions',     label: 'Edizioni' },
   { href: '/chi-siamo',    label: 'Chi siamo' },

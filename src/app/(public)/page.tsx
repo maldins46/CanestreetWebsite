@@ -2,7 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Play } from 'lucide-react'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import type { Edition, Standing, NewsArticle } from '@/types'
+import type { Edition, NewsArticle } from '@/types'
 
 const MEDIA = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/media`
 const AFTERMOVIE_URL = 'https://youtu.be/diOnX3Am1Yg'
@@ -18,7 +18,6 @@ function formatDate(dateStr: string) {
 export default async function HomePage() {
   const supabase = createServerSupabaseClient()
 
-  // Edition first — standings depend on it
   const { data: edition } = await supabase
     .from('editions')
     .select('*')
@@ -27,15 +26,8 @@ export default async function HomePage() {
 
   const year = edition?.year ?? new Date().getFullYear()
 
-  // Parallel queries for the rest
-  const [{ data: standings }, { data: news }, { data: allEditions }] =
+  const [{ data: news }, { data: allEditions }] =
     await Promise.all([
-      supabase
-        .from('standings')
-        .select<'*', Standing>('*')
-        .eq('edition_id', edition?.id ?? '')
-        .order('rank', { ascending: true })
-        .limit(5),
       supabase
         .from('news')
         .select<'*', NewsArticle>('*')
@@ -267,96 +259,6 @@ export default async function HomePage() {
           </div>
         </section>
       )}
-
-      {/* ── STANDINGS PREVIEW ────────────────────────────── */}
-      <section className="border-t border-court-border">
-        <div className="max-w-6xl mx-auto px-6 py-20 md:py-28">
-          <div className="flex items-end justify-between mb-12">
-            <div>
-              <p className="text-brand-orange font-display uppercase tracking-widest text-xs font-semibold mb-3">
-                {edition?.title ?? `Edizione ${year}`}
-              </p>
-              <h2 className="heading-section text-3xl md:text-4xl text-court-white">
-                Classifica
-              </h2>
-            </div>
-            <Link
-              href="/standings"
-              className="btn-ghost text-sm px-4 py-2 hidden sm:inline-flex"
-            >
-              Classifica completa &rarr;
-            </Link>
-          </div>
-
-          {standings && standings.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="border-b border-court-border text-court-muted text-xs font-display uppercase tracking-wider">
-                    <th className="pb-3 pr-4 w-12">#</th>
-                    <th className="pb-3 pr-4">Squadra</th>
-                    <th className="pb-3 pr-4 w-12 text-center">G</th>
-                    <th className="pb-3 pr-4 w-12 text-center">V</th>
-                    <th className="pb-3 pr-4 w-12 text-center">P</th>
-                    <th className="pb-3 w-16 text-center">Diff</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {standings.map((s) => (
-                    <tr
-                      key={s.id}
-                      className={`border-b border-court-border/50 ${
-                        s.rank === 1 ? 'bg-brand-orange/5' : ''
-                      }`}
-                    >
-                      <td className="py-3 pr-4 font-display font-bold text-court-light">
-                        {s.rank ?? '–'}
-                      </td>
-                      <td className="py-3 pr-4 font-display font-semibold text-court-white">
-                        {s.team_name}
-                      </td>
-                      <td className="py-3 pr-4 text-center text-court-gray">
-                        {s.played}
-                      </td>
-                      <td className="py-3 pr-4 text-center text-court-gray">
-                        {s.won}
-                      </td>
-                      <td className="py-3 pr-4 text-center text-court-gray">
-                        {s.lost}
-                      </td>
-                      <td
-                        className={`py-3 text-center font-display font-semibold ${
-                          s.points_for - s.points_against > 0
-                            ? 'text-green-400'
-                            : s.points_for - s.points_against < 0
-                              ? 'text-red-400'
-                              : 'text-court-gray'
-                        }`}
-                      >
-                        {s.points_for - s.points_against > 0 ? '+' : ''}
-                        {s.points_for - s.points_against}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="card p-8 text-center">
-              <p className="text-court-gray">
-                La classifica verrà pubblicata a inizio torneo.
-              </p>
-            </div>
-          )}
-
-          <Link
-            href="/standings"
-            className="btn-ghost text-sm px-4 py-2 mt-8 sm:hidden inline-flex"
-          >
-            Classifica completa &rarr;
-          </Link>
-        </div>
-      </section>
 
       {/* ── PAST EDITIONS ────────────────────────────────── */}
       {pastEditions.length > 0 && (

@@ -59,25 +59,6 @@ create table teams (
 );
 
 -- ============================================================
--- STANDINGS
--- Per-edition standings table
--- ============================================================
-create table standings (
-  id          uuid primary key default uuid_generate_v4(),
-  edition_id  uuid not null references editions(id) on delete cascade,
-  team_id     uuid references teams(id) on delete set null,
-  team_name   text not null,               -- denormalised for display
-  played      int  not null default 0,
-  won         int  not null default 0,
-  lost        int  not null default 0,
-  points_for  int  not null default 0,
-  points_against int not null default 0,
-  rank        int,
-  created_at  timestamptz not null default now(),
-  updated_at  timestamptz not null default now()
-);
-
--- ============================================================
 -- NEWS
 -- Articles and updates written in the backoffice
 -- ============================================================
@@ -106,7 +87,6 @@ create index news_published_idx on news(published, published_at desc);
 
 alter table editions  enable row level security;
 alter table teams     enable row level security;
-alter table standings enable row level security;
 alter table news      enable row level security;
 alter table admins    enable row level security;
 
@@ -129,12 +109,6 @@ create policy "teams_public_insert"   on teams for insert with check (true);
 create policy "teams_admin_read"      on teams for select using (is_admin());
 create policy "teams_admin_update"    on teams for update using (is_admin());
 create policy "teams_admin_delete"    on teams for delete using (is_admin());
-
--- Standings: public read, admin write
-create policy "standings_public_read"  on standings for select using (true);
-create policy "standings_admin_insert" on standings for insert with check (is_admin());
-create policy "standings_admin_update" on standings for update using (is_admin());
-create policy "standings_admin_delete" on standings for delete using (is_admin());
 
 -- News: public can read published, admins read all
 create policy "news_public_read"  on news for select using (published = true);

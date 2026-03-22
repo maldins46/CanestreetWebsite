@@ -4,6 +4,7 @@
 
 export type AdminRole = 'superadmin' | 'editor'
 export type TeamStatus = 'pending' | 'approved' | 'rejected' | 'waitlisted'
+export type TeamCategory = 'open' | 'u14' | 'u16' | 'u18'
 
 export interface Admin {
   id: string
@@ -21,6 +22,7 @@ export interface Edition {
   description: string | null
   winner_name: string | null
   is_current: boolean
+  registration_open: boolean
   cover_url: string | null
   created_at: string
 }
@@ -29,30 +31,30 @@ export interface Team {
   id: string
   edition_id: string
   name: string
-  captain_name: string
+  category: TeamCategory
+  captain_name: string | null  // legacy — flat form; null for new registrations
   captain_email: string
   captain_phone: string | null
-  player2_name: string
-  player3_name: string
-  player4_name: string | null
+  player2_name: string | null  // legacy
+  player3_name: string | null  // legacy
+  player4_name: string | null  // legacy
+  schedule_notes: string | null
   notes: string | null
   status: TeamStatus
   created_at: string
 }
 
-export interface Standing {
+export interface Player {
   id: string
-  edition_id: string
-  team_id: string | null
-  team_name: string
-  played: number
-  won: number
-  lost: number
-  points_for: number
-  points_against: number
-  rank: number | null
+  team_id: string
+  name: string
+  birth_date: string  // ISO date string
+  codice_fiscale: string
+  instagram: string | null
+  club: string | null
+  is_captain: boolean
+  sort_order: number
   created_at: string
-  updated_at: string
 }
 
 export interface NewsArticle {
@@ -84,6 +86,11 @@ export interface EditionWinner {
 // ============================================================
 
 export interface TeamWithEdition extends Team {
+  editions?: Pick<Edition, 'year' | 'title'>
+}
+
+export interface TeamWithPlayers extends Team {
+  players: Player[]
   editions?: Pick<Edition, 'year' | 'title'>
 }
 

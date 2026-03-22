@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Edition, EditionWinner } from '@/types'
-import { Save, Trash2, Plus, Star, StarOff } from 'lucide-react'
+import { Save, Trash2, Plus, Star, StarOff, LockOpen, Lock } from 'lucide-react'
 
 interface Props {
   edition: Edition | null
@@ -17,12 +17,13 @@ export default function EditionEditor({ edition, winners }: Props) {
   const router = useRouter()
 
   const [form, setForm] = useState({
-    year:        edition?.year        ?? new Date().getFullYear(),
-    title:       edition?.title       ?? '',
-    subtitle:    edition?.subtitle    ?? '',
-    description: edition?.description ?? '',
-    cover_url:   edition?.cover_url   ?? '',
-    is_current:  edition?.is_current  ?? false,
+    year:              edition?.year              ?? new Date().getFullYear(),
+    title:             edition?.title             ?? '',
+    subtitle:          edition?.subtitle          ?? '',
+    description:       edition?.description       ?? '',
+    cover_url:         edition?.cover_url         ?? '',
+    is_current:        edition?.is_current        ?? false,
+    registration_open: edition?.registration_open ?? false,
   })
   const [rows, setRows] = useState<WinnerRow[]>(
     winners.map(w => ({ ...w }))
@@ -59,12 +60,13 @@ export default function EditionEditor({ edition, winners }: Props) {
     setMsg(null)
 
     const payload = {
-      year:        form.year,
-      title:       form.title,
-      subtitle:    form.subtitle || null,
-      description: form.description || null,
-      cover_url:   form.cover_url || null,
-      is_current:  form.is_current,
+      year:              form.year,
+      title:             form.title,
+      subtitle:          form.subtitle || null,
+      description:       form.description || null,
+      cover_url:         form.cover_url || null,
+      is_current:        form.is_current,
+      registration_open: form.registration_open,
     }
 
     let editionId = edition?.id
@@ -235,6 +237,32 @@ export default function EditionEditor({ edition, winners }: Props) {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Registration open toggle */}
+      <div className="border-t border-court-border pt-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="font-display font-bold uppercase text-court-white tracking-wide">Iscrizioni</h2>
+            <p className="text-court-muted text-xs mt-1">
+              {form.registration_open
+                ? 'Le iscrizioni sono aperte. Il modulo di registrazione è visibile sul sito.'
+                : 'Le iscrizioni sono chiuse. Il modulo non è accessibile al pubblico.'}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => set('registration_open', !form.registration_open)}
+            className={`flex items-center gap-2 px-4 py-2 font-display uppercase tracking-wide text-sm border transition-colors ${
+              form.registration_open
+                ? 'border-green-600 text-green-400 hover:bg-green-900/20'
+                : 'border-court-border text-court-muted hover:border-court-muted hover:text-court-white'
+            }`}
+          >
+            {form.registration_open ? <LockOpen size={14} /> : <Lock size={14} />}
+            {form.registration_open ? 'Aperte' : 'Chiuse'}
+          </button>
+        </div>
       </div>
 
       {/* Actions */}

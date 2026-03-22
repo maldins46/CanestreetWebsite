@@ -1,14 +1,13 @@
 'use client'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Users, BarChart2, Newspaper, Image, ShieldCheck, LogOut, Home, ExternalLink, Trophy, UserCircle } from 'lucide-react'
+import { Users, Newspaper, Image, ShieldCheck, LogOut, Home, ExternalLink, Trophy, UserCircle } from 'lucide-react'
 import clsx from 'clsx'
 import { createClient } from '@/lib/supabase/client'
 
 const nav = [
   { href: '/admin',           label: 'Dashboard',  icon: Home },
   { href: '/admin/teams',     label: 'Squadre',    icon: Users },
-  { href: '/admin/standings', label: 'Classifica', icon: BarChart2 },
   { href: '/admin/editions',  label: 'Edizioni',   icon: Trophy },
   { href: '/admin/news',      label: 'News',       icon: Newspaper },
   { href: '/admin/staff',     label: 'Staff',      icon: UserCircle },

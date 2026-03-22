@@ -1,6 +1,6 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { Users, BarChart2, Newspaper, ArrowRight } from 'lucide-react'
+import { Users, Newspaper, ArrowRight } from 'lucide-react'
 
 export default async function AdminDashboard() {
   const supabase = createServerSupabaseClient()
@@ -15,9 +15,8 @@ export default async function AdminDashboard() {
   ])
 
   const stats = [
-    { label: 'Squadre iscritte', value: totalTeams ?? 0, sub: `${pendingTeams ?? 0} in attesa`, href: '/admin/teams',     icon: Users },
-    { label: 'Classifica',       value: '—',             sub: 'Aggiorna i risultati',           href: '/admin/standings', icon: BarChart2 },
-    { label: 'Articoli',         value: totalNews ?? 0,  sub: 'Pubblica aggiornamenti',         href: '/admin/news',      icon: Newspaper },
+    { label: 'Squadre iscritte', value: totalTeams ?? 0, sub: `${pendingTeams ?? 0} in attesa`, href: '/admin/teams', icon: Users },
+    { label: 'Articoli',         value: totalNews ?? 0,  sub: 'Pubblica aggiornamenti',         href: '/admin/news',  icon: Newspaper },
   ]
 
   return (

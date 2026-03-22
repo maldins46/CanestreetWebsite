@@ -43,7 +43,6 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             {/* Nav links + socials */}
             <div className="flex flex-col gap-6">
               <div className="grid grid-cols-3 gap-x-10 gap-y-3">
-                <Link href="/standings"   className="font-display font-semibold uppercase tracking-wider text-xs text-court-gray hover:text-court-white transition-colors whitespace-nowrap">Classifica</Link>
                 <Link href="/news"        className="font-display font-semibold uppercase tracking-wider text-xs text-court-gray hover:text-court-white transition-colors whitespace-nowrap">News</Link>
                 <Link href="/editions"    className="font-display font-semibold uppercase tracking-wider text-xs text-court-gray hover:text-court-white transition-colors whitespace-nowrap">Edizioni</Link>
                 <Link href="/chi-siamo"   className="font-display font-semibold uppercase tracking-wider text-xs text-court-gray hover:text-court-white transition-colors whitespace-nowrap">Chi siamo</Link>

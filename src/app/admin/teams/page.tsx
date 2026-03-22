@@ -1,85 +1,163 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import type { Team, Edition } from '@/types'
+import type { TeamWithPlayers, Edition, TeamCategory } from '@/types'
 import TeamStatusButton from '@/components/admin/TeamStatusButton'
+import CategoryFilter from '@/components/admin/CategoryFilter'
+import { Suspense } from 'react'
 import clsx from 'clsx'
 
-export default async function AdminTeamsPage() {
+const statusLabel: Record<string, string> = {
+  pending: 'In attesa', approved: 'Approvata', rejected: 'Rifiutata', waitlisted: 'Lista d\'attesa',
+}
+
+const categoryLabel: Record<TeamCategory, string> = {
+  open: 'Open', u14: 'U14', u16: 'U16', u18: 'U18',
+}
+
+interface Props {
+  searchParams: { category?: string }
+}
+
+export default async function AdminTeamsPage({ searchParams }: Props) {
   const supabase = createServerSupabaseClient()
 
   const { data: edition } = await supabase
-    .from('editions').select('id, title').eq('is_current', true).single<Edition>()
+    .from('editions').select('id, title, registration_open').eq('is_current', true).single<Edition>()
 
-  const { data: teams } = await supabase
-    .from('teams').select('*')
+  let query = supabase
+    .from('teams')
+    .select('*, players(*)')
     .eq('edition_id', edition?.id ?? '')
     .order('created_at', { ascending: false })
-    .returns<Team[]>()
 
-  const statusLabel: Record<string, string> = {
-    pending: 'In attesa', approved: 'Approvata', rejected: 'Rifiutata', waitlisted: 'Lista d\'attesa',
+  const categoryFilter = searchParams.category as TeamCategory | undefined
+  if (categoryFilter && ['open', 'u14', 'u16', 'u18'].includes(categoryFilter)) {
+    query = query.eq('category', categoryFilter)
   }
+
+  const { data: teams } = await query.returns<TeamWithPlayers[]>()
 
   return (
     <div>
-      <div className="flex items-start justify-between mb-10">
+      <div className="flex items-start justify-between mb-6 flex-wrap gap-4">
         <div>
           <p className="text-brand-orange font-display uppercase tracking-widest text-xs mb-1">Squadre</p>
           <h1 className="font-display font-bold uppercase text-3xl text-court-white">Gestione Iscrizioni</h1>
-          {edition && <p className="text-court-gray text-sm mt-1">{edition.title}</p>}
+          {edition && (
+            <p className="text-court-gray text-sm mt-1 flex items-center gap-2">
+              {edition.title}
+              <span className={clsx('text-xs px-2 py-0.5 font-display uppercase tracking-wide border',
+                edition.registration_open ? 'border-green-600 text-green-400' : 'border-court-border text-court-muted'
+              )}>
+                {edition.registration_open ? 'Iscrizioni aperte' : 'Iscrizioni chiuse'}
+              </span>
+            </p>
+          )}
         </div>
-        <div className="text-right text-sm text-court-gray">
+        <div className="text-right text-sm text-court-gray shrink-0">
           <span className="font-display text-2xl text-court-white font-bold">{teams?.length ?? 0}</span>
-          <br />iscrizioni totali
+          <br />iscrizioni{categoryFilter ? ` (${categoryLabel[categoryFilter]})` : ' totali'}
         </div>
+      </div>
+
+      {/* Category filter */}
+      <div className="mb-6">
+        <Suspense>
+          <CategoryFilter />
+        </Suspense>
       </div>
 
       {!teams?.length ? (
         <div className="card p-10 text-center">
-          <p className="text-court-gray">Nessuna squadra iscritta ancora.</p>
+          <p className="text-court-gray">Nessuna squadra iscritta{categoryFilter ? ` nella categoria ${categoryLabel[categoryFilter]}` : ' ancora'}.
+          </p>
         </div>
       ) : (
         <div className="space-y-3">
-          {teams.map(team => (
-            <div key={team.id} className="card p-5">
-              <div className="flex items-start justify-between gap-4 flex-wrap">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-3 mb-1 flex-wrap">
-                    <h2 className="font-display font-bold uppercase text-lg text-court-white">{team.name}</h2>
-                    <span className={clsx('text-xs px-2 py-0.5 font-display uppercase tracking-wide',
-                      team.status === 'approved'   && 'badge-approved',
-                      team.status === 'pending'    && 'badge-pending',
-                      team.status === 'rejected'   && 'badge-rejected',
-                      team.status === 'waitlisted' && 'badge-waitlisted',
-                    )}>
-                      {statusLabel[team.status]}
-                    </span>
+          {teams.map(team => {
+            // Determine players: prefer new players table, fall back to legacy flat columns
+            const hasPlayers = team.players && team.players.length > 0
+            const captain = hasPlayers
+              ? team.players.find(p => p.is_captain)
+              : null
+            const sortedPlayers = hasPlayers
+              ? [...team.players].sort((a, b) => a.sort_order - b.sort_order)
+              : null
+
+            return (
+              <div key={team.id} className="card p-5">
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-3 mb-1 flex-wrap">
+                      <h2 className="font-display font-bold uppercase text-lg text-court-white">{team.name}</h2>
+                      <span className="text-xs px-2 py-0.5 font-display uppercase tracking-wide border border-court-border text-court-muted">
+                        {categoryLabel[team.category]}
+                      </span>
+                      <span className={clsx('text-xs px-2 py-0.5 font-display uppercase tracking-wide',
+                        team.status === 'approved'   && 'badge-approved',
+                        team.status === 'pending'    && 'badge-pending',
+                        team.status === 'rejected'   && 'badge-rejected',
+                        team.status === 'waitlisted' && 'badge-waitlisted',
+                      )}>
+                        {statusLabel[team.status]}
+                      </span>
+                    </div>
+
+                    {/* Captain / contact info */}
+                    <p className="text-court-gray text-sm">
+                      {hasPlayers && captain ? (
+                        <>Capitano: <span className="text-court-light">{captain.name}</span>{' · '}</>
+                      ) : team.captain_name ? (
+                        <>Capitano: <span className="text-court-light">{team.captain_name}</span>{' · '}</>
+                      ) : null}
+                      <a href={`mailto:${team.captain_email}`} className="hover:text-brand-orange transition-colors">
+                        {team.captain_email}
+                      </a>
+                      {team.captain_phone && ` · ${team.captain_phone}`}
+                    </p>
+
+                    {/* Players */}
+                    {sortedPlayers ? (
+                      <div className="mt-2 space-y-1">
+                        {sortedPlayers.map(p => (
+                          <div key={p.id} className="text-xs text-court-muted flex flex-wrap gap-x-3 gap-y-0.5">
+                            <span className="text-court-light">
+                              {p.name}{p.is_captain && <span className="ml-1 text-brand-orange text-[10px]">cap</span>}
+                            </span>
+                            <span className="font-mono">{new Date(p.birth_date).toLocaleDateString('it-IT')}</span>
+                            <span className="font-mono uppercase">{p.codice_fiscale}</span>
+                            {p.instagram && <span className="text-court-muted">{p.instagram}</span>}
+                            {p.club && <span className="text-court-muted italic">{p.club}</span>}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      // Legacy flat players
+                      <p className="text-court-muted text-xs mt-1">
+                        Giocatori: {[team.captain_name, team.player2_name, team.player3_name, team.player4_name].filter(Boolean).join(', ')}
+                      </p>
+                    )}
+
+                    {team.schedule_notes && (
+                      <p className="text-court-muted text-xs mt-2 italic">Orari: "{team.schedule_notes}"</p>
+                    )}
+                    {team.notes && (
+                      <p className="text-court-muted text-xs mt-1 italic">Note: "{team.notes}"</p>
+                    )}
                   </div>
-                  <p className="text-court-gray text-sm">
-                    Capitano: <span className="text-court-light">{team.captain_name}</span>
-                    {' · '}
-                    <a href={`mailto:${team.captain_email}`} className="hover:text-brand-orange transition-colors">
-                      {team.captain_email}
-                    </a>
-                    {team.captain_phone && ` · ${team.captain_phone}`}
-                  </p>
-                  <p className="text-court-muted text-xs mt-1">
-                    Giocatori: {[team.captain_name, team.player2_name, team.player3_name, team.player4_name].filter(Boolean).join(', ')}
-                  </p>
-                  {team.notes && (
-                    <p className="text-court-muted text-xs mt-2 italic">"{team.notes}"</p>
-                  )}
+
+                  <div className="flex gap-2 shrink-0 flex-wrap">
+                    {(['approved', 'waitlisted', 'rejected'] as const).filter(s => s !== team.status).map(s => (
+                      <TeamStatusButton key={s} teamId={team.id} status={s} label={statusLabel[s]} />
+                    ))}
+                  </div>
                 </div>
-                <div className="flex gap-2 shrink-0 flex-wrap">
-                  {(['approved', 'waitlisted', 'rejected'] as const).filter(s => s !== team.status).map(s => (
-                    <TeamStatusButton key={s} teamId={team.id} status={s} label={statusLabel[s]} />
-                  ))}
-                </div>
+
+                <p className="text-court-muted text-xs mt-3 font-mono">
+                  {new Date(team.created_at).toLocaleString('it-IT')}
+                </p>
               </div>
-              <p className="text-court-muted text-xs mt-3 font-mono">
-                {new Date(team.created_at).toLocaleString('it-IT')}
-              </p>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
