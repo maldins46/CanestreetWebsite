@@ -1,52 +1,19 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
+import type { StaffMember } from '@/types'
 
 export const metadata: Metadata = {
   title: 'Chi siamo — Canestreet 3×3',
 }
 
-const MEDIA = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/media`
+export default async function ChiSiamoPage() {
+  const supabase = createServerSupabaseClient()
+  const { data: staff } = await supabase
+    .from('staff')
+    .select('*')
+    .order('sort_order', { ascending: true }) as { data: StaffMember[] | null }
 
-const staff = [
-  {
-    name: 'Michele Mosca',
-    role: 'Il CEO',
-    photo: `${MEDIA}/michi.jpeg`,
-    bio: 'Signore e signori, il CEO, er capoccia, niente popodimeno che Michele Mosca: è lui il primo firmatario del torneo, colui che tiene insieme la baracca e che ogni anno si fa il culo giù in pieno inverno per la buona riuscita del torneo. Se esistiamo è grazie e soprattutto a questo ragazzo.',
-  },
-  {
-    name: 'Lorenzo Fava',
-    role: 'Lo ZIO',
-    photo: `${MEDIA}/lori.jpeg`,
-    bio: 'Lorenzo Fava: lo speaker ufficiale del torneo. Expat con furore dalla Lituania, è anche grazie a lui se il torneo è sempre così pieno di vita. Questo ragazzo abita a Vilnius, e tutti gli anni si prende una settimana di permesso per venir giù, solo per noi. Se non è questo amore, non sappiamo davvero cosa potrebbe esserlo.',
-  },
-  {
-    name: 'Giacomo Mosca',
-    role: 'Il BRO',
-    photo: null,
-    bio: 'Dietro ad ogni grande CEO di successo, c\'è sempre un grande fratello del CEO di successo. Giacomo Mosca, fratello minore der Capoccia, è entrato nel circuito Canestreet da ormai diversi anni. Assieme al nostro C-level preferito, si occupa della buona riuscita del torneo, dagli aspetti burocratici fino a quelli schifosamente pratici.',
-  },
-  {
-    name: 'Marco Rossetti',
-    role: 'Il Senior',
-    photo: `${MEDIA}/marcone.jpeg`,
-    bio: 'Marco Rossetti è uno degli acquisti più recenti del CaneStaff. Assume il ruolo di tuttofare: Michi indica, e lui esegue, da bravo Canestreeter.',
-  },
-  {
-    name: 'Federico Rossetti',
-    role: 'Il Salame',
-    photo: `${MEDIA}/fede.jpeg`,
-    bio: 'Federico Rossetti, classe \'97, nasce a Jesi. Conosce il CEO in tenera età nei campi da basket jesini. I due frequentano lo stesso istituto tecnico, e cuciono un saldo legame che arriva fino ai giorni nostri. Assieme a loro, è uno dei padri fondatori del torneo. Comunemente detto il Salame, perché dai è un Salame, palese.',
-  },
-  {
-    name: 'Riccardo Maldini',
-    role: 'Lo Hacker',
-    photo: `${MEDIA}/ricco.jpeg`,
-    bio: 'Vivo a Milano, ma son nato nella ridente Jesi. Sono la persona che sta dietro al sito, ai social, mente creativa, quello che attacca gli amplificatori. Non ho ancora imparato le regole del 3×3, ma nonostante tutto sono qua, chi l\'averebbe mai detto. Se mi vedi a segnare i punti, in genere non è un buon segno.',
-  },
-]
-
-export default function ChiSiamoPage() {
   return (
     <div className="max-w-6xl mx-auto px-6 py-16">
       {/* Header */}
@@ -66,58 +33,94 @@ export default function ChiSiamoPage() {
         </p>
       </div>
 
-      {/* Staff grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
-        {staff.map(({ name, role, bio, photo }) => (
-          <div key={name} className="card p-6">
-            <div className="flex items-center gap-4 mb-4">
-              {photo ? (
-                <div className="relative w-16 h-16 rounded-full overflow-hidden shrink-0 border-2 border-brand-orange/40">
-                  <Image src={photo} alt={name} fill className="object-cover" sizes="64px" />
-                </div>
+      {/* Staff grid — portrait cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-24">
+        {(staff ?? []).map((member) => (
+          <div key={member.id} className="card overflow-hidden flex flex-col group">
+            {/* Portrait image */}
+            <div className="relative w-full aspect-[3/4] bg-court-dark shrink-0 overflow-hidden">
+              {member.photo_url ? (
+                <Image
+                  src={member.photo_url}
+                  alt={member.name}
+                  fill
+                  className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                />
               ) : (
-                <div className="w-16 h-16 rounded-full shrink-0 border-2 border-court-border bg-court-surface flex items-center justify-center">
-                  <span className="font-display font-extrabold text-xl text-brand-orange">
-                    {name.charAt(0)}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="font-display font-extrabold text-8xl text-brand-orange/20 select-none">
+                    {member.name.charAt(0)}
                   </span>
                 </div>
               )}
-              <div>
-                <p className="text-brand-orange font-display uppercase tracking-widest text-xs font-semibold mb-0.5">
-                  {role}
-                </p>
-                <h2 className="font-display font-extrabold text-lg text-court-white uppercase tracking-wide leading-tight">
-                  {name}
-                </h2>
+              {/* Gradient overlay at bottom for readability */}
+              <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-court-black/80 to-transparent" />
+              {/* Title badge over image */}
+              <div className="absolute bottom-4 left-4">
+                <span className="text-brand-orange font-display uppercase tracking-widest text-xs font-semibold bg-court-black/60 px-2 py-1 backdrop-blur-sm">
+                  {member.title}
+                </span>
               </div>
             </div>
-            <p className="text-court-gray text-sm leading-relaxed">{bio}</p>
+
+            {/* Text content */}
+            <div className="p-5 flex flex-col flex-1 bg-court-surface">
+              <h2 className="font-display font-extrabold text-xl text-court-white uppercase tracking-wide leading-tight mb-3">
+                {member.name}
+              </h2>
+              <p className="text-court-gray text-sm leading-relaxed flex-1">{member.bio}</p>
+            </div>
           </div>
         ))}
       </div>
 
-      {/* Contact */}
+      {/* Contact + Map */}
       <div className="border-t border-court-border pt-12">
-        <h2 className="heading-section text-2xl text-court-white mb-6">Ci trovi in zona</h2>
-        <div className="grid md:grid-cols-3 gap-6">
-          <div className="card p-6">
-            <p className="text-brand-orange font-display uppercase tracking-widest text-xs font-semibold mb-2">Location</p>
-            <p className="text-court-light text-sm">Playground Piazza della Repubblica</p>
-            <p className="text-court-gray text-sm">Jesi (AN) 60035</p>
+        <h2 className="heading-section text-2xl text-court-white mb-8">Ci trovi in zona</h2>
+        <div className="grid lg:grid-cols-2 gap-6">
+
+          {/* OpenStreetMap embed — dark filter trick, stretches to match contact cards height */}
+          <div className="card overflow-hidden flex flex-col">
+            <iframe
+              title="Playground Piazza della Repubblica, Jesi"
+              src="https://www.openstreetmap.org/export/embed.html?bbox=13.2386%2C43.5183%2C13.2486%2C43.5243&layer=mapnik&marker=43.5213%2C13.2436"
+              className="w-full flex-1 min-h-64 block"
+              style={{ filter: 'invert(90%) hue-rotate(180deg)' }}
+              loading="lazy"
+            />
           </div>
-          <div className="card p-6">
-            <p className="text-brand-orange font-display uppercase tracking-widest text-xs font-semibold mb-2">Telefono</p>
-            <a href="tel:+393291581724" className="text-court-light text-sm hover:text-brand-orange transition-colors">
-              329 158 1724
-            </a>
-            <p className="text-court-gray text-xs mt-1">(Michele)</p>
+
+          {/* Contact cards */}
+          <div className="space-y-3">
+            <div className="card p-6">
+              <p className="text-brand-orange font-display uppercase tracking-widest text-xs font-semibold mb-2">Location</p>
+              <p className="text-court-light text-sm font-semibold">Playground Piazza della Repubblica</p>
+              <p className="text-court-gray text-sm">Jesi (AN) 60035</p>
+              <a
+                href="https://maps.google.com/?q=Piazza+della+Repubblica,+Jesi+AN"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block mt-3 text-xs text-brand-orange hover:text-brand-orange/80 font-display uppercase tracking-widest transition-colors"
+              >
+                Apri in Google Maps →
+              </a>
+            </div>
+            <div className="card p-6">
+              <p className="text-brand-orange font-display uppercase tracking-widest text-xs font-semibold mb-2">Telefono</p>
+              <a href="tel:+393291581724" className="text-court-light text-sm hover:text-brand-orange transition-colors">
+                329 158 1724
+              </a>
+              <p className="text-court-gray text-xs mt-1">(Michele)</p>
+            </div>
+            <div className="card p-6">
+              <p className="text-brand-orange font-display uppercase tracking-widest text-xs font-semibold mb-2">Email</p>
+              <a href="mailto:canestreet3vs3@gmail.com" className="text-court-light text-sm hover:text-brand-orange transition-colors break-all">
+                canestreet3vs3@gmail.com
+              </a>
+            </div>
           </div>
-          <div className="card p-6">
-            <p className="text-brand-orange font-display uppercase tracking-widest text-xs font-semibold mb-2">Email</p>
-            <a href="mailto:canestreet3vs3@gmail.com" className="text-court-light text-sm hover:text-brand-orange transition-colors break-all">
-              canestreet3vs3@gmail.com
-            </a>
-          </div>
+
         </div>
       </div>
     </div>

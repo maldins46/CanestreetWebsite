@@ -94,3 +94,13 @@ export interface NewsWithAuthor extends NewsArticle {
 export interface EditionWithWinners extends Edition {
   edition_winners: EditionWinner[]
 }
+
+export interface StaffMember {
+  id: string
+  name: string
+  title: string       // nickname like "Il CEO"
+  bio: string
+  photo_url: string | null
+  sort_order: number
+  created_at: string
+}
