@@ -68,11 +68,13 @@ export default async function HomePage() {
               Basket di strada,<br />regole vere
             </h2>
             <p className="text-court-gray leading-relaxed mb-4">
-              Cane Street 3×3 è il torneo estivo di basket 3 contro 3 che riunisce le squadre del quartiere
-              per settimane di sfide, eliminatorie e una finale che vale tutto.
+              Il Canestreet è un torneo estivo di basket 3×3, parte del circuito FIP, nato su iniziativa
+              di alcuni amici appassionati di basket. Da piccolo torneo parrocchiale, siamo cresciuti sempre
+              di più, fino all&apos;approdo nel circuito nazionale 3×3.
             </p>
             <p className="text-court-gray leading-relaxed">
-              Formato FIBA 3×3, campo outdoor, niente fronzoli. Porti la tua squadra, lasci il segno.
+              La nostra ambizione è quella di dare un torneo estivo di basket alla nostra piccola città,
+              con l&apos;obiettivo di fare sempre meglio, ogni anno che passa!
             </p>
           </div>
           <div className="grid grid-cols-2 gap-4">

@@ -73,7 +73,7 @@ Prefer these utility classes over re-implementing the same styles inline.
 
 ### Storage
 
-Supabase Storage bucket `media` is used for cover images. The bucket creation SQL is commented out in the migration — it must be created manually in the Supabase dashboard. URLs stored in DB columns (`cover_url`) follow the pattern `https://*.supabase.co/storage/v1/object/public/media/...`, which is already allowlisted in `next.config.js` for `next/image`.
+Supabase Storage bucket `media` is used for cover images and staff photos. Run `bash scripts/upload-media.sh` after `supabase db reset` to recreate the bucket and re-upload the images from `downloaded-media/`. URLs stored in DB columns (`cover_url`) follow the pattern `http://127.0.0.1:54321/storage/v1/object/public/media/...` locally and `https://*.supabase.co/storage/v1/object/public/media/...` in production — both patterns are allowlisted in `next.config.js` for `next/image`.
 
 ### Environment variables
 

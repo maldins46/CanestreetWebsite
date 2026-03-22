@@ -6,11 +6,13 @@ import { Menu, X } from 'lucide-react'
 import clsx from 'clsx'
 
 const links = [
-  { href: '/',          label: 'Home' },
-  { href: '/standings', label: 'Classifica' },
-  { href: '/news',      label: 'News' },
-  { href: '/editions',  label: 'Edizioni' },
-  { href: '/register',  label: 'Iscriviti',  accent: true },
+  { href: '/',             label: 'Home' },
+  { href: '/standings',    label: 'Classifica' },
+  { href: '/news',         label: 'News' },
+  { href: '/editions',     label: 'Edizioni' },
+  { href: '/chi-siamo',    label: 'Chi siamo' },
+  { href: '/regolamento',  label: 'Regolamento' },
+  { href: '/register',     label: 'Iscriviti',  accent: true },
 ]
 
 export default function PublicNav() {
