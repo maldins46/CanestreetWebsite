@@ -1,5 +1,5 @@
 -- ============================================================
--- Cane Street 3x3 Tournament — Database Schema
+-- Canestreet 3x3 Tournament — Database Schema
 -- Run this in the Supabase SQL editor to set up all tables
 -- ============================================================
 
@@ -168,4 +168,4 @@ create policy "admins_super_write" on admins for insert with check (
 
 -- Insert a sample current edition
 insert into editions (year, title, subtitle, is_current)
-values (2025, 'Cane Street Summer 2025', '3x3 Street Basketball Tournament', true);
+values (2025, 'Canestreet Summer 2025', '3x3 Street Basketball Tournament', true);

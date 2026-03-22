@@ -1,5 +1,5 @@
 -- ============================================================
--- Cane Street 3x3 — Historical content seed
+-- Canestreet 3x3 — Historical content seed
 -- Run this in the Supabase SQL editor AFTER 001_initial_schema.sql
 -- ============================================================
 
@@ -12,7 +12,7 @@
 -- via the admin panel or a follow-up migration.
 
 -- Remove the placeholder inserted in 001
-delete from editions where year = 2025 and title = 'Cane Street Summer 2025';
+delete from editions where year = 2025 and title = 'Canestreet Summer 2025';
 
 insert into editions (year, title, subtitle, description, winner_name, is_current, cover_url) values
 

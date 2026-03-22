@@ -74,5 +74,21 @@
 
 @layer utilities {
   .text-balance { text-wrap: balance; }
-  .orange-glow { text-shadow: 0 0 40px theme('colors.brand.orange / 40%'); }
+  .orange-glow { text-shadow: 0 0 60px theme('colors.brand.orange / 50%'); }
+
+  .hero-watermark {
+    position: absolute;
+    bottom: -0.05em;
+    right: -0.05em;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: clamp(10rem, 22vw, 20rem);
+    text-transform: uppercase;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.07);
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+    white-space: nowrap;
+  }
 }

@@ -53,7 +53,7 @@ export default function AdminLoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-court-black px-6">
       <div className="w-full max-w-sm">
         <p className="font-display font-extrabold uppercase tracking-widest text-brand-orange text-sm mb-1">
-          Cane Street 3×3
+          Canestreet 3×3
         </p>
         <h1 className="font-display font-bold uppercase text-3xl text-court-white mb-8">Backoffice</h1>
         <Suspense>

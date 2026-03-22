@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { Menu, X } from 'lucide-react'
+import Image from 'next/image'
 import clsx from 'clsx'
 
 const links = [
@@ -23,18 +24,18 @@ export default function PublicNav() {
     <header className="sticky top-0 z-50 border-b border-court-border bg-court-black/90 backdrop-blur-sm">
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="font-display font-extrabold uppercase tracking-widest text-brand-orange text-lg">
-          Cane Street <span className="text-court-white">3×3</span>
+        <Link href="/" className="flex items-center shrink-0">
+          <Image src="/lion.png" alt="Canestreet 3×3" width={40} height={40} className="h-10 w-auto" priority />
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-1">
+        <nav className="hidden md:flex items-center gap-0">
           {links.map(({ href, label, accent }) => (
             <Link
               key={href}
               href={href}
               className={clsx(
-                'px-4 py-2 font-display font-semibold uppercase tracking-wide text-sm transition-colors',
+                'px-3 py-2 font-display font-semibold uppercase tracking-wide text-sm transition-colors whitespace-nowrap',
                 accent
                   ? 'bg-brand-orange hover:bg-brand-light text-white ml-2'
                   : pathname === href

@@ -29,7 +29,7 @@ export default function AdminSidebar() {
       {/* Logo */}
       <div className="p-6 border-b border-court-border">
         <p className="font-display font-extrabold uppercase tracking-widest text-brand-orange text-sm">
-          Cane Street
+          Canestreet
         </p>
         <p className="text-court-muted text-xs mt-0.5 font-display uppercase tracking-wide">Backoffice</p>
       </div>

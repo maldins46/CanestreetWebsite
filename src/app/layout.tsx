@@ -17,10 +17,10 @@ const barlow = Barlow({
 })
 
 export const metadata: Metadata = {
-  title: { default: 'Cane Street 3x3', template: '%s | Cane Street 3x3' },
-  description: 'Il torneo estivo di basket 3x3 — Cane Street.',
+  title: { default: 'Canestreet 3x3', template: '%s | Canestreet 3x3' },
+  description: 'Il torneo estivo di basket 3x3 — Canestreet.',
   openGraph: {
-    siteName: 'Cane Street 3x3',
+    siteName: 'Canestreet 3x3',
     type: 'website',
   },
 }
