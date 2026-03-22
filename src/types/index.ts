@@ -69,6 +69,16 @@ export interface NewsArticle {
   updated_at: string
 }
 
+export interface EditionWinner {
+  id: string
+  edition_id: string
+  category: string
+  winner_name: string
+  photo_url: string | null
+  sort_order: number
+  created_at: string
+}
+
 // ============================================================
 // Joined / enriched types used in UI
 // ============================================================
@@ -79,4 +89,8 @@ export interface TeamWithEdition extends Team {
 
 export interface NewsWithAuthor extends NewsArticle {
   admins?: Pick<Admin, 'email'>
+}
+
+export interface EditionWithWinners extends Edition {
+  edition_winners: EditionWinner[]
 }

@@ -381,9 +381,10 @@ export default async function HomePage() {
 
             <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory md:grid md:grid-cols-3 md:overflow-visible md:pb-0 md:snap-none">
               {pastEditions.slice(0, 3).map((ed) => (
-                <div
+                <Link
                   key={ed.id}
-                  className="card overflow-hidden shrink-0 w-72 md:w-auto snap-start group"
+                  href={`/editions/${ed.year}`}
+                  className="card overflow-hidden shrink-0 w-72 md:w-auto snap-start group block"
                 >
                   {ed.cover_url ? (
                     <div className="relative h-44 overflow-hidden">
@@ -407,7 +408,7 @@ export default async function HomePage() {
                     </div>
                   )}
                   <div className="p-5">
-                    <h3 className="font-display font-bold text-lg text-court-white uppercase">
+                    <h3 className="font-display font-bold text-lg text-court-white uppercase group-hover:text-brand-orange transition-colors">
                       {ed.title}
                     </h3>
                     {ed.winner_name && (
@@ -416,7 +417,7 @@ export default async function HomePage() {
                       </p>
                     )}
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
 

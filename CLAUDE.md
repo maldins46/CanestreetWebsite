@@ -45,12 +45,34 @@ If either check fails, the user is signed out and redirected to `/admin/login?er
 
 Using the browser client in a Server Component (or vice versa) will break cookie-based auth.
 
+### Database migrations
+
+Migration files live in `supabase/migrations/` and are applied in filename order. **After adding or modifying a migration file**, you must apply it to the local database.
+
+**Option A — full reset (safest, re-seeds data):**
+```bash
+supabase db reset
+bash scripts/upload-media.sh   # re-upload media assets after reset
+```
+This drops and recreates the whole local DB from scratch, running all migrations + seed files in order.
+
+**Option B — apply only the new migration (keeps existing data):**
+```bash
+supabase db push --local
+```
+Or paste the SQL directly into the Supabase Studio SQL editor at `http://127.0.0.1:54323`.
+
+**For production**, go to the Supabase dashboard → SQL editor and run the new migration file's SQL manually.
+
+> After any schema change, always update `src/types/index.ts` to mirror the new columns/tables.
+
 ### Database schema
 
-Defined in `supabase/migrations/001_initial_schema.sql`. Five tables:
+Defined in `supabase/migrations/001_initial_schema.sql`. Tables:
 
 - **`admins`** — links `auth.users.id` → role (`superadmin` | `editor`). The `is_admin()` SQL function is the basis for all RLS write policies.
 - **`editions`** — one per tournament year. Exactly one row may have `is_current = true` (enforced by a partial unique index).
+- **`edition_winners`** — per-category winners for each edition (migration `003`). Categories vary year by year. Foreign key to `editions` with `on delete cascade`.
 - **`teams`** — public registration submissions, scoped to an edition. Status lifecycle: `pending → approved / rejected / waitlisted`.
 - **`standings`** — per-edition results. `team_name` is denormalised for display; `team_id` is nullable (allows manual entries without a registered team).
 - **`news`** — markdown articles with a unique `slug`. Public RLS only exposes `published = true` rows.
