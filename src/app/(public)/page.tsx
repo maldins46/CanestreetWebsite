@@ -45,7 +45,7 @@ export default async function HomePage() {
   return (
     <>
       {/* ── HERO ─────────────────────────────────────────── */}
-      <section className="relative h-[calc(100vh-4rem)] overflow-hidden">
+      <section className="relative h-[calc(100vh-4rem)] overflow-hidden" style={{ height: 'calc(100dvh - 4rem)' }}>
         <Image
           src={`${MEDIA}/cover-2025.jpg`}
           alt="Canestreet 3×3 — Piazza della Repubblica, Jesi"
@@ -174,7 +174,7 @@ export default async function HomePage() {
           <div className="md:col-span-2 grid grid-cols-2 gap-4">
             {[
               { value: '200+', label: 'Atleti' },
-              { value: '7',    label: 'Edizioni' },
+              { value: String(allEditions?.length ?? 0), label: 'Edizioni' },
               { value: '3×3',  label: 'Formato FIBA' },
               { value: 'Jesi', label: 'Piazza della Repubblica' },
             ].map(({ value, label }) => (
@@ -212,12 +212,12 @@ export default async function HomePage() {
               </Link>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory md:grid md:grid-cols-3 md:overflow-visible md:pb-0 md:snap-none">
               {news.map((article) => (
                 <Link
                   key={article.id}
                   href={`/news/${article.slug}`}
-                  className="card group overflow-hidden"
+                  className="card group overflow-hidden shrink-0 w-72 md:w-auto snap-start"
                 >
                   {article.cover_url && (
                     <div className="relative h-44 overflow-hidden">
@@ -270,7 +270,7 @@ export default async function HomePage() {
                   La nostra storia
                 </p>
                 <h2 className="heading-section text-3xl md:text-4xl text-court-white">
-                  Edizioni passate
+                  Edizioni precedenti
                 </h2>
               </div>
               <Link
@@ -313,6 +313,9 @@ export default async function HomePage() {
                     <h3 className="font-display font-bold text-lg text-court-white uppercase group-hover:text-brand-orange transition-colors">
                       {ed.title}
                     </h3>
+                    {ed.subtitle && (
+                      <p className="text-court-gray text-sm mt-1">{ed.subtitle}</p>
+                    )}
                     {ed.winner_name && (
                       <p className="text-brand-orange text-sm font-display uppercase tracking-wide mt-1 flex items-center gap-1">
                         <Trophy size={13} />{ed.winner_name}
