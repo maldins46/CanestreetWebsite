@@ -40,7 +40,7 @@ null, false, 'http://127.0.0.1:54321/storage/v1/object/public/media/edition3-sca
 'Nel 2024, il Canestreet fece ritorno alle sue radici, scegliendo come location Piazza della Repubblica, nel cuore di Jesi. Questa scelta simbolica rappresentò un omaggio alla città che aveva visto nascere il torneo e un modo per rafforzare il legame con la comunità locale. Il campo modulare allestito nella piazza divenne il palcoscenico di quattro giorni di sport, musica e divertimento, con partite che si svolsero dalle 15:00 alle 23:50. L''edizione 2024 vide anche l''introduzione di un premio in denaro per la squadra vincitrice del torneo senior, un segno tangibile della crescita e della professionalizzazione del torneo.',
 null, false, 'http://127.0.0.1:54321/storage/v1/object/public/media/edition2.jpg'),
 
-(2025, 'Famo sul serio', 'Piazza della Repubblica — palco e gradinate',
+(2025, 'Facciamo sul serio', 'Piazza della Repubblica — palco e gradinate',
 'Nel 2025 abbiamo dato vita al nostro torneo più grande: ancora in Piazza della Repubblica, ancora tante edizioni under (record partecipazione under a livello marchigiano), e un super palco con gradinate a ricordare i grandi tornei di Jesi del passato. Ruling the piazza, ancora una volta.',
 null, true, 'http://127.0.0.1:54321/storage/v1/object/public/media/cover-2025.jpg');
 
@@ -135,7 +135,7 @@ insert into news (title, slug, excerpt, body, cover_url, published, published_at
 ),
 
 (
-  'Edizione 2025: famo sul serio',
+  'Edizione 2025: Facciamo sul serio',
   'edizione-2025-famo-sul-serio',
   'Nel 2025 abbiamo dato vita al nostro torneo più grande: record partecipazione under a livello marchigiano e un super palco con gradinate.',
   E'Nel 2025 abbiamo dato vita al nostro torneo più grande: ancora in Piazza della Repubblica, ancora tante edizioni under (record partecipazione under a livello marchigiano), e un super palco con gradinate a ricordare i grandi tornei di Jesi del passato.\n\nRuling the piazza, ancora una volta.',

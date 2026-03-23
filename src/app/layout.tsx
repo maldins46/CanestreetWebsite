@@ -20,18 +20,28 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#f26522',
+  themeColor: '#0a0a0a',
 }
 
 export const metadata: Metadata = {
   title: { default: 'Canestreet 3x3', template: '%s · Canestreet 3x3' },
-  description: 'Il torneo estivo di basket 3x3 — Canestreet.',
+  description: 'A FIP 3x3 Summer Tournament. In the heart of Jesi.',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
     title: 'Canestreet 3x3',
   },
   formatDetection: { telephone: false },
+  icons: {
+    apple: [
+      { url: '/icons/apple-icon.png', sizes: '180x180' },
+    ],
+  },
+  other: {
+    'msapplication-TileColor': '#0a0a0a',
+    'msapplication-TileImage': '/icons/ms-icon-144x144.png',
+    'msapplication-config': '/browserconfig.xml',
+  },
   openGraph: {
     siteName: 'Canestreet 3x3',
     type: 'website',
