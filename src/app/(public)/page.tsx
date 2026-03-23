@@ -120,7 +120,7 @@ animationDelay: '0.15s',
                 className="btn-ghost text-base px-8 py-4 inline-flex items-center justify-center gap-2 bg-court-black/60 backdrop-blur-sm w-full sm:w-auto"
               >
                 <Play className="w-4 h-4" />
-                Aftermovie {year}
+                Aftermovie 2025
               </a>
             </div>
 
