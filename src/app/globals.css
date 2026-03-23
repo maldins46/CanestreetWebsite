@@ -91,11 +91,12 @@
     @media (max-width: 767px) {
       bottom: calc(clamp(9rem, 20vw, 19rem) + 3.5rem);
     }
-    font-family: var(--font-hero);
-    font-size: clamp(12rem, 40vw, 36rem);
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: clamp(10rem, 22vw, 20rem);
     text-transform: uppercase;
     color: transparent;
-    -webkit-text-stroke: 1px theme('colors.brand.orange / 35%');
+    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.07);
     line-height: 1;
     pointer-events: none;
     user-select: none;

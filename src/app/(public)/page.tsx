@@ -103,10 +103,9 @@ animationDelay: '0.15s',
                 animationFillMode: 'both',
               }}
             >
-              <span className="text-outline-orange">Cane</span>
-              <span className="text-outline">street</span>
+              <span className="text-brand-orange orange-glow">Cane</span>
+              <span className="text-court-white">street</span>
             </h1>
-            <span className="hero-3x3-watermark">3×3</span>
             <div
               className="flex flex-col sm:flex-row gap-4 animate-slide-up"
               style={{ animationDelay: '0.28s', animationFillMode: 'both' }}
@@ -160,7 +159,7 @@ animationDelay: '0.15s',
               className="font-display font-extrabold italic uppercase text-court-white leading-[0.9] mb-6"
               style={{ fontSize: 'clamp(2rem, 4.5vw, 3.5rem)' }}
             >
-              Da torneo parrocchiale<br />
+              Da torneo della parrocchia<br />
               <span className="text-brand-orange">a circuito nazionale.</span>
             </h2>
             <p className="text-court-gray leading-relaxed mb-4">
