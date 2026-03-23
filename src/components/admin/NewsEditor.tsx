@@ -19,6 +19,7 @@ export default function NewsEditor({ article }: Props) {
     title:     article?.title     ?? '',
     slug:      article?.slug      ?? '',
     excerpt:   article?.excerpt   ?? '',
+    cover_url: article?.cover_url ?? '',
     body:      article?.body      ?? '',
     published: article?.published ?? false,
   })
@@ -35,6 +36,7 @@ export default function NewsEditor({ article }: Props) {
     setMsg(null)
     const payload = {
       ...form,
+      cover_url: form.cover_url || null,
       published_at: form.published ? (article?.published_at ?? new Date().toISOString()) : null,
       updated_at: new Date().toISOString(),
     }
@@ -83,6 +85,17 @@ export default function NewsEditor({ article }: Props) {
         <textarea className="input resize-none" rows={2} value={form.excerpt}
           onChange={e => set('excerpt', e.target.value)}
           placeholder="Breve descrizione dell'articolo (usata nelle anteprime)" />
+      </div>
+
+      <div>
+        <label className="label">Immagine di copertina (URL)</label>
+        <input className="input text-sm" value={form.cover_url}
+          onChange={e => set('cover_url', e.target.value)}
+          placeholder="https://esempio.com/immagine.jpg" />
+        {form.cover_url && (
+          <img src={form.cover_url} alt="Anteprima copertina"
+            className="mt-2 rounded-lg max-h-48 object-cover border border-court-border" />
+        )}
       </div>
 
       <div>
