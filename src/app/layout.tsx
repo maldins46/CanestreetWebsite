@@ -1,12 +1,20 @@
 import type { Metadata, Viewport } from 'next'
-import { Barlow_Condensed, Barlow } from 'next/font/google'
+import { Barlow_Condensed, Barlow, Anton } from 'next/font/google'
 import './globals.css'
 
 // Display font — condensed, sporty, authoritative
 const barlowCondensed = Barlow_Condensed({
   subsets: ['latin'],
   weight: ['400', '600', '700', '800'],
+  style: ['normal', 'italic'],
   variable: '--font-display',
+})
+
+// Ultra-heavy condensed display font for the hero title
+const anton = Anton({
+  subsets: ['latin'],
+  weight: '400',
+  variable: '--font-hero',
 })
 
 // Body font — readable, clean
@@ -52,7 +60,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="it" className={`${barlowCondensed.variable} ${barlow.variable}`}>
+    <html lang="it" className={`${barlowCondensed.variable} ${barlow.variable} ${anton.variable}`}>
       <body className="bg-court-black text-court-white font-body antialiased">
         {children}
       </body>

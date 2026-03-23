@@ -24,7 +24,7 @@ export default async function HomePage() {
     .eq('is_current', true)
     .single<Edition>()
 
-  const year = edition?.year ?? new Date().getFullYear()
+  const year = edition?.year ?? new Date().getFullYear() - 1
 
   const [{ data: news }, { data: allEditions }] =
     await Promise.all([
@@ -85,7 +85,7 @@ export default async function HomePage() {
         </div>
 
         <div className="absolute inset-0 flex flex-col justify-end">
-          <div className="max-w-6xl mx-auto w-full px-6 pb-20 md:pb-20">
+          <div className="relative z-10 max-w-6xl mx-auto w-full px-6 pb-20 md:pb-20">
             {/* Orange accent rule */}
             <div className="w-12 h-[3px] bg-brand-orange mb-4 md:mb-5 animate-fade-in" />
 
@@ -96,25 +96,29 @@ export default async function HomePage() {
               A FIP 3×3 summer tournament. In the heart of Jesi.
             </p>
             <h1
-              className="font-display font-extrabold uppercase leading-[0.85] mb-5 md:mb-8 animate-slide-up"
-              style={{ fontSize: 'clamp(2.5rem, 13vw, 10rem)', animationDelay: '0.15s', animationFillMode: 'both' }}
+              className="font-hero uppercase leading-[0.88] mb-5 md:mb-8 animate-slide-up"
+              style={{
+                fontSize: 'clamp(3.5rem, 18vw, 14rem)',
+animationDelay: '0.15s',
+                animationFillMode: 'both',
+              }}
             >
-              <span className="text-brand-orange orange-glow">Cane</span>
-              <span className="text-court-white">street</span>
-              <span className="text-brand-orange orange-glow"> 3×3</span>
+              <span className="text-outline-orange">Cane</span>
+              <span className="text-outline">street</span>
             </h1>
+            <span className="hero-3x3-watermark">3×3</span>
             <div
               className="flex flex-col sm:flex-row gap-4 animate-slide-up"
               style={{ animationDelay: '0.28s', animationFillMode: 'both' }}
             >
-              <Link href="/register" className="btn-primary text-base px-8 py-4 justify-center">
+              <Link href="/register" className="btn-primary text-base px-8 py-4 justify-center w-full sm:w-auto">
                 Iscriviti ora
               </Link>
               <a
                 href={AFTERMOVIE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn-ghost text-base px-8 py-4 inline-flex items-center justify-center gap-2 bg-court-black/60 backdrop-blur-sm"
+                className="btn-ghost text-base px-8 py-4 inline-flex items-center justify-center gap-2 bg-court-black/60 backdrop-blur-sm w-full sm:w-auto"
               >
                 <Play className="w-4 h-4" />
                 Aftermovie {year}
@@ -122,7 +126,7 @@ export default async function HomePage() {
             </div>
 
             {/* Social icons — mobile only (desktop has vertical strip on right) */}
-            <div className="flex gap-5 mt-6 md:hidden">
+            <div className="flex gap-5 mt-6 mb-14 md:mb-0 md:hidden">
               <a href="https://www.instagram.com/canestreet3x3" target="_blank" rel="noopener noreferrer"
                  className="text-court-gray hover:text-court-white transition-colors" aria-label="Instagram">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5" aria-hidden="true">
