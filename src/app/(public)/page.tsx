@@ -85,18 +85,18 @@ export default async function HomePage() {
         </div>
 
         <div className="absolute inset-0 flex flex-col justify-end">
-          <div className="max-w-6xl mx-auto w-full px-6 pb-14 md:pb-20">
+          <div className="max-w-6xl mx-auto w-full px-6 pb-20 md:pb-20">
             {/* Orange accent rule */}
-            <div className="w-12 h-[3px] bg-brand-orange mb-5 animate-fade-in" />
+            <div className="w-12 h-[3px] bg-brand-orange mb-4 md:mb-5 animate-fade-in" />
 
             <p
-              className="font-display uppercase tracking-[0.25em] text-court-light text-sm mb-5 animate-slide-up"
+              className="font-display uppercase tracking-[0.25em] text-court-light text-sm mb-4 md:mb-5 animate-slide-up"
               style={{ animationDelay: '0.05s', animationFillMode: 'both' }}
             >
               A FIP 3×3 summer tournament. In the heart of Jesi.
             </p>
             <h1
-              className="font-display font-extrabold uppercase leading-[0.85] mb-8 animate-slide-up"
+              className="font-display font-extrabold uppercase leading-[0.85] mb-5 md:mb-8 animate-slide-up"
               style={{ fontSize: 'clamp(2.5rem, 13vw, 10rem)', animationDelay: '0.15s', animationFillMode: 'both' }}
             >
               <span className="text-brand-orange orange-glow">Cane</span>
