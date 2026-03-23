@@ -97,7 +97,7 @@ export default async function HomePage() {
             </p>
             <h1
               className="font-display font-extrabold uppercase leading-[0.85] mb-8 animate-slide-up"
-              style={{ fontSize: 'clamp(4rem, 10vw, 10rem)', animationDelay: '0.15s', animationFillMode: 'both' }}
+              style={{ fontSize: 'clamp(2.5rem, 13vw, 10rem)', animationDelay: '0.15s', animationFillMode: 'both' }}
             >
               <span className="text-brand-orange orange-glow">Cane</span>
               <span className="text-court-white">street</span>

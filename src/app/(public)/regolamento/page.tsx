@@ -15,7 +15,7 @@ import {
 import type { LucideIcon } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Regolamento — Canestreet 3×3',
+  title: 'Regolamento',
   description:
     'Tutto quello che devi sapere sul basket 3x3: regole FIBA, circuito FIP e le regole specifiche del torneo Canestreet.',
 }
@@ -109,7 +109,7 @@ export default function RegolamentoPage() {
         <p className="text-brand-orange font-display uppercase tracking-[0.3em] text-xs font-semibold mb-3">
           Tutto quello che devi sapere
         </p>
-        <h1 className="heading-section text-5xl text-court-white mb-6">
+        <h1 className="heading-section text-4xl md:text-5xl text-court-white mb-6">
           Regolamento
         </h1>
         <p className="text-court-gray leading-relaxed max-w-2xl">

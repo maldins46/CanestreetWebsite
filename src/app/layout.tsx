@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Barlow_Condensed, Barlow } from 'next/font/google'
 import './globals.css'
 
@@ -16,9 +16,22 @@ const barlow = Barlow({
   variable: '--font-body',
 })
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#f26522',
+}
+
 export const metadata: Metadata = {
-  title: { default: 'Canestreet 3x3', template: '%s | Canestreet 3x3' },
+  title: { default: 'Canestreet 3x3', template: '%s · Canestreet 3x3' },
   description: 'Il torneo estivo di basket 3x3 — Canestreet.',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Canestreet 3x3',
+  },
+  formatDetection: { telephone: false },
   openGraph: {
     siteName: 'Canestreet 3x3',
     type: 'website',

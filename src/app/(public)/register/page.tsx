@@ -16,10 +16,10 @@ export default async function RegisterPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-20">
-      <p className="text-brand-orange font-display uppercase tracking-widest text-xs font-semibold mb-3">
+      <p className="text-brand-orange font-display uppercase tracking-[0.3em] text-xs font-semibold mb-3">
         {edition?.title ?? 'Iscrizioni'}
       </p>
-      <h1 className="heading-section text-4xl text-court-white mb-2">Iscriviti</h1>
+      <h1 className="heading-section text-4xl md:text-5xl text-court-white mb-2">Iscriviti</h1>
       <p className="text-court-gray mb-12">
         Compila il modulo per registrare la tua squadra. Ti contatteremo per conferma.
       </p>

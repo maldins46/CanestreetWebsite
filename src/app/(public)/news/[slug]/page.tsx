@@ -43,12 +43,12 @@ export default async function NewsArticlePage({ params }: Props) {
         </div>
       )}
 
-      <p className="text-brand-orange text-xs font-display uppercase tracking-widest mb-3">
+      <p className="text-brand-orange text-xs font-display uppercase tracking-[0.3em] font-semibold mb-3">
         {article.published_at
           ? new Date(article.published_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })
           : ''}
       </p>
-      <h1 className="font-display font-extrabold text-4xl text-court-white uppercase leading-tight mb-8">
+      <h1 className="heading-section text-4xl md:text-5xl text-court-white mb-8">
         {article.title}
       </h1>
 

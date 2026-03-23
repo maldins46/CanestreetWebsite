@@ -4,7 +4,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import type { StaffMember } from '@/types'
 
 export const metadata: Metadata = {
-  title: 'Chi siamo — Canestreet 3×3',
+  title: 'Chi siamo',
 }
 
 export default async function ChiSiamoPage() {
@@ -21,7 +21,7 @@ export default async function ChiSiamoPage() {
         <p className="text-brand-orange font-display uppercase tracking-[0.3em] text-xs font-semibold mb-3">
           Il CaneStaff
         </p>
-        <h1 className="heading-section text-5xl text-court-white mb-6">
+        <h1 className="heading-section text-4xl md:text-5xl text-court-white mb-6">
           Chi siamo
         </h1>
         <p className="text-court-gray max-w-2xl leading-relaxed">

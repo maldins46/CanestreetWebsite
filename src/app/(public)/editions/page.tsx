@@ -20,10 +20,10 @@ export default async function EditionsPage() {
   return (
     <div className="max-w-4xl mx-auto px-6 py-20">
       <div className="mb-12">
-        <p className="text-brand-orange font-display uppercase tracking-widest text-xs font-semibold mb-3">
+        <p className="text-brand-orange font-display uppercase tracking-[0.3em] text-xs font-semibold mb-3">
           La nostra storia
         </p>
-        <h1 className="heading-section text-4xl text-court-white">Edizioni precedenti</h1>
+        <h1 className="heading-section text-4xl md:text-5xl text-court-white">Edizioni precedenti</h1>
       </div>
 
       {!past.length ? (

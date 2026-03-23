@@ -17,37 +17,54 @@ export default async function NewsPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-20">
-      <h1 className="heading-section text-4xl text-court-white mb-12">News</h1>
+      <div className="mb-12">
+        <p className="text-brand-orange font-display uppercase tracking-[0.3em] text-xs font-semibold mb-3">
+          Aggiornamenti
+        </p>
+        <h1 className="heading-section text-4xl md:text-5xl text-court-white">News</h1>
+      </div>
 
       {!articles?.length ? (
         <div className="card p-10 text-center">
           <p className="text-court-gray">Nessun articolo pubblicato.</p>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="grid sm:grid-cols-2 gap-6">
           {articles.map(article => (
             <Link
               key={article.id}
               href={`/news/${article.slug}`}
-              className="group card flex gap-6 p-6 hover:border-court-muted transition-colors"
+              className="card overflow-hidden group block"
             >
-              {article.cover_url && (
-                <div className="relative w-32 h-24 shrink-0 overflow-hidden">
-                  <Image src={article.cover_url} alt={article.title} fill className="object-cover" />
+              {article.cover_url ? (
+                <div className="relative h-48 overflow-hidden">
+                  <Image
+                    src={article.cover_url}
+                    alt={article.title}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    sizes="(max-width: 640px) 100vw, 50vw"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-court-dark to-transparent" />
                 </div>
+              ) : (
+                <div className="h-24 bg-court-dark" />
               )}
-              <div className="flex-1 min-w-0">
-                <p className="text-court-muted text-xs font-display uppercase tracking-wide mb-2">
+              <div className="p-6">
+                <p className="text-brand-orange font-display uppercase tracking-[0.3em] text-xs font-semibold mb-2">
                   {article.published_at
                     ? new Date(article.published_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })
                     : ''}
                 </p>
-                <h2 className="font-display font-bold text-xl text-court-white group-hover:text-brand-orange transition-colors truncate">
+                <h2 className="font-display font-bold text-xl text-court-white uppercase group-hover:text-brand-orange transition-colors leading-tight">
                   {article.title}
                 </h2>
                 {article.excerpt && (
-                  <p className="text-court-gray text-sm mt-2 line-clamp-2">{article.excerpt}</p>
+                  <p className="text-court-gray text-sm mt-3 line-clamp-3">{article.excerpt}</p>
                 )}
+                <span className="mt-4 inline-block text-xs text-court-muted font-display uppercase tracking-wide group-hover:text-brand-orange transition-colors">
+                  Leggi →
+                </span>
               </div>
             </Link>
           ))}

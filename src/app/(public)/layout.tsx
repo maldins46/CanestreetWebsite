@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import PublicNav from '@/components/public/PublicNav'
+import MobileBottomNav from '@/components/public/MobileBottomNav'
 
 function InstagramIcon() {
   return (
@@ -23,8 +24,9 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
   return (
     <div className="min-h-screen flex flex-col">
       <PublicNav />
-      <main className="flex-1">{children}</main>
-      <footer className="border-t border-court-border py-12">
+      <main className="flex-1 pb-20 md:pb-0">{children}</main>
+      <MobileBottomNav />
+      <footer className="hidden md:block border-t border-court-border py-12">
         <div className="max-w-6xl mx-auto px-6">
           <div className="flex flex-col md:flex-row justify-between gap-10 mb-10">
             {/* Brand + contact */}

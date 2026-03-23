@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .eq('year', parseInt(params.year))
     .single<{ title: string; year: number }>()
   if (!data) return { title: 'Edizione non trovata' }
-  return { title: `${data.year} — ${data.title}` }
+  return { title: `${data.year} · ${data.title}` }
 }
 
 export default async function EditionDetailPage({ params }: Props) {
