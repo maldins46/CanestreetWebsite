@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
+import { Trophy } from 'lucide-react'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import type { EditionWithWinners } from '@/types'
 
@@ -68,7 +69,7 @@ export default async function EditionsPage() {
                     <ul className="mt-2 space-y-0.5">
                       {winners.map(w => (
                         <li key={w.id} className="text-sm font-display uppercase tracking-wide">
-                          <span className="text-brand-orange">🏆 {w.category}:</span>{' '}
+                          <span className="text-brand-orange inline-flex items-center gap-1"><Trophy size={12} />{w.category}:</span>{' '}
                           <span className="text-court-gray">{w.winner_name}</span>
                         </li>
                       ))}

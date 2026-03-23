@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { Play } from 'lucide-react'
+import { Play, Trophy } from 'lucide-react'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import type { Edition, NewsArticle } from '@/types'
 
@@ -314,8 +314,8 @@ export default async function HomePage() {
                       {ed.title}
                     </h3>
                     {ed.winner_name && (
-                      <p className="text-brand-orange text-sm font-display uppercase tracking-wide mt-1">
-                        🏆 {ed.winner_name}
+                      <p className="text-brand-orange text-sm font-display uppercase tracking-wide mt-1 flex items-center gap-1">
+                        <Trophy size={13} />{ed.winner_name}
                       </p>
                     )}
                   </div>

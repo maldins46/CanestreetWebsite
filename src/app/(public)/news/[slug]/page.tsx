@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import sanitizeHtml from 'sanitize-html'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import type { NewsArticle } from '@/types'
 
@@ -24,6 +25,11 @@ export default async function NewsArticlePage({ params }: Props) {
     .single<NewsArticle>()
 
   if (!article) notFound()
+
+  const safeBody = sanitizeHtml(article.body, {
+    allowedTags: ['p', 'h2', 'h3', 'strong', 'em', 'ul', 'ol', 'li', 'a', 'br', 'blockquote'],
+    allowedAttributes: { 'a': ['href', 'target', 'rel'] },
+  })
 
   return (
     <article className="max-w-2xl mx-auto px-6 py-20">
@@ -48,7 +54,7 @@ export default async function NewsArticlePage({ params }: Props) {
 
       <div
         className="prose prose-invert prose-sm max-w-none text-court-gray leading-relaxed"
-        dangerouslySetInnerHTML={{ __html: article.body }}
+        dangerouslySetInnerHTML={{ __html: safeBody }}
       />
     </article>
   )

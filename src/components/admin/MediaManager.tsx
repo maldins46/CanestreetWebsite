@@ -13,6 +13,7 @@ export default function MediaManager() {
   const [uploading, setUploading] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [uploadError, setUploadError] = useState<string | null>(null)
 
   async function loadFiles() {
     const { data } = await supabase.storage.from('media').list('', { sortBy: { column: 'created_at', order: 'desc' } })
@@ -27,6 +28,17 @@ export default function MediaManager() {
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+    setUploadError(null)
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Solo file immagine sono consentiti (JPG, PNG, WebP, GIF).')
+      if (inputRef.current) inputRef.current.value = ''
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError('Il file supera il limite di 5MB.')
+      if (inputRef.current) inputRef.current.value = ''
+      return
+    }
     setUploading(true)
     const ext = file.name.split('.').pop()
     const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
@@ -56,6 +68,12 @@ export default function MediaManager() {
         <p className="text-court-muted text-xs mt-1">JPG, PNG, WebP, GIF — max 5MB</p>
         <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
       </div>
+
+      {uploadError && (
+        <p className="text-red-400 text-sm bg-red-900/20 border border-red-800 px-4 py-3 mb-4">
+          {uploadError}
+        </p>
+      )}
 
       {/* Gallery */}
       {loading ? (

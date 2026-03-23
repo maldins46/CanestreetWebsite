@@ -15,21 +15,15 @@ export default function AddAdminForm() {
     setMsg(null)
     const fd = new FormData(e.currentTarget)
     const email = fd.get('email') as string
+    const uuid  = fd.get('uuid')  as string
     const role  = fd.get('role')  as string
 
-    // Look up the user by email using a custom function or just insert
-    // (Requires the user to have signed up already in Supabase Auth)
-    const { data: users } = await supabase.rpc('get_user_id_by_email', { email })
-    const userId = users?.[0]?.id
-
-    if (!userId) {
+    const { error } = await supabase.from('admins').insert({ user_id: uuid, email, role })
+    if (error) {
       setStatus('error')
-      setMsg('Utente non trovato. Deve prima registrarsi con questa email.')
+      setMsg(error.code === '23503' ? 'UUID non trovato. Verifica che l\'utente esista in Supabase Auth.' : error.message)
       return
     }
-
-    const { error } = await supabase.from('admins').insert({ user_id: userId, email, role })
-    if (error) { setStatus('error'); setMsg(error.message); return }
     setStatus('success')
     setMsg('Admin aggiunto!')
     router.refresh()
@@ -42,6 +36,21 @@ export default function AddAdminForm() {
       <div>
         <label className="label">Email</label>
         <input name="email" type="email" required className="input" placeholder="admin@email.com" />
+      </div>
+      <div>
+        <label className="label">UUID Utente</label>
+        <input
+          name="uuid"
+          type="text"
+          required
+          className="input font-mono text-sm"
+          placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+          pattern="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+          title="UUID nel formato xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+        />
+        <p className="text-court-muted text-xs mt-1">
+          Trovalo in Supabase Dashboard → Authentication → Users → copia il campo &quot;User UID&quot;.
+        </p>
       </div>
       <div>
         <label className="label">Ruolo</label>
@@ -62,7 +71,7 @@ export default function AddAdminForm() {
       </button>
 
       <p className="text-court-muted text-xs">
-        Nota: è necessario aggiungere una funzione RPC <code className="text-brand-orange">get_user_id_by_email</code> in Supabase (vedi README).
+        L&apos;utente deve aver già effettuato almeno un accesso prima di poter essere promosso ad admin.
       </p>
     </form>
   )
