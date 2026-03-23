@@ -42,9 +42,11 @@ export const metadata: Metadata = {
     'msapplication-TileImage': '/icons/ms-icon-144x144.png',
     'msapplication-config': '/browserconfig.xml',
   },
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://canestreet3x3.vercel.app'),
   openGraph: {
     siteName: 'Canestreet 3x3',
     type: 'website',
+    images: [{ url: '/icons/android-icon-512x512.png', width: 512, height: 512 }],
   },
 }
 
