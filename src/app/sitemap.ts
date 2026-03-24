@@ -14,6 +14,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/register`, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE_URL}/editions`, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${BASE_URL}/news`, changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${BASE_URL}/sponsor`, changeFrequency: 'monthly', priority: 0.6 },
   ]
 
   // Dynamic: published news articles

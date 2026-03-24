@@ -10,6 +10,7 @@ const links = [
   { href: '/editions',     label: 'Edizioni' },
   { href: '/chi-siamo',    label: 'Chi siamo' },
   { href: '/regolamento',  label: 'Regolamento' },
+  { href: '/sponsor',      label: 'Sponsor' },
   { href: '/register',     label: 'Iscriviti',  accent: true },
 ]
 

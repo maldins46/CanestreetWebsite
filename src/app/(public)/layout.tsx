@@ -50,6 +50,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                 <Link href="/editions"    className="font-display font-semibold uppercase tracking-wider text-xs text-court-gray hover:text-court-white transition-colors whitespace-nowrap">Edizioni</Link>
                 <Link href="/chi-siamo"   className="font-display font-semibold uppercase tracking-wider text-xs text-court-gray hover:text-court-white transition-colors whitespace-nowrap">Chi siamo</Link>
                 <Link href="/regolamento" className="font-display font-semibold uppercase tracking-wider text-xs text-court-gray hover:text-court-white transition-colors whitespace-nowrap">Regolamento</Link>
+                <Link href="/sponsor"     className="font-display font-semibold uppercase tracking-wider text-xs text-court-gray hover:text-court-white transition-colors whitespace-nowrap">Sponsor</Link>
                 <Link href="/register"    className="font-display font-semibold uppercase tracking-wider text-xs text-court-gray hover:text-court-white transition-colors whitespace-nowrap">Iscriviti</Link>
               </div>
               <div className="flex gap-4">

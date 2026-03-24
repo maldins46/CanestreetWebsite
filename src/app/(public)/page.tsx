@@ -2,7 +2,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Play, Trophy } from 'lucide-react'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import type { Edition, NewsArticle } from '@/types'
+import type { Edition, NewsArticle, Sponsor } from '@/types'
+import SponsorCarousel from '@/components/public/SponsorCarousel'
 
 const MEDIA = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/media`
 const AFTERMOVIE_URL = 'https://youtu.be/diOnX3Am1Yg'
@@ -26,7 +27,7 @@ export default async function HomePage() {
 
   const year = edition?.year ?? new Date().getFullYear() - 1
 
-  const [{ data: news }, { data: allEditions }] =
+  const [{ data: news }, { data: allEditions }, { data: sponsors }] =
     await Promise.all([
       supabase
         .from('news')
@@ -38,6 +39,11 @@ export default async function HomePage() {
         .from('editions')
         .select<'*', Edition>('*')
         .order('year', { ascending: false }),
+      supabase
+        .from('sponsors')
+        .select<'id, name, logo_url, website_url', Pick<Sponsor, 'id' | 'name' | 'logo_url' | 'website_url'>>('id, name, logo_url, website_url')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true }),
     ])
 
   const pastEditions = allEditions?.filter((e) => !e.is_current) ?? []
@@ -342,6 +348,23 @@ export default async function HomePage() {
             >
               Tutte le edizioni &rarr;
             </Link>
+          </div>
+        </section>
+      )}
+
+      {/* ── SPONSOR CAROUSEL ─────────────────────────────── */}
+      {sponsors && sponsors.length > 0 && (
+        <section className="border-t border-court-border py-14">
+          <div className="max-w-6xl mx-auto px-6">
+            <p className="text-center text-brand-orange font-display uppercase tracking-[0.3em] text-xs font-semibold mb-8">
+              I Nostri Partner
+            </p>
+            <SponsorCarousel sponsors={sponsors} />
+            <div className="text-center mt-8">
+              <Link href="/sponsor" className="btn-ghost text-sm px-5 py-2">
+                Tutti gli sponsor &rarr;
+              </Link>
+            </div>
           </div>
         </section>
       )}

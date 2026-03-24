@@ -1,12 +1,12 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Newspaper, Trophy, Users, BookOpen } from 'lucide-react'
+import { Home, Trophy, Users, BookOpen, Handshake } from 'lucide-react'
 import clsx from 'clsx'
 
 const tabs = [
   { href: '/',             label: 'Home',      Icon: Home },
-  { href: '/news',         label: 'News',      Icon: Newspaper },
+  { href: '/sponsor',      label: 'Sponsor',   Icon: Handshake },
   { href: '/editions',     label: 'Edizioni',  Icon: Trophy },
   { href: '/chi-siamo',    label: 'Chi siamo', Icon: Users },
   { href: '/regolamento',  label: 'Regolam.',  Icon: BookOpen },

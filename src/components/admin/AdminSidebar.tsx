@@ -3,7 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
-import { Users, Newspaper, Image as ImageIcon, ShieldCheck, LogOut, Home, ExternalLink, Trophy, UserCircle, Menu, X } from 'lucide-react'
+import { Users, Newspaper, Image as ImageIcon, ShieldCheck, LogOut, Home, ExternalLink, Trophy, UserCircle, Menu, X, Handshake } from 'lucide-react'
 import clsx from 'clsx'
 import { createClient } from '@/lib/supabase/client'
 
@@ -13,6 +13,7 @@ const nav = [
   { href: '/admin/editions',  label: 'Edizioni',   icon: Trophy },
   { href: '/admin/news',      label: 'News',       icon: Newspaper },
   { href: '/admin/staff',     label: 'Staff',      icon: UserCircle },
+  { href: '/admin/sponsors',  label: 'Sponsor',    icon: Handshake },
   { href: '/admin/media',     label: 'Media',      icon: ImageIcon },
   { href: '/admin/admins',    label: 'Admins',     icon: ShieldCheck },
 ]

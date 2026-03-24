@@ -5,6 +5,7 @@
 export type AdminRole = 'superadmin' | 'editor'
 export type TeamStatus = 'pending' | 'approved' | 'rejected' | 'waitlisted'
 export type TeamCategory = 'open' | 'u14' | 'u16' | 'u18'
+export type SponsorTier = 'main' | 'gold' | 'silver' | 'bronze'
 
 export interface Admin {
   id: string
@@ -109,5 +110,17 @@ export interface StaffMember {
   bio: string
   photo_url: string | null
   sort_order: number
+  created_at: string
+}
+
+export interface Sponsor {
+  id: string
+  name: string
+  tier: SponsorTier
+  logo_url: string | null
+  website_url: string | null
+  description: string | null
+  sort_order: number
+  is_active: boolean
   created_at: string
 }
