@@ -47,7 +47,7 @@ export default async function HomePage() {
       {/* ── HERO ─────────────────────────────────────────── */}
       <section className="relative overflow-hidden" style={{ height: 'calc(100svh - 4rem)' }}>
         <Image
-          src={`${MEDIA}/cover-image.jpg`}
+          src={`${MEDIA}/cover-image-2025-3.jpg`}
           alt="Canestreet 3×3 — Piazza della Repubblica, Jesi"
           fill
           className="object-cover object-center"
@@ -85,7 +85,7 @@ export default async function HomePage() {
         </div>
 
         <div className="absolute inset-0 flex flex-col justify-end">
-          <div className="relative z-10 max-w-6xl mx-auto w-full px-6 pb-20 md:pb-20">
+          <div className="relative z-10 max-w-6xl mx-auto w-full px-6 pb-28 md:pb-20">
 
             <h1
               className="mb-3 md:mb-4 animate-slide-up"

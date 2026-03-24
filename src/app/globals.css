@@ -110,7 +110,7 @@
     right: -0.05em;
 
     @media (max-width: 767px) {
-      bottom: 3.5rem;
+      bottom: 19rem;
     }
     font-family: var(--font-display);
     font-weight: 900;
