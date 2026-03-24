@@ -66,6 +66,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
 
           <div className="border-t border-court-border/50 pt-4">
             <p className="text-court-muted text-xs">© {new Date().getFullYear()} The Canestreet. All rights reserved.</p>
+            <p className="text-court-muted text-xs mt-1">Another Comepaolo Production, made with love by <a href="https://riccardomaldini.it" target="_blank" rel="noopener noreferrer" className="underline hover:text-brand-orange transition-colors">Riccardo Maldini</a></p>
           </div>
         </div>
       </footer>
