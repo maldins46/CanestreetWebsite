@@ -24,8 +24,9 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
   return (
     <div className="min-h-screen flex flex-col">
       <PublicNav />
-      <main className="flex-1 pb-20 md:pb-0">{children}</main>
+      <main className="flex-1">{children}</main>
       <MobileBottomNav />
+      {/* Desktop footer */}
       <footer className="hidden md:block border-t border-court-border py-12">
         <div className="max-w-6xl mx-auto px-6">
           <div className="flex flex-col md:flex-row justify-between gap-10 mb-10">
@@ -37,7 +38,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               <p className="text-court-gray text-sm mt-1 mb-4">A FIP 3×3 summer tournament. In the heart of Jesi.</p>
               <div className="flex flex-col gap-1 text-court-muted text-xs">
                 <span>Piazza della Repubblica, Jesi (AN) 60035</span>
-                <span><a href="tel:+393291581724" className="hover:text-court-white transition-colors">329 158 1724</a> (Michele)</span>
+                <span><a href="tel:+393291581724" className="hover:text-court-white transition-colors">+39 329 158 1724</a> (Michele)</span>
                 <span><a href="mailto:canestreet3vs3@gmail.com" className="hover:text-court-white transition-colors">canestreet3vs3@gmail.com</a></span>
               </div>
             </div>
@@ -66,6 +67,38 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
 
           <div className="border-t border-court-border/50 pt-4">
             <p className="text-court-muted text-xs">© {new Date().getFullYear()} The Canestreet. All rights reserved.</p>
+            <p className="text-court-muted text-xs mt-1">Another Comepaolo Production, made with love by <a href="https://riccardomaldini.it" target="_blank" rel="noopener noreferrer" className="underline hover:text-brand-orange transition-colors">Riccardo Maldini</a></p>
+          </div>
+        </div>
+      </footer>
+
+      {/* Mobile footer — compact, sits above the bottom nav */}
+      <footer className="md:hidden border-t border-court-border py-6 pb-24">
+        <div className="px-6 text-center">
+          <p className="font-display font-bold uppercase tracking-widest text-brand-orange text-sm">
+            Canestreet 3×3
+          </p>
+          <p className="text-court-gray text-xs mt-1 mb-4">A FIP 3×3 summer tournament. In the heart of Jesi.</p>
+
+          <div className="flex flex-col gap-1 text-court-muted text-xs mb-4">
+            <span>Piazza della Repubblica, Jesi (AN) 60035</span>
+            <span><a href="tel:+393291581724" className="hover:text-court-white transition-colors">+39 329 158 1724</a> (Michele)</span>
+            <span><a href="mailto:canestreet3vs3@gmail.com" className="hover:text-court-white transition-colors">canestreet3vs3@gmail.com</a></span>
+          </div>
+
+          <div className="flex justify-center gap-5 mb-5">
+            <a href="https://www.instagram.com/canestreet3x3" target="_blank" rel="noopener noreferrer"
+               className="text-court-gray hover:text-brand-orange transition-colors" aria-label="Instagram">
+              <InstagramIcon />
+            </a>
+            <a href="https://www.facebook.com/thecanestreet" target="_blank" rel="noopener noreferrer"
+               className="text-court-gray hover:text-brand-orange transition-colors" aria-label="Facebook">
+              <FacebookIcon />
+            </a>
+          </div>
+
+          <div className="border-t border-court-border/50 pt-4">
+            <p className="text-court-muted text-xs">© {new Date().getFullYear()} Canestreet 3x3. All rights reserved.</p>
             <p className="text-court-muted text-xs mt-1">Another Comepaolo Production, made with love by <a href="https://riccardomaldini.it" target="_blank" rel="noopener noreferrer" className="underline hover:text-brand-orange transition-colors">Riccardo Maldini</a></p>
           </div>
         </div>
