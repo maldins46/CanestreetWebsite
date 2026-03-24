@@ -47,7 +47,7 @@ export default async function HomePage() {
       {/* ── HERO ─────────────────────────────────────────── */}
       <section className="relative overflow-hidden" style={{ height: 'calc(100svh - 4rem)' }}>
         <Image
-          src={`${MEDIA}/cover-image-2025.jpg`}
+          src={`${MEDIA}/cover-image.jpg`}
           alt="Canestreet 3×3 — Piazza della Repubblica, Jesi"
           fill
           className="object-cover object-center"
@@ -60,32 +60,32 @@ export default async function HomePage() {
         {/* Ghost watermark */}
         <span className="hero-watermark">Jesi</span>
 
+        {/* Social icons — vertical strip, right edge (desktop only) */}
+        <div className="absolute right-6 top-1/2 -translate-y-1/2 hidden sm:flex flex-col gap-5 z-10 animate-fade-in">
+          <a href="https://www.instagram.com/canestreet3x3" target="_blank" rel="noopener noreferrer"
+             className="text-court-gray hover:text-court-white transition-colors" aria-label="Instagram">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5" aria-hidden="true">
+              <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+              <circle cx="12" cy="12" r="4" />
+              <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none" />
+            </svg>
+          </a>
+          <a href="https://www.facebook.com/thecanestreet" target="_blank" rel="noopener noreferrer"
+             className="text-court-gray hover:text-court-white transition-colors" aria-label="Facebook">
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5" aria-hidden="true">
+              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+            </svg>
+          </a>
+          <a href="https://www.youtube.com/channel/UCtluwkHf-ghko6Ut-Y6PvRg" target="_blank" rel="noopener noreferrer"
+             className="text-court-gray hover:text-court-white transition-colors" aria-label="YouTube">
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5" aria-hidden="true">
+              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+            </svg>
+          </a>
+        </div>
+
         <div className="absolute inset-0 flex flex-col justify-end">
           <div className="relative z-10 max-w-6xl mx-auto w-full px-6 pb-20 md:pb-20">
-
-            {/* Social icons — horizontal row above logo */}
-            <div className="flex gap-5 mb-4 animate-fade-in">
-              <a href="https://www.instagram.com/canestreet3x3" target="_blank" rel="noopener noreferrer"
-                 className="text-court-gray hover:text-court-white transition-colors" aria-label="Instagram">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5" aria-hidden="true">
-                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-                  <circle cx="12" cy="12" r="4" />
-                  <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none" />
-                </svg>
-              </a>
-              <a href="https://www.facebook.com/thecanestreet" target="_blank" rel="noopener noreferrer"
-                 className="text-court-gray hover:text-court-white transition-colors" aria-label="Facebook">
-                <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5" aria-hidden="true">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                </svg>
-              </a>
-              <a href="https://www.youtube.com/channel/UCtluwkHf-ghko6Ut-Y6PvRg" target="_blank" rel="noopener noreferrer"
-                 className="text-court-gray hover:text-court-white transition-colors" aria-label="YouTube">
-                <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5" aria-hidden="true">
-                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-                </svg>
-              </a>
-            </div>
 
             <h1
               className="mb-3 md:mb-4 animate-slide-up"
@@ -121,6 +121,30 @@ export default async function HomePage() {
               >
                 <Play className="w-4 h-4" />
                 Aftermovie 2025
+              </a>
+            </div>
+
+            {/* Social icons — horizontal row below buttons (mobile only) */}
+            <div className="flex sm:hidden gap-5 mt-6 animate-fade-in">
+              <a href="https://www.instagram.com/canestreet3x3" target="_blank" rel="noopener noreferrer"
+                 className="text-court-gray hover:text-court-white transition-colors" aria-label="Instagram">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5" aria-hidden="true">
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                  <circle cx="12" cy="12" r="4" />
+                  <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none" />
+                </svg>
+              </a>
+              <a href="https://www.facebook.com/thecanestreet" target="_blank" rel="noopener noreferrer"
+                 className="text-court-gray hover:text-court-white transition-colors" aria-label="Facebook">
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5" aria-hidden="true">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                </svg>
+              </a>
+              <a href="https://www.youtube.com/channel/UCtluwkHf-ghko6Ut-Y6PvRg" target="_blank" rel="noopener noreferrer"
+                 className="text-court-gray hover:text-court-white transition-colors" aria-label="YouTube">
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5" aria-hidden="true">
+                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                </svg>
               </a>
             </div>
 
