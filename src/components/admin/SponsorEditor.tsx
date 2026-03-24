@@ -2,9 +2,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import Image from 'next/image'
 import type { Sponsor, SponsorTier } from '@/types'
-import { Save, Trash2, ChevronDown, ChevronUp, Eye, EyeOff } from 'lucide-react'
+import { Save, Trash2, Eye, EyeOff } from 'lucide-react'
+import MediaPickerInput from './MediaPickerInput'
 
 interface Props { sponsor: Sponsor | null }
 
@@ -28,33 +28,12 @@ export default function SponsorEditor({ sponsor }: Props) {
     sort_order:  sponsor?.sort_order  ?? 0,
     is_active:   sponsor?.is_active   ?? true,
   })
-  const [saving,     setSaving]     = useState(false)
-  const [deleting,   setDeleting]   = useState(false)
-  const [msg,        setMsg]        = useState<string | null>(null)
-  const [mediaOpen,  setMediaOpen]  = useState(false)
-  const [mediaFiles, setMediaFiles] = useState<{ name: string; url: string }[]>([])
+  const [saving,   setSaving]   = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [msg,      setMsg]      = useState<string | null>(null)
 
   function set(field: string, value: string | number | boolean) {
     setForm(prev => ({ ...prev, [field]: value }))
-  }
-
-  async function loadMedia() {
-    if (mediaFiles.length > 0) return
-    const { data } = await supabase.storage.from('media').list('', {
-      sortBy: { column: 'created_at', order: 'desc' },
-    })
-    if (!data) return
-    const base = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/media/`
-    setMediaFiles(
-      data
-        .filter(f => f.name !== '.emptyFolderPlaceholder')
-        .map(f => ({ name: f.name, url: base + f.name }))
-    )
-  }
-
-  function toggleMedia() {
-    if (!mediaOpen) loadMedia()
-    setMediaOpen(v => !v)
   }
 
   async function save() {
@@ -143,60 +122,12 @@ export default function SponsorEditor({ sponsor }: Props) {
         </div>
       </div>
 
-      {/* Logo URL + media picker */}
-      <div>
-        <label className="label">URL Logo</label>
-        <div className="flex gap-2">
-          <input
-            className="input"
-            value={form.logo_url}
-            onChange={e => set('logo_url', e.target.value)}
-            placeholder="https://..."
-          />
-          <button
-            type="button"
-            onClick={toggleMedia}
-            className="btn-ghost text-sm px-4 py-3 shrink-0 flex items-center gap-1.5 whitespace-nowrap"
-          >
-            {mediaOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-            Media
-          </button>
-        </div>
-
-        {/* Inline media picker */}
-        {mediaOpen && (
-          <div className="mt-3 card p-3 max-h-64 overflow-y-auto">
-            {mediaFiles.length === 0 ? (
-              <p className="text-court-muted text-sm text-center py-4">Caricamento...</p>
-            ) : (
-              <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-                {mediaFiles.map(f => (
-                  <button
-                    key={f.name}
-                    type="button"
-                    onClick={() => { set('logo_url', f.url); setMediaOpen(false) }}
-                    className={`relative aspect-square overflow-hidden border-2 transition-colors ${
-                      form.logo_url === f.url
-                        ? 'border-brand-orange'
-                        : 'border-court-border hover:border-court-muted'
-                    }`}
-                    title={f.name}
-                  >
-                    <Image src={f.url} alt={f.name} fill className="object-contain p-1" sizes="80px" />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Live logo preview */}
-        {form.logo_url && (
-          <div className="mt-3 relative w-32 h-20 overflow-hidden border border-court-border bg-court-dark">
-            <Image src={form.logo_url} alt="Anteprima logo" fill className="object-contain p-2" sizes="128px" />
-          </div>
-        )}
-      </div>
+      <MediaPickerInput
+        label="URL Logo"
+        value={form.logo_url}
+        onChange={url => set('logo_url', url)}
+        preview="landscape"
+      />
 
       {/* Actions */}
       <div className="flex items-center gap-4 flex-wrap pt-2 border-t border-court-border">

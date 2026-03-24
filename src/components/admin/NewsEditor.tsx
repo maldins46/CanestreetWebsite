@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { NewsArticle } from '@/types'
 import { Save, Trash2, Eye, EyeOff } from 'lucide-react'
+import MediaPickerInput from './MediaPickerInput'
 
 interface Props { article: NewsArticle | null }
 
@@ -87,16 +88,13 @@ export default function NewsEditor({ article }: Props) {
           placeholder="Breve descrizione dell'articolo (usata nelle anteprime)" />
       </div>
 
-      <div>
-        <label className="label">Immagine di copertina (URL)</label>
-        <input className="input text-sm" value={form.cover_url}
-          onChange={e => set('cover_url', e.target.value)}
-          placeholder="https://esempio.com/immagine.jpg" />
-        {form.cover_url && (
-          <img src={form.cover_url} alt="Anteprima copertina"
-            className="mt-2 rounded-lg max-h-48 object-cover border border-court-border" />
-        )}
-      </div>
+      <MediaPickerInput
+        label="Immagine di copertina"
+        value={form.cover_url}
+        onChange={url => set('cover_url', url)}
+        preview="cover"
+        inputClassName="text-sm"
+      />
 
       <div>
         <label className="label">Contenuto (HTML o testo)</label>

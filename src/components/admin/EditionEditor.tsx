@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Edition, EditionWinner } from '@/types'
 import { Save, Trash2, Plus, Star, StarOff, LockOpen, Lock } from 'lucide-react'
+import MediaPickerInput from './MediaPickerInput'
 
 interface Props {
   edition: Edition | null
@@ -173,15 +174,13 @@ export default function EditionEditor({ edition, winners }: Props) {
         />
       </div>
 
-      <div>
-        <label className="label">URL copertina</label>
-        <input
-          className="input font-mono text-sm"
-          value={form.cover_url}
-          onChange={e => set('cover_url', e.target.value)}
-          placeholder="https://... o /media/..."
-        />
-      </div>
+      <MediaPickerInput
+        label="URL copertina"
+        value={form.cover_url}
+        onChange={url => set('cover_url', url)}
+        preview="cover"
+        inputClassName="font-mono text-sm"
+      />
 
       {/* Winners section */}
       <div className="border-t border-court-border pt-6">
