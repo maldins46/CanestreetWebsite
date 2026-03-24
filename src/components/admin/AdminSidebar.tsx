@@ -1,8 +1,9 @@
 'use client'
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useState } from 'react'
-import { Users, Newspaper, Image, ShieldCheck, LogOut, Home, ExternalLink, Trophy, UserCircle, Menu, X } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Users, Newspaper, Image as ImageIcon, ShieldCheck, LogOut, Home, ExternalLink, Trophy, UserCircle, Menu, X } from 'lucide-react'
 import clsx from 'clsx'
 import { createClient } from '@/lib/supabase/client'
 
@@ -12,7 +13,7 @@ const nav = [
   { href: '/admin/editions',  label: 'Edizioni',   icon: Trophy },
   { href: '/admin/news',      label: 'News',       icon: Newspaper },
   { href: '/admin/staff',     label: 'Staff',      icon: UserCircle },
-  { href: '/admin/media',     label: 'Media',      icon: Image },
+  { href: '/admin/media',     label: 'Media',      icon: ImageIcon },
   { href: '/admin/admins',    label: 'Admins',     icon: ShieldCheck },
 ]
 
@@ -21,6 +22,11 @@ export default function AdminSidebar() {
   const router = useRouter()
   const supabase = createClient()
   const [open, setOpen] = useState(false)
+  const [email, setEmail] = useState<string | null>(null)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? null))
+  }, [supabase])
 
   async function signOut() {
     await supabase.auth.signOut()
@@ -64,11 +70,14 @@ export default function AdminSidebar() {
       >
         {/* Logo */}
         <div className="p-6 border-b border-court-border flex items-center justify-between">
-          <div>
-            <p className="font-display font-extrabold uppercase tracking-widest text-brand-orange text-sm">
-              Canestreet
-            </p>
-            <p className="text-court-muted text-xs mt-0.5 font-display uppercase tracking-wide">Backoffice</p>
+          <div className="flex items-center gap-3">
+            <Image src="/lion.png" alt="Lion" width={32} height={32} className="shrink-0" />
+            <div>
+              <p className="font-display font-extrabold tracking-widest text-brand-orange text-sm">
+                CANESTREET
+              </p>
+              <p className="text-court-muted text-xs mt-0.5 font-display uppercase tracking-wide">Backoffice</p>
+            </div>
           </div>
           <button
             className="md:hidden text-court-gray hover:text-court-white p-1"
@@ -104,6 +113,12 @@ export default function AdminSidebar() {
 
         {/* Footer */}
         <div className="p-4 border-t border-court-border space-y-1">
+          {email && (
+            <div className="flex items-center gap-3 px-2 py-2">
+              <UserCircle size={14} className="text-brand-orange shrink-0" />
+              <p className="text-xs text-court-muted truncate" title={email}>{email}</p>
+            </div>
+          )}
           <a
             href="/"
             target="_blank"
