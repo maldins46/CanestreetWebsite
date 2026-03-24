@@ -18,12 +18,15 @@ export default async function EditionsPage() {
   const past = editions?.filter(e => !e.is_current) ?? []
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-20">
+    <div className="max-w-6xl mx-auto px-6 py-20">
       <div className="mb-12">
         <p className="text-brand-orange font-display uppercase tracking-[0.3em] text-xs font-semibold mb-3">
           La nostra storia
         </p>
         <h1 className="heading-section text-4xl md:text-5xl text-court-white">Edizioni precedenti</h1>
+        <p className="text-court-gray leading-relaxed max-w-2xl mt-4">
+          Torna indietro nel tempo e scopri tutte le edizioni passate del torneo: vincitori, squadre e i momenti che hanno fatto la storia del Canestreet.
+        </p>
       </div>
 
       {!past.length ? (

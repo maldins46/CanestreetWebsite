@@ -102,7 +102,7 @@ function DocumentCard({
 
 export default function RegolamentoPage() {
   return (
-    <div className="max-w-5xl mx-auto px-6 py-16">
+    <div className="max-w-6xl mx-auto px-6 py-16">
 
       {/* ── Header ── */}
       <div className="mb-10">

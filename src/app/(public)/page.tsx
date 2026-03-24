@@ -160,8 +160,8 @@ export default async function HomePage() {
               className="font-display font-extrabold italic uppercase text-court-white leading-[0.9] mb-6"
               style={{ fontSize: 'clamp(2rem, 4.5vw, 3.5rem)' }}
             >
-              Da torneo della parrocchia<br />
-              <span className="text-brand-orange">a circuito nazionale.</span>
+              Dal playground della parrocchia<br />
+              <span className="text-brand-orange">al circuito nazionale.</span>
             </h2>
             <p className="text-court-gray leading-relaxed mb-4">
               Il Canestreet è un torneo estivo di basket 3×3, parte del circuito
@@ -199,14 +199,17 @@ export default async function HomePage() {
       {news && news.length > 0 && (
         <section className="border-t border-court-border">
           <div className="max-w-6xl mx-auto px-6 py-20 md:py-28">
-            <div className="flex items-end justify-between mb-12">
+            <div className="flex items-start justify-between mb-12">
               <div>
                 <p className="text-brand-orange font-display uppercase tracking-widest text-xs font-semibold mb-3">
                   Ultime Notizie
                 </p>
-                <h2 className="heading-section text-3xl md:text-4xl text-court-white">
+                <h2 className="heading-section text-4xl md:text-5xl text-court-white">
                   News
                 </h2>
+                <p className="text-court-gray max-w-2xl leading-relaxed mt-3">
+                  Aggiornamenti, annunci e tutto quello che succede intorno al Canestreet.
+                </p>
               </div>
               <Link
                 href="/news"
@@ -268,14 +271,17 @@ export default async function HomePage() {
       {pastEditions.length > 0 && (
         <section className="border-t border-court-border">
           <div className="max-w-6xl mx-auto px-6 py-20 md:py-28">
-            <div className="flex items-end justify-between mb-12">
+            <div className="flex items-start justify-between mb-12">
               <div>
                 <p className="text-brand-orange font-display uppercase tracking-widest text-xs font-semibold mb-3">
                   La nostra storia
                 </p>
-                <h2 className="heading-section text-3xl md:text-4xl text-court-white">
+                <h2 className="heading-section text-4xl md:text-5xl text-court-white">
                   Edizioni precedenti
                 </h2>
+                <p className="text-court-gray max-w-2xl leading-relaxed mt-3">
+                  Torna indietro nel tempo e scopri le edizioni passate del torneo.
+                </p>
               </div>
               <Link
                 href="/editions"
