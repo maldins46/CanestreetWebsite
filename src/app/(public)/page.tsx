@@ -45,7 +45,7 @@ export default async function HomePage() {
   return (
     <>
       {/* ── HERO ─────────────────────────────────────────── */}
-      <section className="relative overflow-hidden" style={{ height: 'calc(100dvh - 4rem)' }}>
+      <section className="relative overflow-hidden" style={{ height: 'calc(100svh - 4rem)' }}>
         <Image
           src={`${MEDIA}/cover-image.jpg`}
           alt="Canestreet 3×3 — Piazza della Repubblica, Jesi"
