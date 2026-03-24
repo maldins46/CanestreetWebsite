@@ -2,8 +2,12 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import type { TeamWithPlayers, Edition, TeamCategory } from '@/types'
 import TeamStatusButton from '@/components/admin/TeamStatusButton'
 import CategoryFilter from '@/components/admin/CategoryFilter'
+import EditionSwitcher from '@/components/admin/EditionSwitcher'
+import RegistrationToggle from '@/components/admin/RegistrationToggle'
 import { Suspense } from 'react'
+import Link from 'next/link'
 import clsx from 'clsx'
+import { Plus, Pencil } from 'lucide-react'
 
 const statusLabel: Record<string, string> = {
   pending: 'In attesa', approved: 'Approvata', rejected: 'Rifiutata', waitlisted: 'Lista d\'attesa',
@@ -14,27 +18,44 @@ const categoryLabel: Record<TeamCategory, string> = {
 }
 
 interface Props {
-  searchParams: { category?: string }
+  searchParams: { category?: string; edition?: string }
 }
 
 export default async function AdminTeamsPage({ searchParams }: Props) {
   const supabase = createServerSupabaseClient()
 
-  const { data: edition } = await supabase
-    .from('editions').select('id, title, registration_open').eq('is_current', true).single<Edition>()
+  // Fetch all editions for the switcher
+  const { data: allEditions } = await supabase
+    .from('editions')
+    .select('id, year, title, is_current, registration_open')
+    .order('year', { ascending: false })
+    .returns<Pick<Edition, 'id' | 'year' | 'title' | 'is_current' | 'registration_open'>[]>()
 
-  let query = supabase
-    .from('teams')
-    .select('*, players(*)')
-    .eq('edition_id', edition?.id ?? '')
-    .order('created_at', { ascending: false })
+  // Determine active edition: from URL param or fallback to is_current
+  const editions = allEditions ?? []
+  let activeEdition = searchParams.edition
+    ? editions.find(e => e.id === searchParams.edition)
+    : editions.find(e => e.is_current)
+  if (!activeEdition && editions.length > 0) activeEdition = editions[0]
 
-  const categoryFilter = searchParams.category as TeamCategory | undefined
-  if (categoryFilter && ['open', 'u14', 'u16', 'u18'].includes(categoryFilter)) {
-    query = query.eq('category', categoryFilter)
+  let teams: TeamWithPlayers[] = []
+  if (activeEdition) {
+    let query = supabase
+      .from('teams')
+      .select('*, players(*)')
+      .eq('edition_id', activeEdition.id)
+      .order('created_at', { ascending: false })
+
+    const categoryFilter = searchParams.category as TeamCategory | undefined
+    if (categoryFilter && ['open', 'u14', 'u16', 'u18'].includes(categoryFilter)) {
+      query = query.eq('category', categoryFilter)
+    }
+
+    const { data } = await query.returns<TeamWithPlayers[]>()
+    teams = data ?? []
   }
 
-  const { data: teams } = await query.returns<TeamWithPlayers[]>()
+  const categoryFilter = searchParams.category as TeamCategory | undefined
 
   return (
     <div>
@@ -42,20 +63,34 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
         <div>
           <p className="text-brand-orange font-display uppercase tracking-widest text-xs mb-1">Squadre</p>
           <h1 className="font-display font-bold uppercase text-3xl text-court-white">Gestione Iscrizioni</h1>
-          {edition && (
-            <p className="text-court-gray text-sm mt-1 flex items-center gap-2">
-              {edition.title}
-              <span className={clsx('text-xs px-2 py-0.5 font-display uppercase tracking-wide border',
-                edition.registration_open ? 'border-green-600 text-green-400' : 'border-court-border text-court-muted'
-              )}>
-                {edition.registration_open ? 'Iscrizioni aperte' : 'Iscrizioni chiuse'}
-              </span>
-            </p>
+          {activeEdition && (
+            <div className="flex items-center gap-3 mt-2 flex-wrap">
+              <Suspense>
+                <EditionSwitcher
+                  editions={editions}
+                  currentEditionId={activeEdition.id}
+                />
+              </Suspense>
+              <RegistrationToggle
+                editionId={activeEdition.id}
+                registrationOpen={activeEdition.registration_open}
+              />
+            </div>
           )}
         </div>
-        <div className="text-right text-sm text-court-gray shrink-0">
-          <span className="font-display text-2xl text-court-white font-bold">{teams?.length ?? 0}</span>
-          <br />iscrizioni{categoryFilter ? ` (${categoryLabel[categoryFilter]})` : ' totali'}
+        <div className="flex items-start gap-4 shrink-0">
+          {activeEdition && (
+            <Link
+              href={`/admin/teams/new?edition=${activeEdition.id}`}
+              className="btn-primary text-sm px-4 py-2"
+            >
+              <Plus size={14} /> Nuova squadra
+            </Link>
+          )}
+          <div className="text-right text-sm text-court-gray">
+            <span className="font-display text-2xl text-court-white font-bold">{teams.length}</span>
+            <br />iscrizioni{categoryFilter ? ` (${categoryLabel[categoryFilter]})` : ' totali'}
+          </div>
         </div>
       </div>
 
@@ -66,7 +101,7 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
         </Suspense>
       </div>
 
-      {!teams?.length ? (
+      {!teams.length ? (
         <div className="card p-10 text-center">
           <p className="text-court-gray">Nessuna squadra iscritta{categoryFilter ? ` nella categoria ${categoryLabel[categoryFilter]}` : ' ancora'}.
           </p>
@@ -74,7 +109,6 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
       ) : (
         <div className="space-y-3">
           {teams.map(team => {
-            // Determine players: prefer new players table, fall back to legacy flat columns
             const hasPlayers = team.players && team.players.length > 0
             const captain = hasPlayers
               ? team.players.find(p => p.is_captain)
@@ -88,7 +122,10 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
                 <div className="flex items-start justify-between gap-4 flex-wrap">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-3 mb-1 flex-wrap">
-                      <h2 className="font-display font-bold uppercase text-lg text-court-white">{team.name}</h2>
+                      <Link href={`/admin/teams/${team.id}`} className="flex items-center gap-2 group">
+                        <h2 className="font-display font-bold uppercase text-lg text-court-white group-hover:text-brand-orange transition-colors">{team.name}</h2>
+                        <Pencil size={13} className="text-court-muted group-hover:text-brand-orange transition-colors" />
+                      </Link>
                       <span className="text-xs px-2 py-0.5 font-display uppercase tracking-wide border border-court-border text-court-muted">
                         {categoryLabel[team.category]}
                       </span>
@@ -138,10 +175,10 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
                     )}
 
                     {team.schedule_notes && (
-                      <p className="text-court-muted text-xs mt-2 italic">Orari: "{team.schedule_notes}"</p>
+                      <p className="text-court-muted text-xs mt-2 italic">Orari: &quot;{team.schedule_notes}&quot;</p>
                     )}
                     {team.notes && (
-                      <p className="text-court-muted text-xs mt-1 italic">Note: "{team.notes}"</p>
+                      <p className="text-court-muted text-xs mt-1 italic">Note: &quot;{team.notes}&quot;</p>
                     )}
                   </div>
 

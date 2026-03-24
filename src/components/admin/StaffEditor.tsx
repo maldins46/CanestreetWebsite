@@ -63,14 +63,14 @@ export default function StaffEditor({ member }: Props) {
     }
     setSaving(false)
     if (error) { setMsg('Errore: ' + error.message); return }
-    router.push('/admin/staff')
+    router.push('/admin/staff?t=' + Date.now())
   }
 
   async function deleteMember() {
     if (!member || !confirm(`Eliminare ${member.name} dallo staff?`)) return
     setDeleting(true)
     await supabase.from('staff').delete().eq('id', member.id)
-    router.push('/admin/staff')
+    router.push('/admin/staff?t=' + Date.now())
   }
 
   return (

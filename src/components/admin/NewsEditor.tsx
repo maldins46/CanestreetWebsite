@@ -49,14 +49,14 @@ export default function NewsEditor({ article }: Props) {
     setSaving(false)
     if (error) { setMsg('Errore: ' + error.message); return }
     setMsg('Salvato!')
-    router.push('/admin/news')
+    router.push('/admin/news?t=' + Date.now())
   }
 
   async function deleteArticle() {
     if (!article || !confirm('Eliminare questo articolo?')) return
     setDeleting(true)
     await supabase.from('news').delete().eq('id', article.id)
-    router.push('/admin/news')
+    router.push('/admin/news?t=' + Date.now())
   }
 
   return (

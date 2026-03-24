@@ -105,14 +105,14 @@ export default function EditionEditor({ edition, winners }: Props) {
 
     setSaving(false)
     setMsg('Salvato!')
-    router.push('/admin/editions')
+    router.push('/admin/editions?t=' + Date.now())
   }
 
   async function deleteEdition() {
     if (!edition || !confirm('Eliminare questa edizione? Verranno eliminati anche tutti i vincitori associati.')) return
     setDeleting(true)
     await supabase.from('editions').delete().eq('id', edition.id)
-    router.push('/admin/editions')
+    router.push('/admin/editions?t=' + Date.now())
   }
 
   return (
