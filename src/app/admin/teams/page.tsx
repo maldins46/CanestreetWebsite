@@ -7,7 +7,7 @@ import RegistrationToggle from '@/components/admin/RegistrationToggle'
 import { Suspense } from 'react'
 import Link from 'next/link'
 import clsx from 'clsx'
-import { Plus, Pencil } from 'lucide-react'
+import { Plus, Pencil, Download } from 'lucide-react'
 
 const statusLabel: Record<string, string> = {
   pending: 'In attesa', approved: 'Approvata', rejected: 'Rifiutata', waitlisted: 'Lista d\'attesa',
@@ -75,10 +75,22 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
                 editionId={activeEdition.id}
                 registrationOpen={activeEdition.registration_open}
               />
+              <div className="card flex items-center gap-2 px-3 py-1.5 text-xs font-display uppercase tracking-wide">
+                <span className="text-court-white font-bold">{teams.length}</span>
+                <span className="text-court-gray">{categoryFilter ? categoryLabel[categoryFilter] : 'iscrizioni'}</span>
+              </div>
             </div>
           )}
         </div>
         <div className="flex items-start gap-4 shrink-0">
+          {activeEdition && (
+            <a
+              href={`/api/admin/teams/export?edition=${activeEdition.id}${categoryFilter ? `&category=${categoryFilter}` : ''}`}
+              className="btn-ghost text-sm px-4 py-2"
+            >
+              <Download size={14} /> Esporta CSV
+            </a>
+          )}
           {activeEdition && (
             <Link
               href={`/admin/teams/new?edition=${activeEdition.id}`}
@@ -87,10 +99,6 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
               <Plus size={14} /> Nuova squadra
             </Link>
           )}
-          <div className="text-right text-sm text-court-gray">
-            <span className="font-display text-2xl text-court-white font-bold">{teams.length}</span>
-            <br />iscrizioni{categoryFilter ? ` (${categoryLabel[categoryFilter]})` : ' totali'}
-          </div>
         </div>
       </div>
 
