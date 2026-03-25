@@ -32,30 +32,44 @@ export default async function NewsArticlePage({ params }: Props) {
   })
 
   return (
-    <article className="max-w-2xl mx-auto px-6 py-20">
-      <Link href="/news" className="text-court-gray hover:text-court-white text-sm font-display uppercase tracking-wide transition-colors mb-8 inline-block">
-        ← News
-      </Link>
+    <>
+      {/* Full-bleed hero */}
+      <div className="relative h-80 md:h-[28rem] overflow-hidden bg-court-dark">
+        {article.cover_url && (
+          <Image
+            src={article.cover_url}
+            alt={article.title}
+            fill
+            className="object-cover opacity-60"
+            priority
+            sizes="100vw"
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-court-dark via-court-dark/60 to-transparent" />
 
-      {article.cover_url && (
-        <div className="relative w-full h-64 mb-8 overflow-hidden">
-          <Image src={article.cover_url} alt={article.title} fill className="object-cover" />
+        <div className="absolute bottom-0 left-0 p-8 md:p-12">
+          <p className="text-brand-orange font-display uppercase tracking-widest text-xs font-semibold mb-2">
+            {article.published_at
+              ? new Date(article.published_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })
+              : ''}
+          </p>
+          <h1 className="font-display font-extrabold text-4xl md:text-6xl text-court-white uppercase leading-tight">
+            {article.title}
+          </h1>
         </div>
-      )}
+      </div>
 
-      <p className="text-brand-orange text-xs font-display uppercase tracking-[0.3em] font-semibold mb-3">
-        {article.published_at
-          ? new Date(article.published_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })
-          : ''}
-      </p>
-      <h1 className="heading-section text-4xl md:text-5xl text-court-white mb-8">
-        {article.title}
-      </h1>
+      {/* Body */}
+      <article className="max-w-2xl mx-auto px-6 py-12">
+        <Link href="/news" className="text-court-gray hover:text-court-white text-sm font-display uppercase tracking-wide transition-colors mb-8 inline-block">
+          ← News
+        </Link>
 
-      <div
-        className="prose prose-invert prose-sm max-w-none text-court-gray leading-relaxed"
-        dangerouslySetInnerHTML={{ __html: safeBody }}
-      />
-    </article>
+        <div
+          className="prose prose-invert prose-sm max-w-none text-court-gray leading-relaxed"
+          dangerouslySetInnerHTML={{ __html: safeBody }}
+        />
+      </article>
+    </>
   )
 }

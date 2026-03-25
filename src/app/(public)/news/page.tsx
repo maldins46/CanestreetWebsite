@@ -16,7 +16,7 @@ export default async function NewsPage() {
     .returns<NewsArticle[]>()
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-20">
+    <div className="max-w-6xl mx-auto px-6 py-16">
       <div className="mb-12">
         <p className="text-brand-orange font-display uppercase tracking-[0.3em] text-xs font-semibold mb-3">
           Aggiornamenti
