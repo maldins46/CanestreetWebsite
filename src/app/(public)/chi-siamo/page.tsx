@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
-import Image from 'next/image'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import type { StaffMember } from '@/types'
+import StaffCard from '@/components/public/StaffCard'
 
 export const metadata: Metadata = {
   title: 'Chi siamo',
@@ -36,42 +36,7 @@ export default async function ChiSiamoPage() {
       {/* Staff grid — portrait cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-24">
         {(staff ?? []).map((member) => (
-          <div key={member.id} className="card overflow-hidden flex flex-col group">
-            {/* Portrait image */}
-            <div className="relative w-full aspect-[3/4] bg-court-dark shrink-0 overflow-hidden">
-              {member.photo_url ? (
-                <Image
-                  src={member.photo_url}
-                  alt={member.name}
-                  fill
-                  className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                />
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="font-display font-extrabold text-8xl text-brand-orange/20 select-none">
-                    {member.name.charAt(0)}
-                  </span>
-                </div>
-              )}
-              {/* Gradient overlay at bottom for readability */}
-              <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-court-black/80 to-transparent" />
-              {/* Title badge over image */}
-              <div className="absolute bottom-4 left-4">
-                <span className="text-brand-orange font-display uppercase tracking-widest text-xs font-semibold bg-court-black/60 px-2 py-1 backdrop-blur-sm">
-                  {member.title}
-                </span>
-              </div>
-            </div>
-
-            {/* Text content */}
-            <div className="p-5 flex flex-col flex-1 bg-court-surface">
-              <h2 className="font-display font-extrabold text-xl text-court-white uppercase tracking-wide leading-tight mb-3">
-                {member.name}
-              </h2>
-              <p className="text-court-gray text-sm leading-relaxed flex-1">{member.bio}</p>
-            </div>
-          </div>
+          <StaffCard key={member.id} member={member} />
         ))}
       </div>
 
