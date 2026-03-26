@@ -1,0 +1,64 @@
+import type { Metadata } from 'next'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
+import type { Edition, MatchWithTeams } from '@/types'
+import TournamentCalendarSection from '@/components/public/TournamentCalendarSection'
+
+export const metadata: Metadata = { title: 'Torneo' }
+
+export default async function TorneoPage() {
+  const supabase = createServerSupabaseClient()
+
+  const { data: edition } = await supabase
+    .from('editions')
+    .select('id, year, title')
+    .eq('is_current', true)
+    .maybeSingle()
+    .returns<Pick<Edition, 'id' | 'year' | 'title'>>()
+
+  if (!edition) {
+    return (
+      <div className="max-w-6xl mx-auto px-6 py-24 text-center">
+        <p className="text-court-gray">Torneo non ancora disponibile.</p>
+      </div>
+    )
+  }
+
+  const { data: matchData } = await supabase
+    .from('matches')
+    .select(
+      '*, team_home:teams!matches_team_home_id_fkey(id, name), team_away:teams!matches_team_away_id_fkey(id, name), group:groups!matches_group_id_fkey(id, name)',
+    )
+    .eq('edition_id', edition.id)
+    .order('scheduled_at', { ascending: true, nullsFirst: false })
+    .order('sort_order')
+    .returns<MatchWithTeams[]>()
+
+  const matches = matchData ?? []
+
+  return (
+    <div>
+      {/* Hero */}
+      <section className="py-16 border-b border-court-border">
+        <div className="max-w-6xl mx-auto px-6">
+          <p className="text-brand-orange font-display uppercase tracking-widest text-xs mb-2">
+            Torneo {edition.year}
+          </p>
+          <h1 className="font-display font-extrabold uppercase text-4xl md:text-6xl text-court-white leading-none mb-4">
+            Calendario &amp; Classifiche
+          </h1>
+          <p className="text-court-gray font-body">{edition.title}</p>
+        </div>
+      </section>
+
+      {/* Calendar section */}
+      <section className="py-12">
+        <div className="max-w-6xl mx-auto px-6">
+          <h2 className="font-display font-bold uppercase text-xl text-court-white mb-6">
+            Calendario
+          </h2>
+          <TournamentCalendarSection matches={matches} />
+        </div>
+      </section>
+    </div>
+  )
+}
