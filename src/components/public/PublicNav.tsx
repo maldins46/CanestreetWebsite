@@ -7,6 +7,7 @@ import clsx from 'clsx'
 const links = [
   { href: '/',             label: 'Home' },
   { href: '/news',         label: 'News' },
+  { href: '/torneo',       label: 'Torneo' },
   { href: '/editions',     label: 'Edizioni' },
   { href: '/chi-siamo',    label: 'Chi siamo' },
   { href: '/regolamento',  label: 'Regolamento' },
