@@ -4,6 +4,7 @@ import EditionSwitcher from '@/components/admin/EditionSwitcher'
 import CategoryFilter from '@/components/admin/CategoryFilter'
 import TournamentGroups from '@/components/admin/TournamentGroups'
 import TournamentCalendar from '@/components/admin/TournamentCalendar'
+import TournamentBracket from '@/components/admin/TournamentBracket'
 import { Suspense } from 'react'
 import Link from 'next/link'
 import clsx from 'clsx'
@@ -150,9 +151,14 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
           category={searchParams.category as TeamCategory | undefined}
         />
       ) : (
-        <div className="card p-10 text-center">
-          <p className="text-court-gray">Questa sezione sarà disponibile a breve.</p>
-        </div>
+        <TournamentBracket
+          editionId={activeEdition.id}
+          category={category}
+          bracketMatches={matches.filter(m => m.category === category && m.phase === 'bracket')}
+          groupMatches={matches.filter(m => m.category === category && m.phase === 'group')}
+          groups={groups}
+          approvedTeams={approvedTeams}
+        />
       )}
     </div>
   )

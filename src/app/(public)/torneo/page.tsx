@@ -1,7 +1,9 @@
 import type { Metadata } from 'next'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import type { Edition, MatchWithTeams } from '@/types'
+import type { Edition, GroupWithTeams, MatchWithTeams } from '@/types'
 import TournamentCalendarSection from '@/components/public/TournamentCalendarSection'
+import StandingsSection from '@/components/public/StandingsTable'
+import BracketSection from '@/components/public/BracketView'
 
 export const metadata: Metadata = { title: 'Torneo' }
 
@@ -23,17 +25,27 @@ export default async function TorneoPage() {
     )
   }
 
-  const { data: matchData } = await supabase
-    .from('matches')
-    .select(
-      '*, team_home:teams!matches_team_home_id_fkey(id, name), team_away:teams!matches_team_away_id_fkey(id, name), group:groups!matches_group_id_fkey(id, name)',
-    )
-    .eq('edition_id', edition.id)
-    .order('scheduled_at', { ascending: true, nullsFirst: false })
-    .order('sort_order')
-    .returns<MatchWithTeams[]>()
+  const [{ data: matchData }, { data: groupData }] = await Promise.all([
+    supabase
+      .from('matches')
+      .select(
+        '*, team_home:teams!matches_team_home_id_fkey(id, name), team_away:teams!matches_team_away_id_fkey(id, name), group:groups!matches_group_id_fkey(id, name)',
+      )
+      .eq('edition_id', edition.id)
+      .order('scheduled_at', { ascending: true, nullsFirst: false })
+      .order('sort_order')
+      .returns<MatchWithTeams[]>(),
+
+    supabase
+      .from('groups')
+      .select('*, group_teams(*, teams(id, name))')
+      .eq('edition_id', edition.id)
+      .order('sort_order')
+      .returns<GroupWithTeams[]>(),
+  ])
 
   const matches = matchData ?? []
+  const groups = groupData ?? []
 
   return (
     <div>
@@ -57,6 +69,26 @@ export default async function TorneoPage() {
             Calendario
           </h2>
           <TournamentCalendarSection matches={matches} />
+        </div>
+      </section>
+
+      {/* Standings section */}
+      <section className="py-12 border-t border-court-border">
+        <div className="max-w-6xl mx-auto px-6">
+          <h2 className="font-display font-bold uppercase text-xl text-court-white mb-6">
+            Classifiche
+          </h2>
+          <StandingsSection groups={groups} matches={matches} />
+        </div>
+      </section>
+
+      {/* Bracket section */}
+      <section className="py-12 border-t border-court-border">
+        <div className="max-w-6xl mx-auto px-6">
+          <h2 className="font-display font-bold uppercase text-xl text-court-white mb-6">
+            Tabellone
+          </h2>
+          <BracketSection matches={matches} />
         </div>
       </section>
     </div>
