@@ -44,7 +44,7 @@ export default async function EditionsPage() {
                 className="card overflow-hidden group block"
               >
                 {edition.cover_url ? (
-                  <div className="relative h-48 overflow-hidden">
+                  <div className="relative aspect-[3/2] overflow-hidden">
                     <Image
                       src={edition.cover_url}
                       alt={edition.title}

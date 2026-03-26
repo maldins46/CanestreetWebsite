@@ -233,7 +233,7 @@ export default async function HomePage() {
                   className="card group overflow-hidden shrink-0 w-72 md:w-auto snap-start"
                 >
                   {article.cover_url && (
-                    <div className="relative h-44 overflow-hidden">
+                    <div className="relative aspect-[3/2] overflow-hidden">
                       <Image
                         src={article.cover_url}
                         alt={article.title}
@@ -305,7 +305,7 @@ export default async function HomePage() {
                   className="card overflow-hidden shrink-0 w-72 md:w-auto snap-start group block"
                 >
                   {ed.cover_url ? (
-                    <div className="relative h-44 overflow-hidden">
+                    <div className="relative aspect-[3/2] overflow-hidden">
                       <Image
                         src={ed.cover_url}
                         alt={ed.title}

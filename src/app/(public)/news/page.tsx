@@ -40,7 +40,7 @@ export default async function NewsPage() {
               className="card overflow-hidden group block"
             >
               {article.cover_url ? (
-                <div className="relative h-48 overflow-hidden">
+                <div className="relative aspect-[3/2] overflow-hidden">
                   <Image
                     src={article.cover_url}
                     alt={article.title}

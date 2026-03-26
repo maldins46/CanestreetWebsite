@@ -60,7 +60,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="it" className={`${barlowCondensed.variable} ${barlow.variable} ${anton.variable}`}>
+    <html lang="it" suppressHydrationWarning className={`${barlowCondensed.variable} ${barlow.variable} ${anton.variable}`}>
       <body className="bg-court-black text-court-white font-body antialiased">
         {children}
       </body>

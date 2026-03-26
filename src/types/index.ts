@@ -172,7 +172,7 @@ export interface Match {
 
 // Enriched types for UI
 export interface GroupWithTeams extends Group {
-  group_teams: (GroupTeam & { teams: Pick<Team, 'id' | 'name'> })[]
+  group_teams: (GroupTeam & { teams: Pick<Team, 'id' | 'name'> | null })[]
 }
 
 export interface MatchWithTeams extends Match {

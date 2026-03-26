@@ -59,7 +59,7 @@ export default function TournamentBracket({
     // 1. Compute standings per group
     const groupStandings = groups.map(g => {
       const gMatches = groupMatches.filter(m => m.group_id === g.id)
-      const gTeams = g.group_teams.map(gt => ({ id: gt.teams.id, name: gt.teams.name }))
+      const gTeams = g.group_teams.flatMap(gt => gt.teams ? [{ id: gt.teams.id, name: gt.teams.name }] : [])
       return { group: g, standings: computeStandings(gMatches, gTeams) }
     })
 

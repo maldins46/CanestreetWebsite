@@ -21,12 +21,13 @@ function formatDay(iso: string): string {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
+    timeZone: 'Europe/Rome',
   })
 }
 
 function getDayKey(iso: string | null): string {
   if (!iso) return 'non-programmata'
-  return new Date(iso).toISOString().slice(0, 10)
+  return new Date(iso).toLocaleDateString('sv-SE', { timeZone: 'Europe/Rome' }) // yields YYYY-MM-DD in Rome tz
 }
 
 export default function TournamentCalendarSection({ matches }: Props) {

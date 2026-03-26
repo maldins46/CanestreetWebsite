@@ -20,7 +20,7 @@ export default function TournamentGroups({ editionId, category, groups, approved
 
   // Teams not yet assigned to any group in this category
   const assignedTeamIds = new Set(
-    groups.flatMap(g => g.group_teams.map(gt => gt.teams.id))
+    groups.flatMap(g => g.group_teams.flatMap(gt => gt.teams ? [gt.teams.id] : []))
   )
   const unassignedTeams = approvedTeams.filter(
     t => t.category === category && !assignedTeamIds.has(t.id)
@@ -74,7 +74,7 @@ export default function TournamentGroups({ editionId, category, groups, approved
     const allMatches: object[] = []
     let sortOrder = 0
     for (const group of groups) {
-      const teamIds = group.group_teams.map(gt => gt.teams.id)
+      const teamIds = group.group_teams.flatMap(gt => gt.teams ? [gt.teams.id] : [])
       for (let i = 0; i < teamIds.length; i++) {
         for (let j = i + 1; j < teamIds.length; j++) {
           allMatches.push({
@@ -133,7 +133,7 @@ export default function TournamentGroups({ editionId, category, groups, approved
             <div className="space-y-1 mb-3 min-h-[2rem]">
               {group.group_teams.map(gt => (
                 <div key={gt.id} className="flex items-center justify-between text-sm">
-                  <span className="text-court-light">{gt.teams.name}</span>
+                  <span className="text-court-light">{gt.teams?.name}</span>
                   <button
                     onClick={() => removeTeam(gt.id)}
                     disabled={saving}

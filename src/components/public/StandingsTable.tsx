@@ -188,7 +188,7 @@ export default function StandingsSection({ groups, matches }: StandingsSectionPr
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {groupsForCat.map(group => {
-            const teams = group.group_teams.map(gt => gt.teams)
+            const teams = group.group_teams.flatMap(gt => gt.teams ? [gt.teams] : [])
             const groupSpecificMatches = groupMatches.filter(
               m => m.group_id === group.id,
             )

@@ -34,7 +34,7 @@ export default async function NewsArticlePage({ params }: Props) {
   return (
     <>
       {/* Full-bleed hero */}
-      <div className="relative h-80 md:h-[28rem] overflow-hidden bg-court-dark">
+      <div className="relative h-80 md:h-[40rem] overflow-hidden bg-court-dark">
         {article.cover_url && (
           <Image
             src={article.cover_url}

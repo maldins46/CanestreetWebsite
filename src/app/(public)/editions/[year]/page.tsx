@@ -33,7 +33,7 @@ export default async function EditionDetailPage({ params }: Props) {
   return (
     <div>
       {/* Hero */}
-      <div className="relative h-80 md:h-[28rem] overflow-hidden bg-court-dark">
+      <div className="relative h-80 md:h-[40rem] overflow-hidden bg-court-dark">
         {edition.cover_url ? (
           <Image
             src={edition.cover_url}
