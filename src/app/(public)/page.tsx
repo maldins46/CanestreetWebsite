@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { Play, Trophy } from 'lucide-react'
+import { Play } from 'lucide-react'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import type { Edition, NewsArticle, Sponsor } from '@/types'
 import SponsorCarousel from '@/components/public/SponsorCarousel'
@@ -232,32 +232,27 @@ export default async function HomePage() {
                   href={`/news/${article.slug}`}
                   className="card group overflow-hidden shrink-0 w-72 md:w-auto snap-start"
                 >
-                  {article.cover_url && (
-                    <div className="relative aspect-[3/2] overflow-hidden">
+                  <div className="relative aspect-[3/2] overflow-hidden bg-court-dark">
+                    {article.cover_url && (
                       <Image
                         src={article.cover_url}
                         alt={article.title}
                         fill
                         className="object-cover transition-transform duration-500 group-hover:scale-105"
-                        sizes="(max-width: 768px) 100vw, 33vw"
+                        sizes="(max-width: 768px) 288px, 33vw"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-court-surface to-transparent" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-court-black via-court-dark/50 to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-4">
+                      {article.published_at && (
+                        <p className="text-brand-orange font-display uppercase tracking-widest text-xs font-semibold mb-1">
+                          {formatDate(article.published_at)}
+                        </p>
+                      )}
+                      <h3 className="font-display font-bold text-base text-court-white group-hover:text-brand-orange transition-colors line-clamp-2">
+                        {article.title}
+                      </h3>
                     </div>
-                  )}
-                  <div className="p-5">
-                    {article.published_at && (
-                      <p className="text-court-muted text-xs font-display uppercase tracking-wide mb-2">
-                        {formatDate(article.published_at)}
-                      </p>
-                    )}
-                    <h3 className="font-display font-bold text-lg text-court-white group-hover:text-brand-orange transition-colors line-clamp-2">
-                      {article.title}
-                    </h3>
-                    {article.excerpt && (
-                      <p className="text-court-gray text-sm mt-2 line-clamp-2">
-                        {article.excerpt}
-                      </p>
-                    )}
                   </div>
                 </Link>
               ))}
@@ -304,8 +299,8 @@ export default async function HomePage() {
                   href={`/editions/${ed.year}`}
                   className="card overflow-hidden shrink-0 w-72 md:w-auto snap-start group block"
                 >
-                  {ed.cover_url ? (
-                    <div className="relative aspect-[3/2] overflow-hidden">
+                  <div className="relative aspect-[3/2] overflow-hidden bg-court-dark">
+                    {ed.cover_url && (
                       <Image
                         src={ed.cover_url}
                         alt={ed.title}
@@ -313,30 +308,16 @@ export default async function HomePage() {
                         className="object-cover transition-transform duration-500 group-hover:scale-105"
                         sizes="(max-width: 768px) 288px, 33vw"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-court-dark to-transparent" />
-                      <span className="absolute bottom-3 left-4 font-display font-extrabold text-5xl text-white/20">
-                        {ed.year}
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="h-44 bg-court-dark flex items-end p-4">
-                      <span className="font-display font-extrabold text-5xl text-white/20">
-                        {ed.year}
-                      </span>
-                    </div>
-                  )}
-                  <div className="p-5">
-                    <h3 className="font-display font-bold text-lg text-court-white uppercase group-hover:text-brand-orange transition-colors">
-                      {ed.title}
-                    </h3>
-                    {ed.subtitle && (
-                      <p className="text-court-gray text-sm mt-1">{ed.subtitle}</p>
                     )}
-                    {ed.winner_name && (
-                      <p className="text-brand-orange text-sm font-display uppercase tracking-wide mt-1 flex items-center gap-1">
-                        <Trophy size={13} />{ed.winner_name}
+                    <div className="absolute inset-0 bg-gradient-to-t from-court-black via-court-dark/50 to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-4">
+                      <p className="text-brand-orange font-display text-5xl font-extrabold leading-none mb-1">
+                        {ed.year}
                       </p>
-                    )}
+                      <h3 className="font-display font-bold text-base text-court-white group-hover:text-brand-orange transition-colors line-clamp-2">
+                        {ed.title}
+                      </h3>
+                    </div>
                   </div>
                 </Link>
               ))}

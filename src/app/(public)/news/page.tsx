@@ -39,8 +39,8 @@ export default async function NewsPage() {
               href={`/news/${article.slug}`}
               className="card overflow-hidden group block"
             >
-              {article.cover_url ? (
-                <div className="relative aspect-[3/2] overflow-hidden">
+              <div className="relative aspect-[3/2] overflow-hidden bg-court-dark">
+                {article.cover_url && (
                   <Image
                     src={article.cover_url}
                     alt={article.title}
@@ -48,26 +48,18 @@ export default async function NewsPage() {
                     className="object-cover group-hover:scale-105 transition-transform duration-500"
                     sizes="(max-width: 640px) 100vw, 50vw"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-court-dark to-transparent" />
-                </div>
-              ) : (
-                <div className="h-24 bg-court-dark" />
-              )}
-              <div className="p-6">
-                <p className="text-brand-orange font-display uppercase tracking-[0.3em] text-xs font-semibold mb-2">
-                  {article.published_at
-                    ? new Date(article.published_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })
-                    : ''}
-                </p>
-                <h2 className="font-display font-bold text-xl text-court-white uppercase group-hover:text-brand-orange transition-colors leading-tight">
-                  {article.title}
-                </h2>
-                {article.excerpt && (
-                  <p className="text-court-gray text-sm mt-3 line-clamp-3">{article.excerpt}</p>
                 )}
-                <span className="mt-4 inline-block text-xs text-court-muted font-display uppercase tracking-wide group-hover:text-brand-orange transition-colors">
-                  Leggi →
-                </span>
+                <div className="absolute inset-0 bg-gradient-to-t from-court-black via-court-dark/50 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-4">
+                  {article.published_at && (
+                    <p className="text-brand-orange font-display uppercase tracking-widest text-xs font-semibold mb-1">
+                      {new Date(article.published_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </p>
+                  )}
+                  <h2 className="font-display font-bold text-lg text-court-white group-hover:text-brand-orange transition-colors line-clamp-2">
+                    {article.title}
+                  </h2>
+                </div>
               </div>
             </Link>
           ))}
