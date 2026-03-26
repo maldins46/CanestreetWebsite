@@ -124,3 +124,71 @@ export interface Sponsor {
   is_active: boolean
   created_at: string
 }
+
+// ============================================================
+// Tournament types — keep in sync with supabase/migrations/009_tournament.sql
+// ============================================================
+
+export type MatchPhase = 'group' | 'bracket'
+export type MatchStatus = 'scheduled' | 'in_progress' | 'completed'
+export type BracketRound = 'round_of_16' | 'quarterfinal' | 'semifinal' | 'final'
+
+export interface Group {
+  id: string
+  edition_id: string
+  category: TeamCategory
+  name: string
+  sort_order: number
+  created_at: string
+}
+
+export interface GroupTeam {
+  id: string
+  group_id: string
+  team_id: string
+  seed: number | null
+  created_at: string
+}
+
+export interface Match {
+  id: string
+  edition_id: string
+  category: TeamCategory
+  phase: MatchPhase
+  group_id: string | null
+  bracket_round: BracketRound | null
+  bracket_position: number | null
+  next_match_id: string | null
+  next_match_slot: 'home' | 'away' | null
+  team_home_id: string | null
+  team_away_id: string | null
+  score_home: number | null
+  score_away: number | null
+  scheduled_at: string | null
+  status: MatchStatus
+  sort_order: number
+  created_at: string
+}
+
+// Enriched types for UI
+export interface GroupWithTeams extends Group {
+  group_teams: (GroupTeam & { teams: Pick<Team, 'id' | 'name'> })[]
+}
+
+export interface MatchWithTeams extends Match {
+  team_home: Pick<Team, 'id' | 'name'> | null
+  team_away: Pick<Team, 'id' | 'name'> | null
+  group: Pick<Group, 'id' | 'name'> | null
+}
+
+// Computed standings row
+export interface StandingsRow {
+  team_id: string
+  team_name: string
+  played: number
+  wins: number
+  losses: number
+  points_for: number
+  points_against: number
+  point_differential: number
+}
