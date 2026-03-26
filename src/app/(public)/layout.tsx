@@ -79,7 +79,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           </div>
 
           <div className="border-t border-court-border/50 pt-4">
-            <p className="text-court-muted text-xs">© 2026 The Canestreet. All rights reserved.</p>
+            <p className="text-court-muted text-xs">© 2026 The Canestreet. All rights reserved. · <Link href="/privacy" className="underline hover:text-brand-orange transition-colors">Privacy Policy</Link></p>
             <p className="text-court-muted text-xs mt-1">Another Comepaolo Production, made with love by <a href="https://riccardomaldini.it" target="_blank" rel="noopener noreferrer" className="underline hover:text-brand-orange transition-colors">Riccardo Maldini</a></p>
           </div>
         </div>
@@ -124,7 +124,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           </div>
 
           <div className="border-t border-court-border/50 pt-4">
-            <p className="text-court-muted text-xs">© 2026 Canestreet 3x3. All rights reserved.</p>
+            <p className="text-court-muted text-xs">© 2026 Canestreet 3x3. All rights reserved. · <Link href="/privacy" className="underline hover:text-brand-orange transition-colors">Privacy Policy</Link></p>
             <p className="text-court-muted text-xs mt-1">Another Comepaolo Production, made with love by <a href="https://riccardomaldini.it" target="_blank" rel="noopener noreferrer" className="underline hover:text-brand-orange transition-colors">Riccardo Maldini</a></p>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import type { StaffMember } from '@/types'
 import StaffCard from '@/components/public/StaffCard'
@@ -13,6 +14,8 @@ export default async function ChiSiamoPage() {
     .from('staff')
     .select('*')
     .order('sort_order', { ascending: true }) as { data: StaffMember[] | null }
+
+  const jesiImageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/media/jesi.png`
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-16">
@@ -45,14 +48,14 @@ export default async function ChiSiamoPage() {
         <h2 className="heading-section text-2xl text-court-white mb-8">Ci trovi in zona</h2>
         <div className="grid lg:grid-cols-2 gap-6">
 
-          {/* OpenStreetMap embed — dark filter trick, stretches to match contact cards height */}
-          <div className="card overflow-hidden flex flex-col">
-            <iframe
-              title="Playground Piazza della Repubblica, Jesi"
-              src="https://www.openstreetmap.org/export/embed.html?bbox=13.2386%2C43.5183%2C13.2486%2C43.5243&layer=mapnik&marker=43.5213%2C13.2436"
-              className="w-full flex-1 min-h-64 block"
-              style={{ filter: 'invert(90%) hue-rotate(180deg)' }}
-              loading="lazy"
+          {/* Static photo of Jesi */}
+          <div className="card overflow-hidden relative h-full">
+            <Image
+              src={jesiImageUrl}
+              alt="Playground Piazza della Repubblica, Jesi"
+              fill
+              className="object-cover"
+              sizes="(max-width: 1024px) 100vw, 50vw"
             />
           </div>
 
