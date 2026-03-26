@@ -22,6 +22,7 @@ const nav = [
 export default function AdminSidebar() {
   const pathname = usePathname()
   const router = useRouter()
+
   const supabase = createClient()
   const [open, setOpen] = useState(false)
   const [email, setEmail] = useState<string | null>(null)
