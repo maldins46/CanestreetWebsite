@@ -1,8 +1,9 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import type { Edition, GroupWithTeams, TeamCategory } from '@/types'
+import type { Edition, GroupWithTeams, MatchWithTeams, TeamCategory } from '@/types'
 import EditionSwitcher from '@/components/admin/EditionSwitcher'
 import CategoryFilter from '@/components/admin/CategoryFilter'
 import TournamentGroups from '@/components/admin/TournamentGroups'
+import TournamentCalendar from '@/components/admin/TournamentCalendar'
 import { Suspense } from 'react'
 import Link from 'next/link'
 import clsx from 'clsx'
@@ -37,6 +38,7 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
   let groups: GroupWithTeams[] = []
   let approvedTeams: { id: string; name: string; category: string }[] = []
   let hasGroupMatches = false
+  let matches: MatchWithTeams[] = []
 
   if (activeEdition) {
     const { data: g } = await supabase
@@ -63,6 +65,15 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
       .eq('category', category)
       .eq('phase', 'group')
     hasGroupMatches = (count ?? 0) > 0
+
+    const { data: matchData } = await supabase
+      .from('matches')
+      .select('*, team_home:teams!matches_team_home_id_fkey(id, name), team_away:teams!matches_team_away_id_fkey(id, name), group:groups!matches_group_id_fkey(id, name)')
+      .eq('edition_id', activeEdition.id)
+      .order('scheduled_at', { ascending: true, nullsFirst: false })
+      .order('sort_order')
+      .returns<MatchWithTeams[]>()
+    matches = matchData ?? []
   }
 
   const tabs = [
@@ -131,6 +142,12 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
           groups={groups}
           approvedTeams={approvedTeams}
           hasGroupMatches={hasGroupMatches}
+        />
+      ) : tab === 'calendario' ? (
+        <TournamentCalendar
+          editionId={activeEdition.id}
+          matches={matches}
+          category={searchParams.category as TeamCategory | undefined}
         />
       ) : (
         <div className="card p-10 text-center">
