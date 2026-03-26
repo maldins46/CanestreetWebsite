@@ -157,22 +157,24 @@ export default function TournamentCalendar({ editionId, matches, category }: Pro
             {/* Scores */}
             <div className="flex items-center gap-1">
               <input
-                type="number"
-                min={0}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={homeVal}
-                onChange={e => setScore(match.id, 'home', e.target.value)}
+                onChange={e => setScore(match.id, 'home', e.target.value.replace(/\D/g, ''))}
                 disabled={isSaving}
-                className="input py-1 w-12 text-center text-sm"
+                className="input py-1 px-1 w-12 text-center text-sm"
                 placeholder="–"
               />
               <span className="text-court-muted">-</span>
               <input
-                type="number"
-                min={0}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={awayVal}
-                onChange={e => setScore(match.id, 'away', e.target.value)}
+                onChange={e => setScore(match.id, 'away', e.target.value.replace(/\D/g, ''))}
                 disabled={isSaving}
-                className="input py-1 w-12 text-center text-sm"
+                className="input py-1 px-1 w-12 text-center text-sm"
                 placeholder="–"
               />
               <button
