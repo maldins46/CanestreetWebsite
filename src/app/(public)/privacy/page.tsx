@@ -32,8 +32,8 @@ export default function PrivacyPage() {
 
       <Section label="Titolare del trattamento">
         <p>
-          Il titolare del trattamento dei dati personali è <strong className="text-court-light">ASD Aesis &apos;98</strong>,
-          con sede a Jesi (AN) 60035.
+          Il titolare del trattamento dei dati personali raccolti tramite questo sito è{' '}
+          <strong className="text-court-light">Michele Mosca</strong>, domiciliato a Jesi (AN).
         </p>
         <p>
           Per qualsiasi questione relativa al trattamento dei tuoi dati, puoi scrivere a{' '}
