@@ -74,11 +74,6 @@ def make_icon(size, maskable=False):
     offset_y = (size - new_h) // 2
     canvas.paste(lion_resized, (offset_x, offset_y), lion_resized)
 
-    if not maskable:
-        radius = max(2, int(size * 0.18))
-        mask = make_rounded_mask(size, radius)
-        canvas.putalpha(mask)
-
     return canvas
 
 
