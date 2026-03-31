@@ -65,7 +65,7 @@ def make_icon(size, rounded=False, maskable=False):
     lion = Image.open(SOURCE).convert('RGBA')
 
     # Scale preserving aspect ratio so the lion fits within the target box
-    lion_fraction = 0.80 if maskable else 0.85
+    lion_fraction = 0.65 if maskable else 0.85
     box = int(size * lion_fraction)
     lion_w, lion_h = lion.size
     scale = min(box / lion_w, box / lion_h)
