@@ -40,6 +40,7 @@ export const metadata: Metadata = {
     title: 'Canestreet 3x3',
   },
   formatDetection: { telephone: false },
+  manifest: '/manifest.json',
   icons: {
     apple: [
       { url: '/icons/apple-icon.png', sizes: '180x180' },

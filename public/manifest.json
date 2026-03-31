@@ -1,0 +1,14 @@
+{
+  "name": "Canestreet 3x3",
+  "short_name": "Canestreet",
+  "description": "A FIP 3x3 Summer Tournament. In the heart of Jesi.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "icons": [
+    { "src": "/icons/android-icon-192x192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/android-icon-512x512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/maskable-icon-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
