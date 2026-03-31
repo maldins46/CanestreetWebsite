@@ -13,32 +13,34 @@ APP_OUT = os.path.join(os.path.dirname(__file__), '..', 'src', 'app')
 BG_COLOR = (10, 10, 10, 255)       # #0a0a0a
 LION_COLOR = (245, 245, 240, 255)  # #f5f5f0 (court-white)
 
+# rounded=True  → browser favicons (transparent rounded corners, shown in browser UI)
+# rounded=False → OS app icons (solid square, OS applies its own shape)
 SIZES = {
-    'favicon-16x16.png': 16,
-    'favicon-32x32.png': 32,
-    'favicon-96x96.png': 96,
-    'apple-icon-57x57.png': 57,
-    'apple-icon-60x60.png': 60,
-    'apple-icon-72x72.png': 72,
-    'apple-icon-76x76.png': 76,
-    'apple-icon-114x114.png': 114,
-    'apple-icon-120x120.png': 120,
-    'apple-icon-144x144.png': 144,
-    'apple-icon-152x152.png': 152,
-    'apple-icon-180x180.png': 180,
-    'apple-icon-precomposed.png': 180,
-    'apple-icon.png': 180,
-    'android-icon-36x36.png': 36,
-    'android-icon-48x48.png': 48,
-    'android-icon-72x72.png': 72,
-    'android-icon-96x96.png': 96,
-    'android-icon-144x144.png': 144,
-    'android-icon-192x192.png': 192,
-    'android-icon-512x512.png': 512,
-    'ms-icon-70x70.png': 70,
-    'ms-icon-144x144.png': 144,
-    'ms-icon-150x150.png': 150,
-    'ms-icon-310x310.png': 310,
+    'favicon-16x16.png':        (16,  True),
+    'favicon-32x32.png':        (32,  True),
+    'favicon-96x96.png':        (96,  True),
+    'apple-icon-57x57.png':     (57,  False),
+    'apple-icon-60x60.png':     (60,  False),
+    'apple-icon-72x72.png':     (72,  False),
+    'apple-icon-76x76.png':     (76,  False),
+    'apple-icon-114x114.png':   (114, False),
+    'apple-icon-120x120.png':   (120, False),
+    'apple-icon-144x144.png':   (144, False),
+    'apple-icon-152x152.png':   (152, False),
+    'apple-icon-180x180.png':   (180, False),
+    'apple-icon-precomposed.png':(180,False),
+    'apple-icon.png':           (180, False),
+    'android-icon-36x36.png':   (36,  False),
+    'android-icon-48x48.png':   (48,  False),
+    'android-icon-72x72.png':   (72,  False),
+    'android-icon-96x96.png':   (96,  False),
+    'android-icon-144x144.png': (144, False),
+    'android-icon-192x192.png': (192, False),
+    'android-icon-512x512.png': (512, False),
+    'ms-icon-70x70.png':        (70,  False),
+    'ms-icon-144x144.png':      (144, False),
+    'ms-icon-150x150.png':      (150, False),
+    'ms-icon-310x310.png':      (310, False),
 }
 
 
@@ -50,17 +52,17 @@ def make_rounded_mask(size, radius):
     return mask
 
 
-def make_icon(size, maskable=False):
+def make_icon(size, rounded=False, maskable=False):
     """
     Build a single icon at `size`x`size` pixels.
-    - maskable=True: no rounded corners (the OS applies its own mask shape),
-      and the lion is padded to 80% of the canvas (safe zone).
+    - rounded=True:  apply rounded corners with transparency (browser favicons)
+    - maskable=True: safe-zone padding, solid bg (Android adaptive icon)
+    - default:       solid square bg (OS applies its own shape)
     """
     canvas = Image.new('RGBA', (size, size), BG_COLOR)
 
     # Load the white lion (already white on transparent background)
-    src = Image.open(SOURCE).convert('RGBA')
-    lion = src
+    lion = Image.open(SOURCE).convert('RGBA')
 
     # Scale preserving aspect ratio so the lion fits within the target box
     lion_fraction = 0.80 if maskable else 0.85
@@ -73,6 +75,11 @@ def make_icon(size, maskable=False):
     offset_x = (size - new_w) // 2
     offset_y = (size - new_h) // 2
     canvas.paste(lion_resized, (offset_x, offset_y), lion_resized)
+
+    if rounded:
+        radius = max(2, int(size * 0.18))
+        mask = make_rounded_mask(size, radius)
+        canvas.putalpha(mask)
 
     return canvas
 
@@ -124,8 +131,8 @@ def main():
     os.makedirs(ICONS_OUT, exist_ok=True)
 
     print('Generating icons...')
-    for filename, size in SIZES.items():
-        img = make_icon(size)
+    for filename, (size, rounded) in SIZES.items():
+        img = make_icon(size, rounded=rounded)
         out_path = os.path.join(ICONS_OUT, filename)
         img.save(out_path, format='PNG', optimize=True)
         print(f'  {filename} ({size}x{size})')
@@ -135,13 +142,13 @@ def main():
     maskable.save(os.path.join(ICONS_OUT, 'maskable-icon-512x512.png'), format='PNG', optimize=True)
     print('  maskable-icon-512x512.png (512x512)')
 
-    # src/app/icon.png — Next.js uses this for <link rel="icon">
-    app_icon = make_icon(512)
+    # src/app/icon.png — Next.js uses this for <link rel="icon"> (browser, rounded)
+    app_icon = make_icon(512, rounded=True)
     app_icon.save(os.path.join(APP_OUT, 'icon.png'), format='PNG', optimize=True)
-    print('  src/app/icon.png (512x512)')
+    print('  src/app/icon.png (512x512, rounded)')
 
-    # src/app/favicon.ico — multi-size for browser tabs
-    ico_sizes = {16: make_icon(16), 32: make_icon(32), 48: make_icon(48)}
+    # src/app/favicon.ico — multi-size for browser tabs (rounded)
+    ico_sizes = {16: make_icon(16, rounded=True), 32: make_icon(32, rounded=True), 48: make_icon(48, rounded=True)}
     save_ico(ico_sizes, os.path.join(APP_OUT, 'favicon.ico'))
     print('  src/app/favicon.ico (16, 32, 48)')
 
