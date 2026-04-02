@@ -1,10 +1,27 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Plus, Trash2, ChevronDown, ChevronUp, Radio } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronUp, Radio, GripVertical } from 'lucide-react'
 import clsx from 'clsx'
 import { createClient } from '@/lib/supabase/client'
 import type { TpcCategory, TpcContestFull, TpcEntryWithPlayer, TpcRoundWithEntries } from '@/types'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 interface Props {
   editionId: string
@@ -237,6 +254,13 @@ function RoundCard({ round, contest, prevRound, expanded, onToggle, onDelete }: 
   const [saving, setSaving] = useState(false)
   const [selectedPlayerId, setSelectedPlayerId] = useState('')
 
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
   const sortedEntries = [...round.tpc_entries].sort((a, b) => a.sort_order - b.sort_order)
   const entryPlayerIds = new Set(round.tpc_entries.map(e => e.player_id))
 
@@ -284,6 +308,26 @@ function RoundCard({ round, contest, prevRound, expanded, onToggle, onDelete }: 
     if (!currentlyLive) {
       await supabase.from('tpc_entries').update({ is_live: true }).eq('id', entryId)
     }
+    router.refresh()
+    setSaving(false)
+  }
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    const oldIndex = sortedEntries.findIndex(e => e.id === active.id)
+    const newIndex = sortedEntries.findIndex(e => e.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+
+    const newOrder = arrayMove(sortedEntries, oldIndex, newIndex)
+
+    setSaving(true)
+    await Promise.all(
+      newOrder.map((entry, index) =>
+        supabase.from('tpc_entries').update({ sort_order: index }).eq('id', entry.id)
+      )
+    )
     router.refresh()
     setSaving(false)
   }
@@ -381,33 +425,29 @@ function RoundCard({ round, contest, prevRound, expanded, onToggle, onDelete }: 
           {sortedEntries.length === 0 ? (
             <p className="text-court-muted text-sm">Nessun partecipante in questo turno.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-court-gray font-display uppercase tracking-wide text-xs border-b border-court-border">
-                    <th className="text-left py-2 pr-3 w-12">#</th>
-                    <th className="text-left py-2 pr-3">Nome</th>
-                    <th className="text-left py-2 pr-3 w-28">Punteggio</th>
-                    <th className="text-center py-2 pr-3 w-24">Qualificato</th>
-                    <th className="text-center py-2 pr-3 w-16">Live</th>
-                    <th className="w-8" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-court-border">
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={sortedEntries.map(e => e.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-1">
                   {sortedEntries.map(entry => (
-                    <EntryRow
+                    <SortableEntryRow
                       key={entry.id}
                       entry={entry}
                       onUpdateScore={updateScore}
                       onToggleQualified={toggleQualified}
                       onSetLive={setLive}
-                      onUpdateSortOrder={updateSortOrder}
                       onDelete={deleteEntry}
                     />
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </div>
+              </SortableContext>
+            </DndContext>
           )}
         </div>
       )}
@@ -416,38 +456,59 @@ function RoundCard({ round, contest, prevRound, expanded, onToggle, onDelete }: 
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Individual entry row with inline editing
+// Individual sortable entry row
 // ─────────────────────────────────────────────────────────────────
 interface EntryRowProps {
   entry: TpcEntryWithPlayer
   onUpdateScore: (id: string, value: string) => void
   onToggleQualified: (entry: TpcEntryWithPlayer) => void
   onSetLive: (id: string, currentlyLive: boolean) => void
-  onUpdateSortOrder: (id: string, value: string) => void
   onDelete: (id: string) => void
 }
 
-function EntryRow({ entry, onUpdateScore, onToggleQualified, onSetLive, onUpdateSortOrder, onDelete }: EntryRowProps) {
+function SortableEntryRow({ entry, onUpdateScore, onToggleQualified, onSetLive, onDelete }: EntryRowProps) {
   const [scoreVal, setScoreVal] = useState(entry.score !== null ? String(entry.score) : '')
-  const [orderVal, setOrderVal] = useState(String(entry.sort_order))
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: entry.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
 
   return (
-    <tr className={clsx(
-      'transition-colors',
-      entry.is_live && 'bg-red-500/10',
-      entry.is_qualified && !entry.is_live && 'bg-brand-orange/5',
-    )}>
-      {/* Sort order */}
-      <td className="py-2 pr-3">
-        <input
-          className="w-10 bg-transparent border border-court-border rounded px-1.5 py-0.5 text-xs text-center text-court-white focus:border-brand-orange focus:outline-none"
-          value={orderVal}
-          onChange={e => setOrderVal(e.target.value)}
-          onBlur={() => onUpdateSortOrder(entry.id, orderVal)}
-        />
-      </td>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={clsx(
+        'flex items-center gap-3 px-3 py-2 rounded bg-court-dark border border-court-border',
+        'transition-colors',
+        isDragging && 'opacity-50 border-brand-orange',
+        entry.is_live && 'bg-red-500/10',
+        entry.is_qualified && !entry.is_live && 'bg-brand-orange/5',
+      )}
+    >
+      {/* Drag handle */}
+      <button
+        className="cursor-grab active:cursor-grabbing text-court-muted hover:text-court-white"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical size={16} />
+      </button>
+
+      {/* Position number */}
+      <span className="text-xs text-court-muted w-6 text-center">{entry.sort_order + 1}</span>
+
       {/* Name */}
-      <td className="py-2 pr-3 text-court-white font-medium">
+      <span className="flex-1 text-court-white font-medium">
         {entry.tpc_players.name}
         {entry.is_live && (
           <span className="ml-2 inline-flex items-center gap-1 text-xs text-red-400 font-display uppercase tracking-wide">
@@ -455,51 +516,47 @@ function EntryRow({ entry, onUpdateScore, onToggleQualified, onSetLive, onUpdate
             LIVE
           </span>
         )}
-      </td>
+      </span>
+
       {/* Score */}
-      <td className="py-2 pr-3">
-        <input
-          className="w-20 bg-transparent border border-court-border rounded px-2 py-0.5 text-sm text-court-white focus:border-brand-orange focus:outline-none text-center"
-          type="number"
-          min="0"
-          placeholder="—"
-          value={scoreVal}
-          onChange={e => setScoreVal(e.target.value)}
-          onBlur={() => onUpdateScore(entry.id, scoreVal)}
-        />
-      </td>
+      <input
+        className="w-16 bg-transparent border border-court-border rounded px-2 py-0.5 text-sm text-court-white focus:border-brand-orange focus:outline-none text-center"
+        type="number"
+        min="0"
+        placeholder="—"
+        value={scoreVal}
+        onChange={e => setScoreVal(e.target.value)}
+        onBlur={() => onUpdateScore(entry.id, scoreVal)}
+      />
+
       {/* Qualified */}
-      <td className="py-2 pr-3 text-center">
-        <input
-          type="checkbox"
-          checked={entry.is_qualified}
-          onChange={() => onToggleQualified(entry)}
-          className="w-4 h-4 accent-brand-orange cursor-pointer"
-        />
-      </td>
+      <input
+        type="checkbox"
+        checked={entry.is_qualified}
+        onChange={() => onToggleQualified(entry)}
+        className="w-4 h-4 accent-brand-orange cursor-pointer"
+      />
+
       {/* Live */}
-      <td className="py-2 pr-3 text-center">
-        <button
-          onClick={() => onSetLive(entry.id, entry.is_live)}
-          title={entry.is_live ? 'Rimuovi live' : 'Imposta live'}
-          className={clsx(
-            'transition-colors',
-            entry.is_live ? 'text-red-400' : 'text-court-border hover:text-red-400'
-          )}
-        >
-          <Radio size={16} />
-        </button>
-      </td>
+      <button
+        onClick={() => onSetLive(entry.id, entry.is_live)}
+        title={entry.is_live ? 'Rimuovi live' : 'Imposta live'}
+        className={clsx(
+          'transition-colors',
+          entry.is_live ? 'text-red-400' : 'text-court-border hover:text-red-400'
+        )}
+      >
+        <Radio size={16} />
+      </button>
+
       {/* Delete */}
-      <td className="py-2 text-right">
-        <button
-          onClick={() => onDelete(entry.id)}
-          className="text-court-muted hover:text-red-400 transition-colors"
-          title="Rimuovi dal turno"
-        >
-          <Trash2 size={13} />
-        </button>
-      </td>
-    </tr>
+      <button
+        onClick={() => onDelete(entry.id)}
+        className="text-court-muted hover:text-red-400 transition-colors"
+        title="Rimuovi dal turno"
+      >
+        <Trash2 size={13} />
+      </button>
+    </div>
   )
 }

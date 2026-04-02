@@ -76,15 +76,15 @@ function RoundCard({ round }: { round: TpcRoundWithEntries }) {
 
   return (
     <div className="card overflow-hidden">
-      <div className="px-4 py-3 border-b border-court-border">
-        <span className="font-display font-bold uppercase tracking-wide text-court-white">
+      <div className="px-4 py-4">
+        <span className="font-display font-bold uppercase tracking-wide text-lg text-court-white">
           {round.name}
         </span>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-court-border">
+          <thead className="sticky top-0 z-10 bg-court-dark shadow-[0_1px_0_0_#444]">
+            <tr>
               <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center w-8 px-3 py-2">
                 #
               </th>
@@ -104,7 +104,7 @@ function RoundCard({ round }: { round: TpcRoundWithEntries }) {
               <tr
                 key={entry.id}
                 className={clsx(
-                  'border-b border-court-border last:border-b-0 transition-colors hover:bg-white/[0.02]',
+                  'transition-colors hover:bg-white/[0.02]',
                   entry.is_live && 'bg-red-500/5',
                   entry.is_qualified && !entry.is_live && 'bg-brand-orange/10',
                 )}

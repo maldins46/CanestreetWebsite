@@ -76,7 +76,7 @@ function ShowcaseCalendar({ matches, theme }: { matches: MatchWithTeams[]; theme
 
   return (
     <div className="h-full flex flex-col">
-      <div className={clsx('px-4 py-3 border-b', theme.headerBg)}>
+      <div className={clsx('px-4 py-3 border-b', theme.headerBg, lightMode ? 'border-gray-300' : 'border-court-border')}>
         <h2 className={clsx('font-display font-bold uppercase text-sm tracking-wide', theme.textDarker)}>
           Calendario
         </h2>
@@ -247,7 +247,7 @@ function ShowcaseStandings({ groups, matches, category, theme }: { groups: Group
               </p>
               <table className="w-full text-xs">
                 <thead>
-                  <tr className={clsx('border-b', theme.tableBorder, theme.textMuted)}>
+                  <tr className={clsx(theme.textMuted)}>
                     <th className="text-left py-2 pr-3 font-display uppercase">#</th>
                     <th className="text-left py-2 pr-3 font-display uppercase">Squadra</th>
                     <th className="text-center py-2 pr-3 font-display uppercase">G</th>
@@ -257,7 +257,7 @@ function ShowcaseStandings({ groups, matches, category, theme }: { groups: Group
                 </thead>
                 <tbody>
                   {standings.map((row, idx) => (
-                    <tr key={row.team_id} className={clsx('border-b border-opacity-50', theme.tableBorder, theme.tableRow)}>
+                    <tr key={row.team_id} className={clsx(theme.tableRow)}>
                       <td className="py-2 pr-3">
                         <span className={clsx('font-display font-bold', idx < 2 ? 'text-brand-orange' : theme.textMuted)}>
                           {idx + 1}
@@ -317,7 +317,7 @@ function ShowcaseBracket({ matches, category }: { matches: MatchWithTeams[]; cat
 
   return (
     <div className="h-full flex flex-col">
-      <div className="px-4 py-3 bg-court-dark border-b border-court-border flex items-center justify-between">
+      <div className="px-4 py-3 flex items-center justify-between bg-court-dark border-b border-court-border">
         <h2 className="font-display font-bold uppercase text-sm tracking-wide text-court-white">
           Tabellone
         </h2>
@@ -403,7 +403,7 @@ function ShowcaseTPC({ contests, category, theme }: { contests: TpcContestFull[]
 
   return (
     <div className="h-full flex flex-col">
-      <div className={clsx('px-6 py-4 border-b', theme.headerBg)}>
+      <div className={clsx('px-6 py-4 border-b', theme.headerBg, lightMode ? 'border-gray-300' : 'border-court-border')}>
         <h2 className={clsx('font-display font-bold uppercase text-lg tracking-wide', theme.textDarker)}>
           3-Point Contest {category === 'open' ? 'Open' : 'Under'}
         </h2>
@@ -411,22 +411,22 @@ function ShowcaseTPC({ contests, category, theme }: { contests: TpcContestFull[]
       <div ref={containerRef} className="flex-1 overflow-x-auto overflow-y-hidden p-6">
         <div className={`flex h-full min-w-max ${flexClass}`}>
           {sortedRounds.map(round => {
-            const sortedEntries = [...round.tpc_entries].sort((a, b) => (b.score ?? -1) - (a.score ?? -1))
+            const sortedEntries = [...round.tpc_entries].sort((a, b) => a.sort_order - b.sort_order)
             const minWidth = columnCount === 1 ? 'min-w-[400px]' : columnCount === 2 ? 'min-w-[350px]' : 'min-w-[280px]'
             const flexGrow = columnCount <= 2 ? 'flex-1 max-w-xl' : ''
             return (
               <div key={round.id} className={`flex flex-col ${minWidth} ${flexGrow}`}>
                 {/* Round header */}
-                <div className={clsx('px-4 py-3 border-b text-center mb-4', theme.headerBg)}>
-                  <p className="font-display font-bold uppercase text-sm tracking-wide text-brand-orange">
+                <div className={clsx('px-4 py-4 text-center mb-4', theme.headerBg)}>
+                  <p className="font-display font-bold uppercase text-lg tracking-wide text-brand-orange">
                     {round.name}
                   </p>
                 </div>
                 {/* Table */}
                 <div className={clsx('card overflow-hidden flex-1', theme.card)}>
                   <table className="w-full text-sm">
-                    <thead>
-                      <tr className={clsx('border-b', theme.tableBorder)}>
+                    <thead className={clsx('sticky top-0 z-10', lightMode ? 'bg-white shadow-[0_1px_0_0_#d1d5db]' : 'bg-court-surface shadow-[0_1px_0_0_#444]')}>
+                      <tr>
                         <th className={clsx('text-left py-2 px-3 font-display uppercase text-xs w-10', theme.textMuted)}>#</th>
                         <th className={clsx('text-left py-2 px-3 font-display uppercase text-xs', theme.textMuted)}>Giocatore</th>
                         <th className={clsx('text-right py-2 px-3 font-display uppercase text-xs w-20', theme.textMuted)}>Punti</th>
@@ -438,8 +438,7 @@ function ShowcaseTPC({ contests, category, theme }: { contests: TpcContestFull[]
                           key={entry.id}
                           data-is-live={entry.is_live || undefined}
                           className={clsx(
-                            'border-b border-opacity-50 transition-colors',
-                            theme.tableBorder,
+                            'transition-colors',
                             theme.tableRow,
                             entry.is_live && theme.liveBg,
                             entry.is_qualified && !entry.is_live && theme.qualifiedBg,
@@ -687,7 +686,7 @@ export default function ShowcasePage() {
     border: lightMode ? 'border-gray-300' : 'border-court-border',
     card: lightMode ? 'bg-white border-gray-300' : 'bg-court-surface border-court-border',
     cardBg: lightMode ? 'bg-white' : 'bg-court-surface',
-    headerBg: lightMode ? 'bg-white border-b-2 border-gray-300' : 'bg-court-dark',
+    headerBg: lightMode ? 'bg-white' : 'bg-court-dark',
     inputBg: lightMode ? 'bg-gray-100' : 'bg-white/[0.02]',
     liveBg: lightMode ? 'bg-red-100' : 'bg-red-500/5',
     liveBorder: lightMode ? 'border-red-500' : 'border-red-500',
