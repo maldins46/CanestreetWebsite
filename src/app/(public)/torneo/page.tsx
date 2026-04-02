@@ -1,9 +1,13 @@
+import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import type { Edition, GroupWithTeams, MatchWithTeams } from '@/types'
+import type { Edition, GroupWithTeams, MatchWithTeams, TpcContestFull } from '@/types'
 import TournamentCalendarSection from '@/components/public/TournamentCalendarSection'
 import StandingsSection from '@/components/public/StandingsTable'
 import BracketSection from '@/components/public/BracketView'
+import ThreePointContestSection from '@/components/public/ThreePointContestSection'
+
+export const revalidate = 15
 
 export const metadata: Metadata = { title: 'Torneo' }
 
@@ -25,7 +29,7 @@ export default async function TorneoPage() {
     )
   }
 
-  const [{ data: matchData }, { data: groupData }] = await Promise.all([
+  const [{ data: matchData }, { data: groupData }, { data: tpcData }] = await Promise.all([
     supabase
       .from('matches')
       .select(
@@ -42,10 +46,17 @@ export default async function TorneoPage() {
       .eq('edition_id', edition.id)
       .order('sort_order')
       .returns<GroupWithTeams[]>(),
+
+    supabase
+      .from('tpc_contests')
+      .select('*, tpc_players(*), tpc_rounds(*, tpc_entries(*, tpc_players(id, name)))')
+      .eq('edition_id', edition.id)
+      .returns<TpcContestFull[]>(),
   ])
 
   const matches = matchData ?? []
   const groups = groupData ?? []
+  const tpcContests = tpcData ?? []
 
   return (
     <div>
@@ -89,6 +100,16 @@ export default async function TorneoPage() {
             Tabellone
           </h2>
           <BracketSection matches={matches} />
+        </div>
+      </section>
+
+      {/* 3-Point Contest section */}
+      <section className="py-12 border-t border-court-border">
+        <div className="max-w-6xl mx-auto px-6">
+          <h2 className="font-display font-bold uppercase text-xl text-court-white mb-6">
+            3-Point Contest
+          </h2>
+          <ThreePointContestSection contests={tpcContests} />
         </div>
       </section>
     </div>

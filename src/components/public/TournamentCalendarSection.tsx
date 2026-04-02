@@ -75,7 +75,7 @@ export default function TournamentCalendarSection({ matches }: Props) {
           {Array.from(days.entries()).map(([dayKey, dayMatches]) => (
             <div key={dayKey}>
               {dayKey !== 'non-programmata' && (
-                <h3 className="font-display uppercase text-xs tracking-widest text-brand-orange mb-3">
+                <h3 className="font-display uppercase text-xs tracking-widest text-brand-orange mb-3" suppressHydrationWarning>
                   {formatDay(dayMatches[0].scheduled_at!)}
                 </h3>
               )}

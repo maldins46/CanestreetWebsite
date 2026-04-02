@@ -61,7 +61,7 @@ export default function MatchCard({ match }: Props) {
             <span className="text-red-500 font-display uppercase text-xs font-bold">LIVE</span>
           </span>
         ) : (
-          <span className="text-court-muted text-xs">{formatTime(match.scheduled_at)}</span>
+          <span className="text-court-muted text-xs" suppressHydrationWarning>{formatTime(match.scheduled_at)}</span>
         )}
       </div>
 

@@ -1,10 +1,11 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import type { Edition, GroupWithTeams, MatchWithTeams, TeamCategory } from '@/types'
+import type { Edition, GroupWithTeams, MatchWithTeams, TeamCategory, TpcContestFull } from '@/types'
 import EditionSwitcher from '@/components/admin/EditionSwitcher'
 import CategoryFilter from '@/components/admin/CategoryFilter'
 import TournamentGroups from '@/components/admin/TournamentGroups'
 import TournamentCalendar from '@/components/admin/TournamentCalendar'
 import TournamentBracket from '@/components/admin/TournamentBracket'
+import TpcAdmin from '@/components/admin/TpcAdmin'
 import { Suspense } from 'react'
 import Link from 'next/link'
 import clsx from 'clsx'
@@ -40,6 +41,7 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
   let approvedTeams: { id: string; name: string; category: string }[] = []
   let hasGroupMatches = false
   let matches: MatchWithTeams[] = []
+  let tpcContests: TpcContestFull[] = []
 
   if (activeEdition) {
     const { data: g } = await supabase
@@ -75,12 +77,23 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
       .order('sort_order')
       .returns<MatchWithTeams[]>()
     matches = matchData ?? []
+
+    if (tab === 'threePoint') {
+      const { data: tpcData } = await supabase
+        .from('tpc_contests')
+        .select('*, tpc_players(*), tpc_rounds(*, tpc_entries(*, tpc_players(id, name)))')
+        .eq('edition_id', activeEdition.id)
+        .order('category')
+        .returns<TpcContestFull[]>()
+      tpcContests = tpcData ?? []
+    }
   }
 
   const tabs = [
     { key: 'gironi', label: 'Gironi' },
     { key: 'calendario', label: 'Calendario' },
     { key: 'tabellone', label: 'Tabellone' },
+    { key: 'threePoint', label: '3-Point Contest' },
   ]
 
   // Suppress unused variable warning — categoryLabel is available for future use
@@ -150,6 +163,8 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
           matches={matches}
           category={searchParams.category as TeamCategory | undefined}
         />
+      ) : tab === 'threePoint' ? (
+        <TpcAdmin editionId={activeEdition.id} contests={tpcContests} />
       ) : (
         <TournamentBracket
           editionId={activeEdition.id}

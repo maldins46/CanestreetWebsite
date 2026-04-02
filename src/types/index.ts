@@ -192,3 +192,55 @@ export interface StandingsRow {
   points_against: number
   point_differential: number
 }
+
+// ============================================================
+// TPC (3-Point Contest) types — keep in sync with 010_tpc.sql
+// ============================================================
+
+export type TpcCategory = 'open' | 'under'
+
+export interface TpcContest {
+  id: string
+  edition_id: string
+  category: TpcCategory
+  created_at: string
+}
+
+export interface TpcPlayer {
+  id: string
+  contest_id: string
+  name: string
+  created_at: string
+}
+
+export interface TpcRound {
+  id: string
+  contest_id: string
+  round_number: number
+  name: string
+  created_at: string
+}
+
+export interface TpcEntry {
+  id: string
+  round_id: string
+  player_id: string
+  score: number | null
+  is_qualified: boolean
+  is_live: boolean
+  sort_order: number
+  created_at: string
+}
+
+export interface TpcEntryWithPlayer extends TpcEntry {
+  tpc_players: Pick<TpcPlayer, 'id' | 'name'>
+}
+
+export interface TpcRoundWithEntries extends TpcRound {
+  tpc_entries: TpcEntryWithPlayer[]
+}
+
+export interface TpcContestFull extends TpcContest {
+  tpc_players: TpcPlayer[]
+  tpc_rounds: TpcRoundWithEntries[]
+}
