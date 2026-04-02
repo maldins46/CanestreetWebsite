@@ -1,6 +1,6 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Plus, Trash2, ChevronDown, ChevronUp, Radio } from 'lucide-react'
 import clsx from 'clsx'
 import { createClient } from '@/lib/supabase/client'
@@ -9,6 +9,7 @@ import type { TpcCategory, TpcContestFull, TpcEntryWithPlayer, TpcRoundWithEntri
 interface Props {
   editionId: string
   contests: TpcContestFull[]
+  initialCategory?: TpcCategory
 }
 
 const CATEGORIES: { key: TpcCategory; label: string }[] = [
@@ -16,13 +17,24 @@ const CATEGORIES: { key: TpcCategory; label: string }[] = [
   { key: 'under', label: 'Under' },
 ]
 
-export default function TpcAdmin({ editionId, contests }: Props) {
-  const [activeCategory, setActiveCategory] = useState<TpcCategory>('open')
+export default function TpcAdmin({ editionId, contests, initialCategory = 'open' }: Props) {
   const supabase = createClient()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [saving, setSaving] = useState(false)
 
+  const activeCategory = (searchParams.get('category') as TpcCategory) ?? initialCategory
   const contest = contests.find(c => c.category === activeCategory) ?? null
+
+  const setActiveCategory = useCallback((cat: TpcCategory) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (cat === 'open') {
+      params.delete('category')
+    } else {
+      params.set('category', cat)
+    }
+    router.push(`?${params.toString()}`, { scroll: false })
+  }, [router, searchParams])
 
   async function createContest() {
     setSaving(true)
@@ -33,17 +45,16 @@ export default function TpcAdmin({ editionId, contests }: Props) {
 
   return (
     <div>
-      {/* Category toggle */}
       <div className="flex gap-2 mb-6">
         {CATEGORIES.map(cat => (
           <button
             key={cat.key}
             onClick={() => setActiveCategory(cat.key)}
             className={clsx(
-              'px-4 py-1.5 rounded font-display uppercase tracking-wide text-sm border transition-colors',
+              'px-3 py-1.5 font-display uppercase tracking-wide text-xs border transition-colors',
               activeCategory === cat.key
-                ? 'bg-brand-orange border-brand-orange text-white'
-                : 'border-court-border text-court-gray hover:text-court-white'
+                ? 'bg-brand-orange border-brand-orange text-court-dark'
+                : 'border-court-border text-court-muted hover:border-court-muted hover:text-court-white'
             )}
           >
             {cat.label}

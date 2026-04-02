@@ -3,20 +3,21 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
-import { Users, Newspaper, Image as ImageIcon, ShieldCheck, LogOut, Home, ExternalLink, Trophy, UserCircle, Menu, X, Handshake, Calendar } from 'lucide-react'
+import { Users, Newspaper, Image as ImageIcon, ShieldCheck, LogOut, Home, ExternalLink, Trophy, UserCircle, Menu, X, Handshake, Calendar, Target } from 'lucide-react'
 import clsx from 'clsx'
 import { createClient } from '@/lib/supabase/client'
 
 const nav = [
-  { href: '/admin',           label: 'Dashboard',  icon: Home },
-  { href: '/admin/teams',     label: 'Squadre',    icon: Users },
-  { href: '/admin/editions',  label: 'Edizioni',   icon: Trophy },
-  { href: '/admin/torneo',    label: 'Torneo',     icon: Calendar },
-  { href: '/admin/news',      label: 'News',       icon: Newspaper },
-  { href: '/admin/staff',     label: 'Staff',      icon: UserCircle },
-  { href: '/admin/sponsors',  label: 'Sponsor',    icon: Handshake },
-  { href: '/admin/media',     label: 'Media',      icon: ImageIcon },
-  { href: '/admin/admins',    label: 'Admins',     icon: ShieldCheck },
+  { href: '/admin',                  label: 'Dashboard',       icon: Home },
+  { href: '/admin/teams',            label: 'Squadre',         icon: Users },
+  { href: '/admin/editions',         label: 'Edizioni',        icon: Trophy },
+  { href: '/admin/torneo',           label: 'Torneo',          icon: Calendar },
+  { href: '/admin/three-point-contest', label: '3-Point Contest', icon: Target },
+  { href: '/admin/news',            label: 'News',       icon: Newspaper },
+  { href: '/admin/staff',           label: 'Staff',      icon: UserCircle },
+  { href: '/admin/sponsors',        label: 'Sponsor',    icon: Handshake },
+  { href: '/admin/media',           label: 'Media',      icon: ImageIcon },
+  { href: '/admin/admins',           label: 'Admins',     icon: ShieldCheck },
 ]
 
 export default function AdminSidebar() {
