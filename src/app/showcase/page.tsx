@@ -376,12 +376,14 @@ function ShowcaseBracket({ matches, category }: { matches: MatchWithTeams[]; cat
 
 function ShowcaseTPC({ contests, category, theme }: { contests: TpcContestFull[]; category: 'open' | 'under'; theme: Record<string, string> }) {
   const containerRef = React.useRef<HTMLDivElement>(null)
+  const lightMode = theme.bg === 'bg-white'
+
   const contest = contests.find(c => c.category === category) ?? null
 
   if (!contest) {
     return (
-      <div className="h-full flex items-center justify-center">
-        <p className="text-court-muted text-sm">Gara non disponibile</p>
+      <div className={clsx('h-full flex items-center justify-center', theme.textMuted)}>
+        <p className="text-sm">Gara non disponibile</p>
       </div>
     )
   }
@@ -401,8 +403,8 @@ function ShowcaseTPC({ contests, category, theme }: { contests: TpcContestFull[]
 
   return (
     <div className="h-full flex flex-col">
-      <div className="px-6 py-4 bg-court-dark border-b border-court-border">
-        <h2 className="font-display font-bold uppercase text-lg tracking-wide text-court-white">
+      <div className={clsx('px-6 py-4 border-b', theme.headerBg)}>
+        <h2 className={clsx('font-display font-bold uppercase text-lg tracking-wide', theme.textDarker)}>
           3-Point Contest {category === 'open' ? 'Open' : 'Under'}
         </h2>
       </div>
@@ -415,19 +417,19 @@ function ShowcaseTPC({ contests, category, theme }: { contests: TpcContestFull[]
             return (
               <div key={round.id} className={`flex flex-col ${minWidth} ${flexGrow}`}>
                 {/* Round header */}
-                <div className="px-4 py-3 bg-court-dark border-b border-court-border text-center mb-4">
+                <div className={clsx('px-4 py-3 border-b text-center mb-4', theme.headerBg)}>
                   <p className="font-display font-bold uppercase text-sm tracking-wide text-brand-orange">
                     {round.name}
                   </p>
                 </div>
                 {/* Table */}
-                <div className="card overflow-hidden flex-1">
+                <div className={clsx('card overflow-hidden flex-1', theme.card)}>
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-court-border">
-                        <th className="text-left py-2 px-3 font-display uppercase text-xs text-court-muted w-10">#</th>
-                        <th className="text-left py-2 px-3 font-display uppercase text-xs text-court-muted">Giocatore</th>
-                        <th className="text-right py-2 px-3 font-display uppercase text-xs text-court-muted w-20">Punti</th>
+                      <tr className={clsx('border-b', theme.tableBorder)}>
+                        <th className={clsx('text-left py-2 px-3 font-display uppercase text-xs w-10', theme.textMuted)}>#</th>
+                        <th className={clsx('text-left py-2 px-3 font-display uppercase text-xs', theme.textMuted)}>Giocatore</th>
+                        <th className={clsx('text-right py-2 px-3 font-display uppercase text-xs w-20', theme.textMuted)}>Punti</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -436,26 +438,28 @@ function ShowcaseTPC({ contests, category, theme }: { contests: TpcContestFull[]
                           key={entry.id}
                           data-is-live={entry.is_live || undefined}
                           className={clsx(
-                            'border-b border-court-border/50 transition-colors',
-                            entry.is_live && 'bg-red-500/5',
-                            entry.is_qualified && !entry.is_live && 'bg-brand-orange/5',
+                            'border-b border-opacity-50 transition-colors',
+                            theme.tableBorder,
+                            theme.tableRow,
+                            entry.is_live && theme.liveBg,
+                            entry.is_qualified && !entry.is_live && theme.qualifiedBg,
                           )}
                         >
                           <td className="py-3 px-3">
                             <span className={clsx(
                               'font-display font-bold text-base',
-                              entry.is_live ? 'text-red-400' : entry.is_qualified ? 'text-brand-orange' : 'text-court-muted'
+                              entry.is_live ? theme.liveText : entry.is_qualified ? theme.qualifiedText : theme.textMuted
                             )}>
                               {idx + 1}
                             </span>
                           </td>
                           <td className="py-3 px-3">
                             <div className="flex items-center gap-2">
-                              <span className="text-court-white text-base truncate">{entry.tpc_players.name}</span>
+                              <span className={clsx('text-base truncate', theme.tableText)}>{entry.tpc_players.name}</span>
                               {entry.is_live && (
                                 <span className="flex items-center gap-1 shrink-0">
-                                  <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                                  <span className="text-red-400 text-xs font-display uppercase">LIVE</span>
+                                  <span className={clsx('w-2 h-2 rounded-full animate-pulse', lightMode ? 'bg-red-600' : 'bg-red-500')} />
+                                  <span className={clsx('text-xs font-display uppercase', theme.liveText)}>LIVE</span>
                                 </span>
                               )}
                             </div>
@@ -463,7 +467,7 @@ function ShowcaseTPC({ contests, category, theme }: { contests: TpcContestFull[]
                           <td className="py-3 px-3 text-right">
                             <span className={clsx(
                               'font-display font-bold text-2xl',
-                              entry.is_live ? 'text-red-400' : entry.is_qualified ? 'text-brand-orange' : 'text-court-white'
+                              entry.is_live ? theme.liveText : entry.is_qualified ? theme.qualifiedText : theme.tableText
                             )}>
                               {entry.score ?? '—'}
                             </span>
@@ -747,7 +751,11 @@ export default function ShowcasePage() {
                   key={cat}
                   className={clsx(
                     'px-3 py-1 rounded text-xs font-display uppercase tracking-wide transition-all',
-                    idx === underCategoryIndex ? 'bg-brand-orange text-white' : 'bg-court-surface text-court-muted'
+                    idx === underCategoryIndex 
+                      ? 'bg-brand-orange text-white' 
+                      : lightMode 
+                        ? 'bg-gray-200 text-gray-700' 
+                        : 'bg-court-surface text-court-muted'
                   )}
                 >
                   {cat}
