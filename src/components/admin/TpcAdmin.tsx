@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Trash2, ChevronDown, ChevronUp, Radio } from 'lucide-react'
 import clsx from 'clsx'
@@ -76,6 +76,14 @@ function ContestManager({ contest }: { contest: TpcContestFull }) {
   const [newPlayerName, setNewPlayerName] = useState('')
   const [newRoundName, setNewRoundName] = useState('')
   const [expandedRounds, setExpandedRounds] = useState<Set<string>>(new Set())
+  const prevContestIdRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (prevContestIdRef.current !== contest.id) {
+      prevContestIdRef.current = contest.id
+      setExpandedRounds(new Set(contest.tpc_rounds.map(r => r.id)))
+    }
+  }, [contest])
 
   async function addPlayer() {
     const name = newPlayerName.trim()
@@ -415,7 +423,7 @@ function EntryRow({ entry, onUpdateScore, onToggleQualified, onSetLive, onUpdate
   return (
     <tr className={clsx(
       'transition-colors',
-      entry.is_live && 'bg-green-500/10',
+      entry.is_live && 'bg-red-500/10',
       entry.is_qualified && !entry.is_live && 'bg-brand-orange/5',
     )}>
       {/* Sort order */}
@@ -431,8 +439,8 @@ function EntryRow({ entry, onUpdateScore, onToggleQualified, onSetLive, onUpdate
       <td className="py-2 pr-3 text-court-white font-medium">
         {entry.tpc_players.name}
         {entry.is_live && (
-          <span className="ml-2 inline-flex items-center gap-1 text-xs text-green-400 font-display uppercase tracking-wide">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse inline-block" />
+          <span className="ml-2 inline-flex items-center gap-1 text-xs text-red-400 font-display uppercase tracking-wide">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse inline-block" />
             LIVE
           </span>
         )}
@@ -465,7 +473,7 @@ function EntryRow({ entry, onUpdateScore, onToggleQualified, onSetLive, onUpdate
           title={entry.is_live ? 'Rimuovi live' : 'Imposta live'}
           className={clsx(
             'transition-colors',
-            entry.is_live ? 'text-green-400' : 'text-court-border hover:text-green-400'
+            entry.is_live ? 'text-red-400' : 'text-court-border hover:text-red-400'
           )}
         >
           <Radio size={16} />
