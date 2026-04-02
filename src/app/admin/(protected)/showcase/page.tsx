@@ -15,6 +15,7 @@ const MODES: { key: ShowcaseMode; label: string; description: string }[] = [
 
 export default function ShowcaseAdminPage() {
   const [currentMode, setCurrentMode] = useState<ShowcaseMode | null>(null)
+  const [lightMode, setLightMode] = useState(false)
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
 
@@ -24,10 +25,13 @@ export default function ShowcaseAdminPage() {
     async function fetchMode() {
       const { data } = await supabase
         .from('showcase_modes')
-        .select('mode')
+        .select('mode, light_mode')
         .eq('id', 'default')
         .single()
-      if (data) setCurrentMode(data.mode)
+      if (data) {
+        setCurrentMode(data.mode)
+        setLightMode(data.light_mode ?? false)
+      }
       setLoading(false)
     }
     fetchMode()
@@ -41,6 +45,18 @@ export default function ShowcaseAdminPage() {
       .eq('id', 'default')
 
     if (!error) setCurrentMode(mode)
+    setUpdating(false)
+  }
+
+  async function toggleLightMode() {
+    setUpdating(true)
+    const newValue = !lightMode
+    const { error } = await supabase
+      .from('showcase_modes')
+      .update({ light_mode: newValue, updated_at: new Date().toISOString() })
+      .eq('id', 'default')
+
+    if (!error) setLightMode(newValue)
     setUpdating(false)
   }
 
@@ -86,7 +102,7 @@ export default function ShowcaseAdminPage() {
       </div>
 
       {/* Mode buttons */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
         {MODES.map(mode => (
           <button
             key={mode.key}
@@ -108,6 +124,33 @@ export default function ShowcaseAdminPage() {
             <p className="text-court-muted text-sm">{mode.description}</p>
           </button>
         ))}
+      </div>
+
+      {/* Light mode toggle */}
+      <div className="card p-6 flex items-center justify-between">
+        <div>
+          <p className="font-display font-bold text-xl text-court-white mb-1">
+            Modalità Chioppo del Sole
+          </p>
+          <p className="text-court-muted text-sm">
+            Tema chiaro ad alto contrasto per visibilità sotto la luce diretta del sole
+          </p>
+        </div>
+        <button
+          onClick={toggleLightMode}
+          disabled={updating}
+          className={clsx(
+            'relative w-14 h-7 rounded-full transition-colors',
+            lightMode ? 'bg-brand-orange' : 'bg-court-border'
+          )}
+        >
+          <span
+            className={clsx(
+              'absolute top-1 w-5 h-5 bg-white rounded-full transition-transform shadow',
+              lightMode ? 'left-8' : 'left-1'
+            )}
+          />
+        </button>
       </div>
 
       {/* Instructions */}

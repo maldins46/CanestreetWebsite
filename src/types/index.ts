@@ -254,6 +254,7 @@ export type ShowcaseMode = 'open' | 'under' | 'tpc_open' | 'tpc_under' | 'sponso
 export interface ShowcaseModeRow {
   id: string
   mode: ShowcaseMode
+  light_mode: boolean
   updated_at: string
   updated_by: string | null
 }

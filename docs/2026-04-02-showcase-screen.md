@@ -18,28 +18,38 @@ The showcase screen is a dedicated public page (`/showcase`) displayed on a larg
 |--------|------|-------|
 | `id` | text | Primary key, always `'default'` (single row) |
 | `mode` | text | Current display mode: `'open' \| 'under' \| 'tpc_open' \| 'tpc_under' \| 'sponsors'` |
+| `light_mode` | boolean | High-contrast white theme for sunlight visibility (default: `false`) |
 | `updated_at` | timestamptz | Last mode change |
 | `updated_by` | uuid, nullable | FK to admins(user_id) |
+
+**Migration:** `supabase/migrations/011_showcase_mode.sql` + `012_showcase_light_mode.sql`
 
 **RLS Policies:**
 - **Public:** `SELECT` (everyone can read current mode)
 - **Admins:** `UPDATE` via `is_admin()` function
 
-**Migration:** `supabase/migrations/011_showcase_mode.sql`
+---
+
+## Light Mode ("Modalità Chioppo del Sole")
+
+A high-contrast white theme designed for visibility under direct sunlight. When enabled, the showcase uses:
+- White background instead of dark
+- Dark text instead of white
+- Light gray cards instead of dark surfaces
+- Higher contrast for all UI elements
+
+### Admin Toggle
+Located on `/admin/showcase` page alongside the 5 mode buttons. Toggle switch to enable/disable.
+
+### Implementation
+- Theme passed as `theme` prop object to all showcase components
+- Components use conditional Tailwind classes based on `theme.*` values
+- Dark theme: `bg-court-dark`, `text-court-white`, `border-court-border`
+- Light theme: `bg-white`, `text-gray-900`, `border-gray-300`
 
 ---
 
 ## Display Modes
-
-| Mode | Description | Layout |
-|------|-------------|--------|
-| `open` | Tournament Open category | Calendar (60%) + Standings (40%) |
-| `under` | Under categories (U14/U16/U18) | Calendar (60%) + Standings (40%) with 20s carousel |
-| `tpc_open` | 3-Point Contest Open | Table columns per round |
-| `tpc_under` | 3-Point Contest Under | Table columns per round |
-| `sponsors` | Single rotating sponsor | Large centered logo, 5s rotation |
-
-All modes except `sponsors` show the sponsor strip at the bottom.
 
 ---
 
@@ -105,6 +115,7 @@ export type ShowcaseMode = 'open' | 'under' | 'tpc_open' | 'tpc_under' | 'sponso
 export interface ShowcaseModeRow {
   id: string
   mode: ShowcaseMode
+  light_mode: boolean
   updated_at: string
   updated_by: string | null
 }
@@ -116,6 +127,7 @@ export interface ShowcaseModeRow {
 
 ### New Files
 - `supabase/migrations/011_showcase_mode.sql` — Database table
+- `supabase/migrations/012_showcase_light_mode.sql` — Light mode column
 - `src/types/index.ts` — Add `ShowcaseMode` and `ShowcaseModeRow` types
 - `src/app/admin/(protected)/showcase/page.tsx` — Admin control page
 - `src/app/showcase/page.tsx` — Public showcase page (root level, no layout wrapper)
@@ -137,4 +149,5 @@ export interface ShowcaseModeRow {
 7. **TPC auto-scroll:** Mark a player as `is_live`, verify TPC page scrolls to center them
 8. **Sponsors mode:** Switch to Sponsors mode, verify single sponsor rotates every 5 seconds
 9. **Sponsor strip:** Verify strip shows on all modes except Sponsors mode
-10. **Build:** Run `npm run build` to verify no TypeScript errors
+10. **Light mode toggle:** Enable "Modalità Chioppo del Sole" in admin, verify showcase switches to white theme with high contrast
+11. **Build:** Run `npm run build` to verify no TypeScript errors

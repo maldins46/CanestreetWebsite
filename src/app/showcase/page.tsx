@@ -37,7 +37,7 @@ function getDayKey(iso: string | null): string {
 
 // ─── Calendar Component ──────────────────────────────────────────────────────────
 
-function ShowcaseCalendar({ matches }: { matches: MatchWithTeams[] }) {
+function ShowcaseCalendar({ matches, theme }: { matches: MatchWithTeams[]; theme: Record<string, string> }) {
   const containerRef = React.useRef<HTMLDivElement>(null)
   const filtered = matches // Show all matches (group + bracket phases)
   
@@ -210,7 +210,7 @@ function computeStandings(matches: MatchWithTeams[], teams: { id: string; name: 
   return rows
 }
 
-function ShowcaseStandings({ groups, matches, category }: { groups: GroupWithTeams[]; matches: MatchWithTeams[]; category: TeamCategory }) {
+function ShowcaseStandings({ groups, matches, category, theme }: { groups: GroupWithTeams[]; matches: MatchWithTeams[]; category: TeamCategory; theme: Record<string, string> }) {
   const groupsForCat = groups.filter(g => g.category === category)
   const groupMatches = matches.filter(m => m.phase === 'group' && m.category === category)
 
@@ -371,7 +371,7 @@ function ShowcaseBracket({ matches, category }: { matches: MatchWithTeams[]; cat
 
 // ─── 3-Point Contest Component ──────────────────────────────────────────────────
 
-function ShowcaseTPC({ contests, category }: { contests: TpcContestFull[]; category: 'open' | 'under' }) {
+function ShowcaseTPC({ contests, category, theme }: { contests: TpcContestFull[]; category: 'open' | 'under'; theme: Record<string, string> }) {
   const containerRef = React.useRef<HTMLDivElement>(null)
   const contest = contests.find(c => c.category === category) ?? null
 
@@ -481,7 +481,7 @@ function ShowcaseTPC({ contests, category }: { contests: TpcContestFull[]; categ
 
 // ─── Sponsor Strip (Bottom - All Modes) ──────────────────────────────────────────
 
-function SponsorStrip({ sponsors }: { sponsors: Sponsor[] }) {
+function SponsorStrip({ sponsors, theme }: { sponsors: Sponsor[]; theme: Record<string, string> }) {
   if (!sponsors.length) return null
   const items = [...sponsors, ...sponsors]
 
@@ -522,7 +522,7 @@ function SponsorStrip({ sponsors }: { sponsors: Sponsor[] }) {
 
 // ─── Single Sponsor Rotating Display ─────────────────────────────────────────────
 
-function SingleSponsorDisplay({ sponsors }: { sponsors: Sponsor[] }) {
+function SingleSponsorDisplay({ sponsors, theme }: { sponsors: Sponsor[]; theme: Record<string, string> }) {
   const [index, setIndex] = useState(0)
 
   useEffect(() => {
@@ -599,6 +599,7 @@ function SingleSponsorDisplay({ sponsors }: { sponsors: Sponsor[] }) {
 
 export default function ShowcasePage() {
   const [mode, setMode] = useState<ShowcaseMode>('open')
+  const [lightMode, setLightMode] = useState(false)
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<{
     edition: Edition | null
@@ -619,7 +620,7 @@ export default function ShowcasePage() {
 
   async function fetchAll() {
     const [{ data: modeData }, { data: editionData }, { data: matchData }, { data: groupData }, { data: tpcData }, { data: sponsorData }] = await Promise.all([
-      supabase.from('showcase_modes').select('mode').eq('id', 'default').single(),
+      supabase.from('showcase_modes').select('mode, light_mode').eq('id', 'default').single(),
       supabase.from('editions').select('*').eq('is_current', true).maybeSingle(),
       supabase
         .from('matches')
@@ -640,6 +641,7 @@ export default function ShowcasePage() {
     })
 
     if (modeData?.mode) setMode(modeData.mode)
+    if (modeData?.light_mode !== undefined) setLightMode(modeData.light_mode)
     setLoading(false)
   }
 
@@ -660,16 +662,35 @@ export default function ShowcasePage() {
 
   if (loading) {
     return (
-      <div className="h-screen bg-court-dark flex items-center justify-center">
-        <p className="text-court-gray font-display uppercase tracking-widest">Caricamento...</p>
+      <div className={clsx('h-screen flex items-center justify-center', lightMode ? 'bg-white' : 'bg-court-dark')}>
+        <p className={clsx('font-display uppercase tracking-widest', lightMode ? 'text-gray-600' : 'text-court-gray')}>Caricamento...</p>
       </div>
     )
   }
 
   const currentUnderCategory = CATEGORY_ORDER[underCategoryIndex]
 
+  // Light mode theme classes
+  const theme = {
+    bg: lightMode ? 'bg-white' : 'bg-court-dark',
+    text: lightMode ? 'text-gray-900' : 'text-court-white',
+    textMuted: lightMode ? 'text-gray-600' : 'text-court-muted',
+    textLight: lightMode ? 'text-gray-800' : 'text-court-light',
+    border: lightMode ? 'border-gray-300' : 'border-court-border',
+    card: lightMode ? 'bg-gray-50 border-gray-200' : 'bg-court-surface border-court-border',
+    cardBg: lightMode ? 'bg-gray-50' : 'bg-court-surface',
+    headerBg: lightMode ? 'bg-gray-100' : 'bg-court-dark',
+    inputBg: lightMode ? 'bg-white' : 'bg-white/[0.02]',
+    liveBg: lightMode ? 'bg-red-50' : 'bg-red-500/5',
+    liveBorder: lightMode ? 'border-red-400' : 'border-red-500',
+    liveText: lightMode ? 'text-red-600' : 'text-red-400',
+    qualifiedBg: lightMode ? 'bg-orange-50' : 'bg-brand-orange/5',
+    qualifiedBorder: lightMode ? 'border-orange-300' : 'border-brand-orange/50',
+    qualifiedText: lightMode ? 'text-orange-600' : 'text-brand-orange',
+  }
+
   return (
-    <div className="h-screen bg-court-dark flex flex-col overflow-hidden">
+    <div className={clsx('h-screen flex flex-col overflow-hidden', theme.bg)}>
       <style jsx>{`
         @keyframes sponsor-strip-scroll {
           from { transform: translateX(0); }
@@ -681,11 +702,11 @@ export default function ShowcasePage() {
         {/* Mode 1: Open - Calendar (60%) + Standings (40%) */}
         {mode === 'open' && (
           <div className="h-full flex">
-            <div className="w-[60%] border-r border-court-border">
-              <ShowcaseCalendar matches={data.matches} />
+            <div className={clsx('w-[60%] border-r', theme.border)}>
+              <ShowcaseCalendar matches={data.matches} theme={theme} />
             </div>
             <div className="w-[40%]">
-              <ShowcaseStandings groups={data.groups} matches={data.matches} category="open" />
+              <ShowcaseStandings groups={data.groups} matches={data.matches} category="open" theme={theme} />
             </div>
           </div>
         )}
@@ -693,14 +714,15 @@ export default function ShowcasePage() {
         {/* Mode 2: Under - Carousel through U14/U16/U18 */}
         {mode === 'under' && (
           <div className="h-full flex">
-            <div className="w-[60%] border-r border-court-border">
-              <ShowcaseCalendar matches={data.matches} />
+            <div className={clsx('w-[60%] border-r', theme.border)}>
+              <ShowcaseCalendar matches={data.matches} theme={theme} />
             </div>
             <div className="w-[40%]">
               <ShowcaseStandings 
                 groups={data.groups} 
                 matches={data.matches} 
                 category={currentUnderCategory} 
+                theme={theme}
               />
             </div>
             {/* Category indicator */}
@@ -722,22 +744,22 @@ export default function ShowcasePage() {
 
         {/* Mode 3: TPC Open */}
         {mode === 'tpc_open' && (
-          <ShowcaseTPC contests={data.tpcContests} category="open" />
+          <ShowcaseTPC contests={data.tpcContests} category="open" theme={theme} />
         )}
 
         {/* Mode 4: TPC Under */}
         {mode === 'tpc_under' && (
-          <ShowcaseTPC contests={data.tpcContests} category="under" />
+          <ShowcaseTPC contests={data.tpcContests} category="under" theme={theme} />
         )}
 
         {/* Mode 5: Sponsors - Single rotating sponsor */}
         {mode === 'sponsors' && (
-          <SingleSponsorDisplay sponsors={data.sponsors} />
+          <SingleSponsorDisplay sponsors={data.sponsors} theme={theme} />
         )}
       </main>
 
       {/* Sponsor strip at bottom - visible on all modes except sponsors */}
-      {mode !== 'sponsors' && <SponsorStrip sponsors={data.sponsors} />}
+      {mode !== 'sponsors' && <SponsorStrip sponsors={data.sponsors} theme={theme} />}
     </div>
   )
 }
