@@ -39,6 +39,7 @@ function getDayKey(iso: string | null): string {
 
 function ShowcaseCalendar({ matches, theme }: { matches: MatchWithTeams[]; theme: Record<string, string> }) {
   const containerRef = React.useRef<HTMLDivElement>(null)
+  const lightMode = theme.bg === 'bg-white'
   const filtered = matches // Show all matches (group + bracket phases)
   
   const days = new Map<string, MatchWithTeams[]>()
@@ -75,14 +76,14 @@ function ShowcaseCalendar({ matches, theme }: { matches: MatchWithTeams[]; theme
 
   return (
     <div className="h-full flex flex-col">
-      <div className="px-4 py-3 bg-court-dark border-b border-court-border">
-        <h2 className="font-display font-bold uppercase text-sm tracking-wide text-court-white">
+      <div className={clsx('px-4 py-3 border-b', theme.headerBg)}>
+        <h2 className={clsx('font-display font-bold uppercase text-sm tracking-wide', theme.textDarker)}>
           Calendario
         </h2>
       </div>
-      <div ref={containerRef} className="flex-1 overflow-y-auto p-4 space-y-6">
+      <div ref={containerRef} className={clsx('flex-1 overflow-y-auto p-4 space-y-6', theme.cardBg)}>
         {sortedDays.length === 0 ? (
-          <p className="text-court-muted text-sm text-center py-8">Nessuna partita programmata</p>
+          <p className={clsx('text-sm text-center py-8', theme.textMuted)}>Nessuna partita programmata</p>
         ) : (
           sortedDays.map(([dayKey, dayMatches]) => (
             <div key={dayKey}>
@@ -104,16 +105,16 @@ function ShowcaseCalendar({ matches, theme }: { matches: MatchWithTeams[]; theme
                       key={m.id}
                       className={clsx(
                         'flex items-center gap-3 px-3 py-2 rounded border-l-2 text-sm',
-                        isLive && 'border-red-500 bg-red-500/5',
-                        isDone && 'border-green-500/50 bg-white/[0.02]',
-                        !isLive && !isDone && 'border-court-border bg-white/[0.02]',
+                        isLive && clsx(theme.liveBorder, theme.liveBg),
+                        isDone && (lightMode ? 'border-green-400 bg-green-50' : 'border-green-500/50 bg-white/[0.02]'),
+                        !isLive && !isDone && clsx(theme.border, theme.inputBg),
                       )}
                     >
-                      <span className="w-12 text-court-muted text-xs shrink-0">
+                      <span className={clsx('w-12 text-xs shrink-0', isLive ? theme.liveText : theme.textMuted)}>
                         {isLive ? (
                           <span className="flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
-                            <span className="text-red-500 font-bold">LIVE</span>
+                            <span className={clsx('w-1.5 h-1.5 rounded-full animate-pulse', lightMode ? 'bg-red-600' : 'bg-red-500')} />
+                            <span className={clsx('font-bold', theme.liveText)}>LIVE</span>
                           </span>
                         ) : (
                           formatTime(m.scheduled_at)
@@ -123,23 +124,23 @@ function ShowcaseCalendar({ matches, theme }: { matches: MatchWithTeams[]; theme
                         {m.category}
                       </span>
                       {getPhaseLabel(m) && (
-                        <span className="text-court-muted text-xs w-12 shrink-0">
+                        <span className={clsx('text-xs w-12 shrink-0', theme.textMuted)}>
                           {getPhaseLabel(m)}
                         </span>
                       )}
-                      <span className={clsx('flex-1 text-right truncate', homeWon ? 'text-court-white font-bold' : 'text-court-gray')}>
+                      <span className={clsx('flex-1 text-right truncate', homeWon ? theme.tableText + ' font-bold' : theme.textMuted)}>
                         {m.team_home?.name ?? 'TBD'}
                       </span>
-                      <span className="w-12 text-center text-court-muted shrink-0">
+                      <span className={clsx('w-12 text-center shrink-0', theme.textMuted)}>
                         {isDone && m.score_home != null ? (
                           <span className="font-display font-bold">
-                            <span className={homeWon ? 'text-green-400' : ''}>{m.score_home}</span>
+                            <span className={homeWon ? (lightMode ? 'text-green-600' : 'text-green-400') : ''}>{m.score_home}</span>
                             <span className="mx-1">-</span>
-                            <span className={awayWon ? 'text-green-400' : ''}>{m.score_away}</span>
+                            <span className={awayWon ? (lightMode ? 'text-green-600' : 'text-green-400') : ''}>{m.score_away}</span>
                           </span>
                         ) : 'vs'}
                       </span>
-                      <span className={clsx('flex-1 truncate', awayWon ? 'text-court-white font-bold' : 'text-court-gray')}>
+                      <span className={clsx('flex-1 truncate', awayWon ? theme.tableText + ' font-bold' : theme.textMuted)}>
                         {m.team_away?.name ?? 'TBD'}
                       </span>
                     </div>
@@ -211,28 +212,29 @@ function computeStandings(matches: MatchWithTeams[], teams: { id: string; name: 
 }
 
 function ShowcaseStandings({ groups, matches, category, theme }: { groups: GroupWithTeams[]; matches: MatchWithTeams[]; category: TeamCategory; theme: Record<string, string> }) {
+  const lightMode = theme.bg === 'bg-white'
   const groupsForCat = groups.filter(g => g.category === category)
   const groupMatches = matches.filter(m => m.phase === 'group' && m.category === category)
 
   if (groupsForCat.length === 0) {
     return (
-      <div className="h-full flex items-center justify-center">
-        <p className="text-court-muted text-sm">Nessun girone per questa categoria</p>
+      <div className={clsx('h-full flex items-center justify-center', theme.textMuted)}>
+        <p className="text-sm">Nessun girone per questa categoria</p>
       </div>
     )
   }
 
   return (
     <div className="h-full flex flex-col">
-      <div className="px-4 py-3 bg-court-dark border-b border-court-border flex items-center justify-between">
-        <h2 className="font-display font-bold uppercase text-sm tracking-wide text-court-white">
+      <div className={clsx('px-4 py-3 flex items-center justify-between', theme.headerBg)}>
+        <h2 className={clsx('font-display font-bold uppercase text-sm tracking-wide', theme.textDarker)}>
           Classifiche
         </h2>
         <span className={clsx('text-[10px] px-2 py-0.5 rounded text-white', CATEGORY_COLORS[category])}>
           {category}
         </span>
       </div>
-      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+      <div className={clsx('flex-1 overflow-y-auto p-4 space-y-6', theme.cardBg)}>
         {groupsForCat.map(group => {
           const teams = group.group_teams.flatMap(gt => gt.teams ? [gt.teams] : [])
           const groupSpecificMatches = groupMatches.filter(m => m.group_id === group.id)
@@ -245,7 +247,7 @@ function ShowcaseStandings({ groups, matches, category, theme }: { groups: Group
               </p>
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="border-b border-court-border text-court-muted">
+                  <tr className={clsx('border-b', theme.tableBorder, theme.textMuted)}>
                     <th className="text-left py-2 pr-3 font-display uppercase">#</th>
                     <th className="text-left py-2 pr-3 font-display uppercase">Squadra</th>
                     <th className="text-center py-2 pr-3 font-display uppercase">G</th>
@@ -255,18 +257,19 @@ function ShowcaseStandings({ groups, matches, category, theme }: { groups: Group
                 </thead>
                 <tbody>
                   {standings.map((row, idx) => (
-                    <tr key={row.team_id} className="border-b border-court-border/50">
+                    <tr key={row.team_id} className={clsx('border-b border-opacity-50', theme.tableBorder, theme.tableRow)}>
                       <td className="py-2 pr-3">
-                        <span className={clsx('font-display font-bold', idx < 2 ? 'text-brand-orange' : 'text-court-muted')}>
+                        <span className={clsx('font-display font-bold', idx < 2 ? 'text-brand-orange' : theme.textMuted)}>
                           {idx + 1}
                         </span>
                       </td>
-                      <td className="py-2 pr-3 text-court-white truncate">{row.team_name}</td>
-                      <td className="py-2 pr-3 text-center text-court-muted">{row.played}</td>
-                      <td className="py-2 pr-3 text-center text-court-white font-semibold">{row.wins}</td>
+                      <td className={clsx('py-2 pr-3 truncate', theme.tableText)}>{row.team_name}</td>
+                      <td className={clsx('py-2 pr-3 text-center', theme.textMuted)}>{row.played}</td>
+                      <td className={clsx('py-2 pr-3 text-center font-semibold', theme.tableText)}>{row.wins}</td>
                       <td className="py-2 text-center">
                         <span className={clsx(
-                          row.point_differential > 0 ? 'text-green-400' : row.point_differential < 0 ? 'text-red-400' : 'text-court-muted'
+                          'font-display font-bold',
+                          row.point_differential > 0 ? 'text-green-600' : row.point_differential < 0 ? 'text-red-600' : theme.textMuted
                         )}>
                           {row.point_differential > 0 ? `+${row.point_differential}` : row.point_differential}
                         </span>
@@ -486,7 +489,7 @@ function SponsorStrip({ sponsors, theme }: { sponsors: Sponsor[]; theme: Record<
   const items = [...sponsors, ...sponsors]
 
   return (
-    <div className="h-16 border-t border-court-border bg-court-surface/50 shrink-0">
+    <div className={clsx('h-16 border-t shrink-0', theme.border, theme.headerBg)}>
       <div className="h-full overflow-hidden" style={{ maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)' }}>
         <div
           className="h-full flex items-center gap-8 w-max"
@@ -676,17 +679,23 @@ export default function ShowcasePage() {
     text: lightMode ? 'text-gray-900' : 'text-court-white',
     textMuted: lightMode ? 'text-gray-600' : 'text-court-muted',
     textLight: lightMode ? 'text-gray-800' : 'text-court-light',
+    textDarker: lightMode ? 'text-gray-950' : 'text-court-white',
     border: lightMode ? 'border-gray-300' : 'border-court-border',
-    card: lightMode ? 'bg-gray-50 border-gray-200' : 'bg-court-surface border-court-border',
-    cardBg: lightMode ? 'bg-gray-50' : 'bg-court-surface',
-    headerBg: lightMode ? 'bg-gray-100' : 'bg-court-dark',
-    inputBg: lightMode ? 'bg-white' : 'bg-white/[0.02]',
-    liveBg: lightMode ? 'bg-red-50' : 'bg-red-500/5',
-    liveBorder: lightMode ? 'border-red-400' : 'border-red-500',
-    liveText: lightMode ? 'text-red-600' : 'text-red-400',
-    qualifiedBg: lightMode ? 'bg-orange-50' : 'bg-brand-orange/5',
-    qualifiedBorder: lightMode ? 'border-orange-300' : 'border-brand-orange/50',
-    qualifiedText: lightMode ? 'text-orange-600' : 'text-brand-orange',
+    card: lightMode ? 'bg-white border-gray-300' : 'bg-court-surface border-court-border',
+    cardBg: lightMode ? 'bg-white' : 'bg-court-surface',
+    headerBg: lightMode ? 'bg-white border-b-2 border-gray-300' : 'bg-court-dark',
+    inputBg: lightMode ? 'bg-gray-100' : 'bg-white/[0.02]',
+    liveBg: lightMode ? 'bg-red-100' : 'bg-red-500/5',
+    liveBorder: lightMode ? 'border-red-500' : 'border-red-500',
+    liveText: lightMode ? 'text-red-700' : 'text-red-400',
+    qualifiedBg: lightMode ? 'bg-orange-100' : 'bg-brand-orange/5',
+    qualifiedBorder: lightMode ? 'border-orange-400' : 'border-brand-orange/50',
+    qualifiedText: lightMode ? 'text-orange-700' : 'text-brand-orange',
+    tableRow: lightMode ? 'hover:bg-gray-100' : 'hover:bg-white/[0.02]',
+    tableBorder: lightMode ? 'border-gray-200' : 'border-court-border',
+    tableText: lightMode ? 'text-gray-800' : 'text-court-white',
+    tableMuted: lightMode ? 'text-gray-600' : 'text-court-muted',
+    tableHighlight: lightMode ? 'text-gray-900 font-bold' : 'text-court-white font-bold',
   }
 
   return (
@@ -696,6 +705,12 @@ export default function ShowcasePage() {
           from { transform: translateX(0); }
           to { transform: translateX(-50%); }
         }
+        ${lightMode ? `
+          ::-webkit-scrollbar { width: 8px; height: 8px; }
+          ::-webkit-scrollbar-track { background: #f3f4f6; }
+          ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+          ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+        ` : ''}
       `}</style>
 
       <main className="flex-1 overflow-hidden">
