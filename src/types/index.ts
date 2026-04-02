@@ -244,3 +244,16 @@ export interface TpcContestFull extends TpcContest {
   tpc_players: TpcPlayer[]
   tpc_rounds: TpcRoundWithEntries[]
 }
+
+// ============================================================
+// Showcase mode type
+// ============================================================
+
+export type ShowcaseMode = 'open' | 'under' | 'tpc_open' | 'tpc_under' | 'sponsors'
+
+export interface ShowcaseModeRow {
+  id: string
+  mode: ShowcaseMode
+  updated_at: string
+  updated_by: string | null
+}
