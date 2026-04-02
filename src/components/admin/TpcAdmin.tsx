@@ -159,10 +159,10 @@ function ContestManager({ contest }: { contest: TpcContestFull }) {
               <span className="text-court-white text-sm">{p.name}</span>
               <button
                 onClick={() => deletePlayer(p.id)}
-                className="text-court-gray hover:text-red-400 transition-colors"
+                className="text-court-muted hover:text-red-400 transition-colors"
                 title="Elimina"
               >
-                <Trash2 size={14} />
+                <Trash2 size={13} />
               </button>
             </div>
           ))}
@@ -329,7 +329,7 @@ function RoundCard({ round, contest, prevRound, expanded, onToggle, onDelete }: 
         <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
           <button
             onClick={onDelete}
-            className="text-court-gray hover:text-red-400 transition-colors p-1"
+            className="text-court-muted hover:text-red-400 transition-colors p-1"
             title="Elimina turno"
           >
             <Trash2 size={13} />
@@ -494,7 +494,7 @@ function EntryRow({ entry, onUpdateScore, onToggleQualified, onSetLive, onUpdate
       <td className="py-2 text-right">
         <button
           onClick={() => onDelete(entry.id)}
-          className="text-court-gray hover:text-red-400 transition-colors"
+          className="text-court-muted hover:text-red-400 transition-colors"
           title="Rimuovi dal turno"
         >
           <Trash2 size={13} />

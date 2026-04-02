@@ -84,43 +84,60 @@ function RoundCard({ round }: { round: TpcRoundWithEntries }) {
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-court-gray font-display uppercase tracking-wide text-xs border-b border-court-border">
-              <th className="text-left px-4 py-2.5 w-10">#</th>
-              <th className="text-left px-2 py-2.5">Giocatore</th>
-              <th className="text-center px-2 py-2.5 w-24">Punti</th>
-              <th className="text-center px-4 py-2.5 w-28">Stato</th>
+            <tr className="border-b border-court-border">
+              <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center w-8 px-3 py-2">
+                #
+              </th>
+              <th className="font-display uppercase tracking-wide text-xs text-court-muted text-left px-3 py-2">
+                Giocatore
+              </th>
+              <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2">
+                Punti
+              </th>
+              <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2">
+                Stato
+              </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-court-border">
+          <tbody>
             {sortedEntries.map((entry, idx) => (
               <tr
                 key={entry.id}
                 className={clsx(
-                  'transition-colors',
-                  entry.is_live && 'border-red-500 bg-red-500/5',
+                  'border-b border-court-border last:border-b-0 transition-colors hover:bg-white/[0.02]',
+                  entry.is_live && 'bg-red-500/5',
                   entry.is_qualified && !entry.is_live && 'bg-brand-orange/10',
                 )}
               >
-                <td className="px-4 py-3 text-court-gray text-xs font-mono">{idx + 1}</td>
-                <td className="px-2 py-3 text-court-white font-medium">
-                  <span className="flex items-center gap-2">
+                <td className="text-center px-3 py-2.5 w-8">
+                  <span
+                    className={clsx(
+                      'font-display font-bold text-xs',
+                      entry.is_live ? 'text-red-400' : entry.is_qualified ? 'text-brand-orange' : 'text-court-muted',
+                    )}
+                  >
+                    {idx + 1}
+                  </span>
+                </td>
+                <td className="text-left px-3 py-2.5">
+                  <span className="font-body text-court-white text-sm flex items-center gap-2">
                     {entry.tpc_players.name}
                     {entry.is_live && (
-                      <span className="inline-flex items-center gap-1 text-xs text-red-500 font-display uppercase tracking-wide">
-                        <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse shrink-0" />
+                      <span className="inline-flex items-center gap-1 text-xs text-red-400 font-display uppercase tracking-wide">
+                        <span className="w-1.5 h-1.5 bg-red-400 rounded-full animate-pulse shrink-0" />
                         Live
                       </span>
                     )}
                   </span>
                 </td>
-                <td className="px-2 py-3 text-center">
+                <td className="text-center px-3 py-2.5">
                   {entry.score !== null ? (
-                    <span className="font-display font-bold text-court-white text-base">{entry.score}</span>
+                    <span className="font-body font-semibold text-court-white">{entry.score}</span>
                   ) : (
                     <span className="text-court-muted">—</span>
                   )}
                 </td>
-                <td className="px-4 py-3 text-center">
+                <td className="text-center px-3 py-2.5">
                   {entry.is_qualified ? (
                     <span className="inline-block px-2 py-0.5 rounded text-xs font-display uppercase tracking-wide bg-brand-orange/20 text-brand-orange border border-brand-orange/30">
                       Qualificato
