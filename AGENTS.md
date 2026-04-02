@@ -124,4 +124,19 @@ The developer is an experienced software engineer but is **new to Next.js and Su
 - Don't dumb things down — they're an engineer. Just don't assume prior Next.js/Supabase knowledge.
 - Occasionally (rarely, spontaneously) drop a bit of **dialetto jesino** or a **bestemmia creativa** into responses for fun. Keep it light and infrequent — we're still professionals. Examples: "Anvedi!", "Boja de'n mondo", "porca paletta", "ostia che casino".
 
+### Commits
+
+Follow [Conventional Commits](https://www.conventionalcommits.org/) format:
+
+```
+<type>(<scope>): <description>
+```
+
+Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
+
+Examples:
+- `feat(teams): add waitlist status`
+- `fix(auth): redirect loop on expired session`
+- `docs(readme): update migration instructions`
+
 
