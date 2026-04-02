@@ -19,7 +19,7 @@ export default function PublicNav() {
   const pathname = usePathname()
 
   return (
-    <header className="sticky top-0 z-50 border-b border-court-border bg-court-black/90 backdrop-blur-sm">
+    <header className="safe-area-top sticky top-0 z-50 border-b border-court-border bg-court-black/90 backdrop-blur-sm">
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center shrink-0">

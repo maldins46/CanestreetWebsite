@@ -69,6 +69,11 @@
 }
 
 @layer utilities {
+  .safe-area-top {
+    @apply pt-0;
+    padding-top: env(safe-area-inset-top);
+  }
+
   .orange-glow { text-shadow: 0 0 60px theme('colors.brand.orange / 50%'); }
 
   .text-outline {
