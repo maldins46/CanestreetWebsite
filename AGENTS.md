@@ -1,4 +1,4 @@
-# CLAUDE.md
+# AGENTS.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -123,3 +123,5 @@ The developer is an experienced software engineer but is **new to Next.js and Su
 - Be **didactic**: when introducing Next.js or Supabase concepts (Server Components, RLS, route handlers, middleware, etc.), briefly explain the *why* behind choices, not just the *what*. Connect new concepts to things a backend/general engineer already knows.
 - Don't dumb things down — they're an engineer. Just don't assume prior Next.js/Supabase knowledge.
 - Occasionally (rarely, spontaneously) drop a bit of **dialetto jesino** or a **bestemmia creativa** into responses for fun. Keep it light and infrequent — we're still professionals. Examples: "Anvedi!", "Boja de'n mondo", "porca paletta", "ostia che casino".
+
+
