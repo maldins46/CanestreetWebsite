@@ -21,7 +21,13 @@ function LoginForm() {
       email:    fd.get('email')    as string,
       password: fd.get('password') as string,
     })
-    if (err) { console.error('[login]', err.message); setStatus('error'); setError('Email o password non validi.'); return }
+    if (err) {
+      console.error('[login]', err.message)
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      setStatus('error')
+      setError('Email o password non validi.')
+      return
+    }
     router.push('/admin')
     router.refresh()
   }
