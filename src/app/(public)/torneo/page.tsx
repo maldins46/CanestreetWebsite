@@ -2,10 +2,7 @@ import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import type { Edition, GroupWithTeams, MatchWithTeams, TpcContestFull } from '@/types'
-import TournamentCalendarSection from '@/components/public/TournamentCalendarSection'
-import StandingsSection from '@/components/public/StandingsTable'
-import BracketSection from '@/components/public/BracketView'
-import ThreePointContestSection from '@/components/public/ThreePointContestSection'
+import TorneoPageClient from '@/components/public/TorneoPageClient'
 
 export const revalidate = 15
 
@@ -73,45 +70,14 @@ export default async function TorneoPage() {
         </div>
       </section>
 
-      {/* Calendar section */}
-      <section className="py-12">
-        <div className="max-w-6xl mx-auto px-6">
-          <h2 className="font-display font-bold uppercase text-xl text-court-white mb-6">
-            Calendario
-          </h2>
-          <TournamentCalendarSection matches={matches} />
-        </div>
-      </section>
-
-      {/* Standings section */}
-      <section className="py-12 border-t border-court-border">
-        <div className="max-w-6xl mx-auto px-6">
-          <h2 className="font-display font-bold uppercase text-xl text-court-white mb-6">
-            Classifiche
-          </h2>
-          <StandingsSection groups={groups} matches={matches} />
-        </div>
-      </section>
-
-      {/* Bracket section */}
-      <section className="py-12 border-t border-court-border">
-        <div className="max-w-6xl mx-auto px-6">
-          <h2 className="font-display font-bold uppercase text-xl text-court-white mb-6">
-            Tabellone
-          </h2>
-          <BracketSection matches={matches} />
-        </div>
-      </section>
-
-      {/* 3-Point Contest section */}
-      <section className="py-12 border-t border-court-border">
-        <div className="max-w-6xl mx-auto px-6">
-          <h2 className="font-display font-bold uppercase text-xl text-court-white mb-6">
-            3-Point Contest
-          </h2>
-          <ThreePointContestSection contests={tpcContests} />
-        </div>
-      </section>
+      {/* Tabs + Content */}
+      <Suspense fallback={<div className="max-w-6xl mx-auto px-6 py-12"><div className="card p-10 text-center"><p className="text-court-gray">Caricamento...</p></div></div>}>
+        <TorneoPageClient
+          matches={matches}
+          groups={groups}
+          tpcContests={tpcContests}
+        />
+      </Suspense>
     </div>
   )
 }
