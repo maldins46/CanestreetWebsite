@@ -489,21 +489,24 @@ function ShowcaseTPC({ contests, category, theme }: { contests: TpcContestFull[]
 
 function SponsorStrip({ sponsors, theme }: { sponsors: Sponsor[]; theme: Record<string, string> }) {
   if (!sponsors.length) return null
-  const items = [...sponsors, ...sponsors]
+
+  const copies = Math.max(2, Math.ceil(12 / sponsors.length))
+  const set = Array.from({ length: copies }, () => sponsors).flat()
+  const items = [...set, ...set]
 
   return (
     <div className={clsx('h-16 border-t shrink-0', theme.border, theme.headerBg)}>
       <div className="h-full overflow-hidden" style={{ maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)' }}>
         <div
-          className="h-full flex items-center gap-8 w-max"
+          className="h-full flex items-center w-max"
           style={{
-            animation: `sponsor-strip-scroll ${Math.max(sponsors.length * 3, 15)}s linear infinite`,
+            animation: `sponsor-scroll ${Math.max(set.length * 3, 15)}s linear infinite`,
           }}
         >
           {items.map((sponsor, i) => (
             <div
               key={`${sponsor.id}-${i}`}
-              className="relative h-10 aspect-[3/2] shrink-0 bg-white overflow-hidden"
+              className="relative h-10 aspect-[3/2] shrink-0 mr-8 bg-white overflow-hidden"
             >
               {sponsor.logo_url ? (
                 <img
