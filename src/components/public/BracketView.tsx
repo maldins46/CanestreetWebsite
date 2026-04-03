@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import clsx from 'clsx'
 import type { BracketRound, MatchWithTeams, TeamCategory } from '@/types'
 
@@ -14,6 +14,20 @@ const roundLabels: Record<BracketRound, string> = {
 }
 
 const roundOrder: BracketRound[] = ['round_of_16', 'quarterfinal', 'semifinal', 'final']
+
+// ─── Layout constants (desktop bracket) ───────────────────────────────────────
+
+const CARD_W = 192   // px — card width (w-48)
+const CARD_H = 74    // px — two rows of py-2 + text-sm + inner border
+const SLOT   = 90    // px — CARD_H + 16px vertical gap between cards in first round
+const COL_GAP = 48   // px — horizontal space between columns (connector lines drawn here)
+const LINE_COLOR = '#3a3a3a'
+
+/** Top offset of match `i` in round index `r` (0 = leftmost / most matches) */
+function matchTop(r: number, i: number): number {
+  const step = Math.pow(2, r)
+  return i * step * SLOT + (step - 1) * SLOT / 2
+}
 
 // ─── BracketMatchCard ──────────────────────────────────────────────────────────
 
@@ -29,7 +43,7 @@ function BracketMatchCard({ match }: BracketMatchCardProps) {
   const awayWon = hasScore && match.score_away! > match.score_home!
 
   return (
-    <div className="card w-48 overflow-hidden text-sm">
+    <div className="card overflow-hidden text-sm">
       {/* Home team row */}
       <div
         className={clsx(
@@ -87,6 +101,133 @@ function BracketMatchCard({ match }: BracketMatchCardProps) {
   )
 }
 
+// ─── Desktop bracket (absolute positioning + SVG connectors) ──────────────────
+
+interface DesktopBracketProps {
+  rounds: BracketRound[]
+  byRound: Map<BracketRound, MatchWithTeams[]>
+}
+
+function DesktopBracket({ rounds, byRound }: DesktopBracketProps) {
+  const wrapperRef = useRef<HTMLDivElement>(null)
+  const [availableWidth, setAvailableWidth] = useState(0)
+
+  useEffect(() => {
+    const el = wrapperRef.current
+    if (!el) return
+    const ro = new ResizeObserver(() => setAvailableWidth(el.getBoundingClientRect().width))
+    ro.observe(el)
+    setAvailableWidth(el.getBoundingClientRect().width)
+    return () => ro.disconnect()
+  }, [])
+
+  const numRounds = rounds.length
+  const firstRoundCount = Math.pow(2, numRounds - 1)
+
+  const minW = numRounds * CARD_W + (numRounds - 1) * COL_GAP
+  const totalW = availableWidth > minW ? availableWidth : minW
+  const gap = numRounds > 1 ? (totalW - numRounds * CARD_W) / (numRounds - 1) : COL_GAP
+  const totalH = firstRoundCount * SLOT - (SLOT - CARD_H)
+
+  return (
+    <div ref={wrapperRef} className="w-full">
+      {/* Round headers — flex row aligned to columns */}
+      <div
+        className="flex mb-3"
+        style={{ gap, width: totalW }}
+      >
+        {rounds.map(round => (
+          <h3
+            key={round}
+            className="font-display font-bold uppercase tracking-wide text-xs text-brand-orange whitespace-nowrap"
+            style={{ width: CARD_W, flexShrink: 0 }}
+          >
+            {roundLabels[round]}
+          </h3>
+        ))}
+      </div>
+
+      {/* Bracket area: cards + SVG connector overlay */}
+      <div style={{ position: 'relative', width: totalW, height: totalH }}>
+        {/* SVG connector lines */}
+        <svg
+          style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+          width={totalW}
+          height={totalH}
+        >
+          {rounds.slice(0, -1).map((round, rIdx) => {
+            const matches = byRound.get(round) ?? []
+            const nextMatches = byRound.get(rounds[rIdx + 1]) ?? []
+
+            const x1   = rIdx * (CARD_W + gap) + CARD_W
+            const x2   = (rIdx + 1) * (CARD_W + gap)
+            const xMid = (x1 + x2) / 2
+
+            const pairs = Math.ceil(matches.length / 2)
+
+            return Array.from({ length: pairs }, (_, k) => {
+              const topMatch    = matches[2 * k]
+              const bottomMatch = matches[2 * k + 1]
+              const nextMatch   = nextMatches[k]
+
+              if (!topMatch || !nextMatch) return null
+
+              const yTop = matchTop(rIdx, 2 * k) + CARD_H / 2
+              const yMid = matchTop(rIdx + 1, k) + CARD_H / 2
+
+              if (!bottomMatch) {
+                // Bye: single straight connector
+                return (
+                  <line
+                    key={k}
+                    x1={x1} y1={yTop} x2={x2} y2={yTop}
+                    stroke={LINE_COLOR} strokeWidth={1.5}
+                  />
+                )
+              }
+
+              const yBottom = matchTop(rIdx, 2 * k + 1) + CARD_H / 2
+
+              return (
+                <g key={k}>
+                  {/* Horizontal out of top match */}
+                  <line x1={x1} y1={yTop} x2={xMid} y2={yTop} stroke={LINE_COLOR} strokeWidth={1.5} />
+                  {/* Vertical bracket arm */}
+                  <line x1={xMid} y1={yTop} x2={xMid} y2={yBottom} stroke={LINE_COLOR} strokeWidth={1.5} />
+                  {/* Horizontal out of bottom match */}
+                  <line x1={x1} y1={yBottom} x2={xMid} y2={yBottom} stroke={LINE_COLOR} strokeWidth={1.5} />
+                  {/* Horizontal into next-round match */}
+                  <line x1={xMid} y1={yMid} x2={x2} y2={yMid} stroke={LINE_COLOR} strokeWidth={1.5} />
+                </g>
+              )
+            })
+          })}
+        </svg>
+
+        {/* Absolutely positioned match cards */}
+        {rounds.map((round, rIdx) => {
+          const matches = byRound.get(round) ?? []
+          const x = rIdx * (CARD_W + gap)
+
+          return matches.map((match, mIdx) => (
+            <div
+              key={match.id}
+              style={{
+                position: 'absolute',
+                top: matchTop(rIdx, mIdx),
+                left: x,
+                width: CARD_W,
+              }}
+            >
+              <BracketMatchCard match={match} />
+            </div>
+          ))
+        })}
+      </div>
+    </div>
+  )
+}
+
 // ─── BracketView ───────────────────────────────────────────────────────────────
 
 interface BracketViewProps {
@@ -120,27 +261,13 @@ export function BracketView({ matches }: BracketViewProps) {
   const rounds = roundOrder.filter(r => byRound.has(r))
 
   return (
-    // overflow-x-auto for large brackets on mobile
-    <div className="overflow-x-auto">
-      {/* Desktop: horizontal flex (rounds as columns) */}
-      <div className="hidden md:flex gap-8 items-start min-w-max pb-4">
-        {rounds.map(round => (
-          <div key={round} className="flex flex-col gap-4">
-            {/* Round header */}
-            <h3 className="font-display font-bold uppercase tracking-wide text-xs text-brand-orange mb-1 whitespace-nowrap">
-              {roundLabels[round]}
-            </h3>
-            {/* Matches */}
-            <div className="flex flex-col gap-3">
-              {(byRound.get(round) ?? []).map(m => (
-                <BracketMatchCard key={m.id} match={m} />
-              ))}
-            </div>
-          </div>
-        ))}
+    <>
+      {/* Desktop: visual bracket with connecting lines */}
+      <div className="hidden md:block overflow-x-auto pb-4">
+        <DesktopBracket rounds={rounds} byRound={byRound} />
       </div>
 
-      {/* Mobile: vertical stack */}
+      {/* Mobile: vertical stack, full-width cards */}
       <div className="flex flex-col gap-8 md:hidden">
         {rounds.map(round => (
           <div key={round}>
@@ -155,7 +282,7 @@ export function BracketView({ matches }: BracketViewProps) {
           </div>
         ))}
       </div>
-    </div>
+    </>
   )
 }
 
@@ -177,7 +304,6 @@ interface BracketSectionProps {
 export default function BracketSection({ matches }: BracketSectionProps) {
   const bracketMatches = matches.filter(m => m.phase === 'bracket')
 
-  // Determine which categories have bracket matches
   const availableCategories = categoryOrder.filter(cat =>
     bracketMatches.some(m => m.category === cat),
   )
