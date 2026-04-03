@@ -27,7 +27,7 @@ export default function SponsorCarousel({ sponsors }: Props) {
       >
         {items.map((sponsor, i) => {
           const Logo = (
-            <div className="relative w-32 aspect-[3/2] shrink-0 bg-white rounded overflow-hidden transition-opacity hover:opacity-90">
+            <div className="relative w-32 aspect-[3/2] shrink-0 bg-white overflow-hidden ring-1 ring-brand-orange/20 hover:ring-brand-orange/70 transition-all duration-200">
               {sponsor.logo_url ? (
                 <Image
                   src={sponsor.logo_url}

@@ -63,7 +63,7 @@ function SponsorCard({ sponsor, config }: { sponsor: Sponsor; config: TierConfig
       className={`card p-5 flex flex-col gap-4 ${sponsor.website_url ? 'hover:border-court-muted transition-colors group' : ''}`}
     >
       {/* Logo */}
-      <div className="relative w-full aspect-[3/2] bg-white rounded overflow-hidden">
+      <div className="relative w-full aspect-[3/2] bg-white overflow-hidden ring-1 ring-brand-orange/20 group-hover:ring-brand-orange/70 transition-all duration-200">
         {sponsor.logo_url ? (
           <Image
             src={sponsor.logo_url}
@@ -105,7 +105,7 @@ function LogoCard({ sponsor }: { sponsor: Sponsor }) {
       className={`card p-3 flex flex-col items-center gap-2 ${sponsor.website_url ? 'hover:border-court-muted transition-colors group' : ''}`}
       title={sponsor.name}
     >
-      <div className="relative w-full aspect-[3/2] bg-white rounded overflow-hidden">
+      <div className="relative w-full aspect-[3/2] bg-white overflow-hidden ring-1 ring-brand-orange/20 group-hover:ring-brand-orange/70 transition-all duration-200">
         {sponsor.logo_url ? (
           <Image
             src={sponsor.logo_url}
