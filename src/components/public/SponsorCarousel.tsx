@@ -27,18 +27,18 @@ export default function SponsorCarousel({ sponsors }: Props) {
       >
         {items.map((sponsor, i) => {
           const Logo = (
-            <div className="relative w-28 h-14 shrink-0 opacity-60 hover:opacity-100 transition-opacity grayscale hover:grayscale-0">
+            <div className="relative w-32 aspect-[3/2] shrink-0 bg-white rounded overflow-hidden transition-opacity hover:opacity-90">
               {sponsor.logo_url ? (
                 <Image
                   src={sponsor.logo_url}
                   alt={sponsor.name}
                   fill
-                  className="object-contain"
-                  sizes="112px"
+                  className="object-contain p-2"
+                  sizes="128px"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center border border-court-border bg-court-surface">
-                  <span className="font-display font-bold text-brand-orange/60 text-sm uppercase tracking-wide">
+                <div className="w-full h-full flex items-center justify-center">
+                  <span className="font-display font-bold text-gray-400 text-sm uppercase tracking-wide">
                     {sponsor.name}
                   </span>
                 </div>

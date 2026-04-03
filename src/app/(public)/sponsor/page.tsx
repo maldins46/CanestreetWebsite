@@ -14,7 +14,6 @@ interface TierConfig {
   label: string
   description: string
   gridClass: string
-  logoSize: string
   showDescription: boolean
 }
 
@@ -23,28 +22,24 @@ const TIER_CONFIG: Record<SponsorTier, TierConfig> = {
     label: 'Main Sponsor',
     description: 'I nostri partner principali, senza i quali nulla sarebbe possibile.',
     gridClass: 'grid grid-cols-1 md:grid-cols-2 gap-6',
-    logoSize: 'h-24',
     showDescription: true,
   },
   gold: {
     label: 'Gold Sponsor',
     description: 'Partner gold che contribuiscono a rendere il torneo un successo.',
     gridClass: 'grid grid-cols-2 md:grid-cols-3 gap-5',
-    logoSize: 'h-16',
     showDescription: true,
   },
   silver: {
     label: 'Silver Sponsor',
     description: '',
     gridClass: 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4',
-    logoSize: 'h-12',
     showDescription: false,
   },
   bronze: {
     label: 'Bronze Sponsor',
     description: '',
     gridClass: 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3',
-    logoSize: 'h-10',
     showDescription: false,
   },
 }
@@ -68,17 +63,17 @@ function SponsorCard({ sponsor, config }: { sponsor: Sponsor; config: TierConfig
       className={`card p-5 flex flex-col gap-4 ${sponsor.website_url ? 'hover:border-court-muted transition-colors group' : ''}`}
     >
       {/* Logo */}
-      <div className={`relative w-full ${config.logoSize} bg-white/5 flex items-center justify-center p-3`}>
+      <div className="relative w-full aspect-[3/2] bg-white rounded overflow-hidden">
         {sponsor.logo_url ? (
           <Image
             src={sponsor.logo_url}
             alt={sponsor.name}
             fill
-            className="object-contain p-2"
+            className="object-contain p-4"
             sizes="(max-width: 768px) 50vw, 33vw"
           />
         ) : (
-          <span className="font-display font-bold text-2xl text-brand-orange/60">{sponsor.name.charAt(0)}</span>
+          <span className="absolute inset-0 flex items-center justify-center font-display font-bold text-2xl text-gray-400">{sponsor.name.charAt(0)}</span>
         )}
       </div>
 
@@ -110,17 +105,17 @@ function LogoCard({ sponsor }: { sponsor: Sponsor }) {
       className={`card p-3 flex flex-col items-center gap-2 ${sponsor.website_url ? 'hover:border-court-muted transition-colors group' : ''}`}
       title={sponsor.name}
     >
-      <div className="relative w-full h-10 bg-white/5 flex items-center justify-center">
+      <div className="relative w-full aspect-[3/2] bg-white rounded overflow-hidden">
         {sponsor.logo_url ? (
           <Image
             src={sponsor.logo_url}
             alt={sponsor.name}
             fill
-            className="object-contain p-1"
+            className="object-contain p-2"
             sizes="120px"
           />
         ) : (
-          <span className="font-display font-bold text-lg text-brand-orange/60">{sponsor.name.charAt(0)}</span>
+          <span className="absolute inset-0 flex items-center justify-center font-display font-bold text-lg text-gray-400">{sponsor.name.charAt(0)}</span>
         )}
       </div>
       <p className="font-display uppercase text-court-gray text-[10px] tracking-wide text-center truncate w-full group-hover:text-court-light transition-colors">
