@@ -503,7 +503,7 @@ function SponsorStrip({ sponsors, theme }: { sponsors: Sponsor[]; theme: Record<
           {items.map((sponsor, i) => (
             <div
               key={`${sponsor.id}-${i}`}
-              className="relative h-10 aspect-[3/2] shrink-0 bg-white rounded overflow-hidden"
+              className="relative h-10 aspect-[3/2] shrink-0 bg-white overflow-hidden"
             >
               {sponsor.logo_url ? (
                 <img
@@ -551,7 +551,7 @@ function SingleSponsorDisplay({ sponsors, theme }: { sponsors: Sponsor[]; theme:
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-12">
-      <div className="w-full max-w-3xl aspect-[3/2] relative mb-8 bg-white rounded-lg overflow-hidden">
+      <div className="w-full max-w-3xl aspect-[3/2] relative mb-8 bg-white overflow-hidden">
         {sponsor.logo_url ? (
           sponsor.website_url ? (
             <a
