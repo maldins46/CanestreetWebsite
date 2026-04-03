@@ -6,7 +6,51 @@
   :root {
     --font-display: 'Barlow Condensed', sans-serif;
     --font-body:    'Barlow', sans-serif;
+
+    /* Court color tokens — dark defaults (R G B channel triplets for Tailwind opacity modifier support) */
+    --color-court-black:   10  10  10;
+    --color-court-dark:    17  17  17;
+    --color-court-surface: 26  26  26;
+    --color-court-border:  42  42  42;
+    --color-court-muted:   68  68  68;
+    --color-court-gray:   136 136 136;
+    --color-court-light:  204 204 204;
+    --color-court-white:  245 245 240;
   }
+
+  /* Admin light theme — scoped to the admin layout wrapper */
+  [data-theme="light"] {
+    --color-court-black:   249 249 248;
+    --color-court-dark:    242 242 239;
+    --color-court-surface: 232 232 228;
+    --color-court-border:  208 208 204;
+    --color-court-muted:   160 160 160;
+    --color-court-gray:     96  96  96;
+    --color-court-light:    48  48  48;
+    --color-court-white:    17  17  17;
+  }
+
+  /* Admin system theme — follows OS preference */
+  @media (prefers-color-scheme: light) {
+    [data-theme="system"] {
+      --color-court-black:   249 249 248;
+      --color-court-dark:    242 242 239;
+      --color-court-surface: 232 232 228;
+      --color-court-border:  208 208 204;
+      --color-court-muted:   160 160 160;
+      --color-court-gray:     96  96  96;
+      --color-court-light:    48  48  48;
+      --color-court-white:    17  17  17;
+    }
+  }
+
+  /* Scrollbar overrides for admin light themes (base scrollbar uses raw hex) */
+  [data-theme="light"] ::-webkit-scrollbar-track,
+  [data-theme="system"] ::-webkit-scrollbar-track { background: rgb(var(--color-court-dark)); }
+  [data-theme="light"] ::-webkit-scrollbar-thumb,
+  [data-theme="system"] ::-webkit-scrollbar-thumb { background: rgb(var(--color-court-border)); border-radius: 2px; }
+  [data-theme="light"] ::-webkit-scrollbar-thumb:hover,
+  [data-theme="system"] ::-webkit-scrollbar-thumb:hover { background: rgb(var(--color-court-muted)); }
 
   * {
     box-sizing: border-box;
@@ -66,6 +110,16 @@
     @apply block text-xs font-display font-semibold uppercase tracking-wider
            text-court-gray mb-1.5;
   }
+
+  /* Badge overrides for admin light themes */
+  [data-theme="light"] .badge-pending,
+  [data-theme="system"] .badge-pending    { @apply bg-yellow-100 text-yellow-700 border-yellow-300; }
+  [data-theme="light"] .badge-approved,
+  [data-theme="system"] .badge-approved   { @apply bg-green-100  text-green-700  border-green-300; }
+  [data-theme="light"] .badge-rejected,
+  [data-theme="system"] .badge-rejected   { @apply bg-red-100    text-red-700    border-red-300; }
+  [data-theme="light"] .badge-waitlisted,
+  [data-theme="system"] .badge-waitlisted { @apply bg-blue-100   text-blue-700   border-blue-300; }
 }
 
 @layer utilities {
@@ -78,7 +132,7 @@
 
   .text-outline {
     color: transparent;
-    -webkit-text-stroke: 2px theme('colors.court.white');
+    -webkit-text-stroke: 2px #f5f5f0; /* static hex — court-white dark value; public-only utility */
     paint-order: stroke fill;
   }
 

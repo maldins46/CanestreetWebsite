@@ -6,6 +6,8 @@ import { useState, useEffect } from 'react'
 import { Users, Newspaper, Image as ImageIcon, ShieldCheck, LogOut, Home, ExternalLink, Trophy, UserCircle, Menu, X, Handshake, Calendar, Target, MonitorPlay } from 'lucide-react'
 import clsx from 'clsx'
 import { createClient } from '@/lib/supabase/client'
+import AdminThemeToggle from './AdminThemeToggle'
+import type { AdminTheme } from '@/hooks/useAdminTheme'
 
 const nav = [
   { href: '/admin',                  label: 'Dashboard',       icon: Home },
@@ -21,7 +23,13 @@ const nav = [
   { href: '/admin/admins',           label: 'Admins',     icon: ShieldCheck },
 ]
 
-export default function AdminSidebar() {
+export default function AdminSidebar({
+  theme,
+  onThemeChange,
+}: {
+  theme: AdminTheme
+  onThemeChange: (t: AdminTheme) => void
+}) {
   const pathname = usePathname()
   const router = useRouter()
 
@@ -124,6 +132,7 @@ export default function AdminSidebar() {
               <p className="text-xs text-court-muted truncate" title={email}>{email}</p>
             </div>
           )}
+          <AdminThemeToggle theme={theme} onThemeChange={onThemeChange} />
           <a
             href="/"
             target="_blank"

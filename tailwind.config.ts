@@ -6,14 +6,14 @@ module.exports = {
       colors: {
         // Brand palette — urban blacktop + accent orange
         court: {
-          black:   '#0a0a0a',
-          dark:    '#111111',
-          surface: '#1a1a1a',
-          border:  '#2a2a2a',
-          muted:   '#444444',
-          gray:    '#888888',
-          light:   '#cccccc',
-          white:   '#f5f5f0',
+          black:   'rgb(var(--color-court-black)   / <alpha-value>)',
+          dark:    'rgb(var(--color-court-dark)    / <alpha-value>)',
+          surface: 'rgb(var(--color-court-surface) / <alpha-value>)',
+          border:  'rgb(var(--color-court-border)  / <alpha-value>)',
+          muted:   'rgb(var(--color-court-muted)   / <alpha-value>)',
+          gray:    'rgb(var(--color-court-gray)    / <alpha-value>)',
+          light:   'rgb(var(--color-court-light)   / <alpha-value>)',
+          white:   'rgb(var(--color-court-white)   / <alpha-value>)',
         },
         brand: {
           orange:  '#f26522',
