@@ -27,6 +27,12 @@ const PREVIEW_IMG: Record<PreviewVariant, string> = {
   cover:     'object-cover',
 }
 
+const PREVIEW_BG: Record<PreviewVariant, string> = {
+  landscape: 'bg-white',
+  portrait:  'bg-court-dark',
+  cover:     'bg-court-dark',
+}
+
 export default function MediaPickerInput({
   label,
   value,
@@ -105,7 +111,7 @@ export default function MediaPickerInput({
       )}
 
       {value && (
-        <div className={`mt-3 relative ${PREVIEW_CONTAINER[preview]} overflow-hidden border border-court-border bg-court-dark`}>
+        <div className={`mt-3 relative ${PREVIEW_CONTAINER[preview]} overflow-hidden border border-court-border ${PREVIEW_BG[preview]}`}>
           <Image src={value} alt="Anteprima" fill className={PREVIEW_IMG[preview]} sizes="512px" />
         </div>
       )}
