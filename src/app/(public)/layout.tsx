@@ -32,7 +32,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
   return (
     <div className="min-h-screen flex flex-col">
       <PublicNav />
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 pb-20 md:pb-0">{children}</main>
       <MobileBottomNav />
       {/* Desktop footer */}
       <footer className="hidden md:block border-t border-court-border py-12">
@@ -92,15 +92,6 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             Canestreet 3×3
           </p>
           <p className="text-court-gray text-xs mt-1 mb-4">A FIP 3×3 summer tournament. In the heart of Jesi.</p>
-
-          <div className="grid grid-cols-3 gap-x-4 gap-y-3 mb-4 mx-auto">
-            <Link href="/news"        className="font-display font-semibold uppercase tracking-wider text-xs text-court-gray hover:text-court-white transition-colors whitespace-nowrap">News</Link>
-            <Link href="/torneo"      className="font-display font-semibold uppercase tracking-wider text-xs text-court-gray hover:text-court-white transition-colors whitespace-nowrap">Torneo</Link>
-            <Link href="/editions"    className="font-display font-semibold uppercase tracking-wider text-xs text-court-gray hover:text-court-white transition-colors whitespace-nowrap">Edizioni</Link>
-            <Link href="/chi-siamo"   className="font-display font-semibold uppercase tracking-wider text-xs text-court-gray hover:text-court-white transition-colors whitespace-nowrap">Chi siamo</Link>
-            <Link href="/regolamento" className="font-display font-semibold uppercase tracking-wider text-xs text-court-gray hover:text-court-white transition-colors whitespace-nowrap">Regolamento</Link>
-            <Link href="/sponsor"     className="font-display font-semibold uppercase tracking-wider text-xs text-court-gray hover:text-court-white transition-colors whitespace-nowrap">Sponsor</Link>
-          </div>
 
           <div className="flex flex-col gap-1 text-court-muted text-xs mb-4">
             <span>Piazza della Repubblica, Jesi (AN) 60035</span>

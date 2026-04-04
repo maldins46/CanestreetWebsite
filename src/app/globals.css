@@ -123,6 +123,14 @@
 }
 
 @layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
   .safe-area-top {
     @apply pt-0;
     padding-top: env(safe-area-inset-top);

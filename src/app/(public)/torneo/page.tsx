@@ -20,8 +20,21 @@ export default async function TorneoPage() {
 
   if (!edition) {
     return (
-      <div className="max-w-6xl mx-auto px-6 py-24 text-center">
-        <p className="text-court-gray">Torneo non ancora disponibile.</p>
+      <div>
+        <section className="py-16 border-b border-court-border">
+          <div className="max-w-6xl mx-auto px-6">
+            <p className="text-brand-orange font-display uppercase tracking-widest text-xs mb-2">
+              Torneo
+            </p>
+            <h1 className="font-display font-extrabold uppercase text-4xl md:text-6xl text-court-white leading-none mb-4">
+              Calendario &amp; Classifiche
+            </h1>
+            <p className="text-court-gray font-body">Torneo non ancora disponibile.</p>
+          </div>
+        </section>
+        <Suspense fallback={null}>
+          <TorneoPageClient matches={[]} groups={[]} tpcContests={[]} />
+        </Suspense>
       </div>
     )
   }

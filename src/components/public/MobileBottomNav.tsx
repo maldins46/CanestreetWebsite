@@ -1,15 +1,15 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Trophy, Users, Calendar, Handshake } from 'lucide-react'
+import { Home, Trophy, Users, Calendar, Newspaper } from 'lucide-react'
 import clsx from 'clsx'
 
 const tabs = [
-  { href: '/',             label: 'Home',      Icon: Home },
-  { href: '/sponsor',      label: 'Sponsor',   Icon: Handshake },
-  { href: '/torneo',       label: 'Torneo',    Icon: Calendar },
-  { href: '/editions',     label: 'Edizioni',  Icon: Trophy },
-  { href: '/chi-siamo',    label: 'Chi siamo', Icon: Users },
+  { href: '/torneo',    label: 'Torneo',    Icon: Calendar },
+  { href: '/news',      label: 'News',      Icon: Newspaper },
+  { href: '/',          label: 'Home',      Icon: Home },
+  { href: '/chi-siamo', label: 'Chi siamo', Icon: Users },
+  { href: '/editions',  label: 'Edizioni',  Icon: Trophy },
 ]
 
 export default function MobileBottomNav() {
@@ -22,7 +22,7 @@ export default function MobileBottomNav() {
     >
       <div className="flex">
         {tabs.map(({ href, label, Icon }) => {
-          const isActive = pathname === href
+          const isActive = href === '/' ? pathname === href : pathname.startsWith(href)
           return (
             <Link
               key={href}
