@@ -340,7 +340,9 @@ export default async function HomePage() {
             <p className="text-center text-brand-orange font-display uppercase tracking-[0.3em] text-xs font-semibold mb-8">
               I Nostri Partner
             </p>
-            <SponsorCarousel sponsors={sponsors} />
+          </div>
+          <SponsorCarousel sponsors={sponsors} />
+          <div className="max-w-6xl mx-auto px-6">
             <div className="text-center mt-8">
               <Link href="/sponsor" className="btn-ghost text-sm px-5 py-2">
                 Tutti gli sponsor &rarr;

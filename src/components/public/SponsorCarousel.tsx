@@ -18,10 +18,7 @@ export default function SponsorCarousel({ sponsors }: Props) {
   const items = [...set, ...set]
 
   return (
-    <div
-      className="overflow-hidden"
-      style={{ maskImage: 'linear-gradient(to right, transparent, black 8%, black 92%, transparent)' }}
-    >
+    <div className="overflow-hidden">
       <div
         className="flex w-max"
         style={{
