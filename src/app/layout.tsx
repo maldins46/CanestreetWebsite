@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Barlow_Condensed, Barlow, Anton } from 'next/font/google'
+import { ServiceWorkerCleanup } from '@/components/ServiceWorkerCleanup'
 import './globals.css'
 
 // Display font — condensed, sporty, authoritative
@@ -62,6 +63,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="it" suppressHydrationWarning className={`${barlowCondensed.variable} ${barlow.variable} ${anton.variable}`}>
       <body className="bg-court-black text-court-white font-body antialiased">
+        <ServiceWorkerCleanup />
         {children}
       </body>
     </html>
