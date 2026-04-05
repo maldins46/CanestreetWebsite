@@ -2,6 +2,12 @@
 
 Official website of the Canestreet 3×3 basketball tournament — Jesi, Italy.
 
+[![Next.js](https://img.shields.io/badge/Next.js-14-black?style=flat&logo=next.js&logoColor=white)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3-06B6D4?style=flat&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![Supabase](https://img.shields.io/badge/Supabase-Postgres%20%2B%20Auth-3ECF8E?style=flat&logo=supabase&logoColor=white)](https://supabase.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat)](./LICENSE)
+
 Built with **Next.js 14 App Router**, **Tailwind CSS**, and **Supabase** (Postgres + Auth + Storage).
 
 ## Features
@@ -133,3 +139,13 @@ To add new images to the project:
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `SUPABASE_SERVICE_ROLE_KEY`
+
+---
+
+## License
+
+This project is open source and licensed under the **[MIT License](./LICENSE)**.
+
+© 2024-2026 Riccardo Maldini. All rights reserved.
+
+If you use this project, please include a copy of the license and attribute the original author.
