@@ -4,6 +4,19 @@ Official website of the Canestreet 3×3 basketball tournament — Jesi, Italy.
 
 Built with **Next.js 14 App Router**, **Tailwind CSS**, and **Supabase** (Postgres + Auth + Storage).
 
+## Features
+
+See the **[User Guide](docs/README.md)** for a complete walkthrough of:
+
+- **[Tournament Management](docs/01-tournament-management.md)** — Group phases, live match calendar, standings, and elimination brackets
+- **[3-Point Contest](docs/02-three-point-contest.md)** — Shooting competition with live scoring and qualification rounds
+- **[Showcase Screen](docs/03-showcase-screen.md)** — Full-screen display for venue monitors with live updates and auto-scroll
+- **[Team Registration](docs/04-team-registration.md)** — Team sign-up, approval workflow, and roster management
+
+Each guide includes both visitor and admin perspectives, so you can understand the full feature from end-to-end.
+
+---
+
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) 18+
