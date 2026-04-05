@@ -10,6 +10,8 @@ Official website of the Canestreet 3×3 basketball tournament — Jesi, Italy.
 
 Built with **Next.js 14 App Router**, **Tailwind CSS**, and **Supabase** (Postgres + Auth + Storage).
 
+![Website screenshot](./docs/siteScreenshot.png)
+
 ## Features
 
 See the **[User Guide](docs/README.md)** for a complete walkthrough of:
@@ -21,7 +23,6 @@ See the **[User Guide](docs/README.md)** for a complete walkthrough of:
 
 Each guide includes both visitor and admin perspectives, so you can understand the full feature from end-to-end.
 
----
 
 ## Prerequisites
 
@@ -79,8 +80,6 @@ npm run dev
 App is available at [http://localhost:3000](http://localhost:3000).
 Supabase Studio (database dashboard) is at [http://localhost:54323](http://localhost:54323).
 
----
-
 ## Commands
 
 ```bash
@@ -95,7 +94,7 @@ supabase db reset     # Re-apply all migrations (resets all data and storage)
 supabase status       # Show local URLs and keys
 ```
 
----
+
 
 ## Creating the first admin user
 
@@ -109,7 +108,7 @@ values ('<auth-user-uuid>', 'you@example.com', 'superadmin');
 
 3. Sign in at [http://localhost:3000/admin/login](http://localhost:3000/admin/login)
 
----
+
 
 ## Media & images
 
@@ -128,7 +127,7 @@ To add new images to the project:
 3. Reference the URL `http://127.0.0.1:54321/storage/v1/object/public/media/<filename>` in
    the admin panel or seed SQL
 
----
+
 
 ## Deploying to production
 
@@ -140,7 +139,7 @@ To add new images to the project:
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `SUPABASE_SERVICE_ROLE_KEY`
 
----
+
 
 ## License
 
