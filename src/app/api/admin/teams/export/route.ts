@@ -11,7 +11,8 @@ function escapeCell(value: string | null | undefined): string {
 }
 
 const categoryLabel: Record<TeamCategory, string> = {
-  open: 'Open', u14: 'U14', u16: 'U16', u18: 'U18',
+  open_m: 'Open Maschile', open_f: 'Open Femminile',
+  u14_m: 'U14 Maschile', u16_m: 'U16 Maschile', u18_m: 'U18 Maschile',
 }
 
 const statusLabel: Record<string, string> = {
@@ -49,7 +50,7 @@ export async function GET(request: Request) {
     .eq('edition_id', editionId)
     .order('created_at', { ascending: false })
 
-  if (category && ['open', 'u14', 'u16', 'u18'].includes(category)) {
+  if (category && ['open_m', 'open_f', 'u14_m', 'u16_m', 'u18_m'].includes(category)) {
     query = query.eq('category', category)
   }
 
@@ -71,9 +72,13 @@ export async function GET(request: Request) {
       `Giocatore ${i} Nome`,
       `Giocatore ${i} Data di nascita`,
       `Giocatore ${i} Codice fiscale`,
+      `Giocatore ${i} Email`,
+      `Giocatore ${i} Telefono`,
+      `Giocatore ${i} Città`,
       `Giocatore ${i} Instagram`,
       `Giocatore ${i} Club`,
       `Giocatore ${i} Capitano`,
+      `Giocatore ${i} Vice-capitano`,
     )
   }
 
@@ -96,9 +101,13 @@ export async function GET(request: Request) {
         p?.name ?? null,
         p ? new Date(p.birth_date).toLocaleDateString('it-IT') : null,
         p?.codice_fiscale ?? null,
+        p?.email ?? null,
+        p?.phone ?? null,
+        p?.city ?? null,
         p?.instagram ?? null,
         p?.club ?? null,
         p ? (p.is_captain ? 'Sì' : 'No') : null,
+        p ? (p.is_vice_captain ? 'Sì' : 'No') : null,
       )
     }
 

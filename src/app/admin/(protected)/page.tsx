@@ -19,7 +19,8 @@ export default async function AdminDashboard() {
     { count: approvedTeams },
     { count: waitlistedTeams },
     { count: rejectedTeams },
-    { count: teamsOpen },
+    { count: teamsOpenM },
+    { count: teamsOpenF },
     { count: teamsU14 },
     { count: teamsU16 },
     { count: teamsU18 },
@@ -34,10 +35,11 @@ export default async function AdminDashboard() {
     supabase.from('teams').select('*', { count: 'exact', head: true }).eq('edition_id', editionId).eq('status', 'approved'),
     supabase.from('teams').select('*', { count: 'exact', head: true }).eq('edition_id', editionId).eq('status', 'waitlisted'),
     supabase.from('teams').select('*', { count: 'exact', head: true }).eq('edition_id', editionId).eq('status', 'rejected'),
-    supabase.from('teams').select('*', { count: 'exact', head: true }).eq('edition_id', editionId).eq('category', 'open'),
-    supabase.from('teams').select('*', { count: 'exact', head: true }).eq('edition_id', editionId).eq('category', 'u14'),
-    supabase.from('teams').select('*', { count: 'exact', head: true }).eq('edition_id', editionId).eq('category', 'u16'),
-    supabase.from('teams').select('*', { count: 'exact', head: true }).eq('edition_id', editionId).eq('category', 'u18'),
+    supabase.from('teams').select('*', { count: 'exact', head: true }).eq('edition_id', editionId).eq('category', 'open_m'),
+    supabase.from('teams').select('*', { count: 'exact', head: true }).eq('edition_id', editionId).eq('category', 'open_f'),
+    supabase.from('teams').select('*', { count: 'exact', head: true }).eq('edition_id', editionId).eq('category', 'u14_m'),
+    supabase.from('teams').select('*', { count: 'exact', head: true }).eq('edition_id', editionId).eq('category', 'u16_m'),
+    supabase.from('teams').select('*', { count: 'exact', head: true }).eq('edition_id', editionId).eq('category', 'u18_m'),
     supabase.from('players').select('id, teams!inner(edition_id)', { count: 'exact', head: true }).eq('teams.edition_id', editionId),
     supabase.from('news').select('*', { count: 'exact', head: true }),
     supabase.from('news').select('*', { count: 'exact', head: true }).eq('published', true),
@@ -90,17 +92,19 @@ export default async function AdminDashboard() {
   ]
 
   const categoryBreakdown = [
-    { label: 'Open', count: teamsOpen ?? 0 },
-    { label: 'U18',  count: teamsU18 ?? 0 },
-    { label: 'U16',  count: teamsU16 ?? 0 },
-    { label: 'U14',  count: teamsU14 ?? 0 },
+    { label: 'Open M', count: teamsOpenM ?? 0 },
+    { label: 'Open F', count: teamsOpenF ?? 0 },
+    { label: 'U18 M',  count: teamsU18 ?? 0 },
+    { label: 'U16 M',  count: teamsU16 ?? 0 },
+    { label: 'U14 M',  count: teamsU14 ?? 0 },
   ]
 
   const categoryLabel: Record<string, string> = {
-    open: 'Open',
-    u14: 'U14',
-    u16: 'U16',
-    u18: 'U18',
+    open_m: 'Open M',
+    open_f: 'Open F',
+    u14_m: 'U14 M',
+    u16_m: 'U16 M',
+    u18_m: 'U18 M',
   }
 
   return (

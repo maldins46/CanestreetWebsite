@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Plus, Trash2 } from 'lucide-react'
+import { Trash2 } from 'lucide-react'
 import type { TeamCategory } from '@/types'
 
 interface Props {
@@ -14,7 +14,11 @@ interface PlayerRow {
   codice_fiscale: string
   instagram: string
   club: string
+  email: string
+  phone: string
+  city: string
   is_captain: boolean
+  is_vice_captain: boolean
 }
 
 const GDPR_TEXT = `Ai sensi del D.Lgs. n. 196 del 30 giugno 2003 ("Codice in materia di protezione dei dati personali") e del Regolamento (UE) 2016/679 (GDPR), si informa che:
@@ -34,84 +38,103 @@ const GDPR_TEXT = `Ai sensi del D.Lgs. n. 196 del 30 giugno 2003 ("Codice in mat
 const CF_REGEX = /^[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]$/i
 
 function emptyPlayer(isCaptain = false): PlayerRow {
-  return { name: '', birth_date: '', codice_fiscale: '', instagram: '', club: '', is_captain: isCaptain }
-}
-
-const CATEGORY_LABELS: Record<TeamCategory, string> = {
-  open: 'Open',
-  u14: 'Under 14',
-  u16: 'Under 16',
-  u18: 'Under 18',
+  return {
+    name: '',
+    birth_date: '',
+    codice_fiscale: '',
+    instagram: '',
+    club: '',
+    email: '',
+    phone: '',
+    city: '',
+    is_captain: isCaptain,
+    is_vice_captain: false,
+  }
 }
 
 export default function RegisterForm({ editionId }: Props) {
   const supabase = createClient()
 
   const [formType, setFormType] = useState<'open' | 'under'>('open')
-  const [category, setCategory] = useState<TeamCategory>('open')
+  const [category, setCategory] = useState<TeamCategory>('open_m')
   const [teamName, setTeamName] = useState('')
-  const [players, setPlayers] = useState<PlayerRow[]>([emptyPlayer(true), emptyPlayer(), emptyPlayer()])
-  const [captainEmail, setCaptainEmail] = useState('')
-  const [captainPhone, setCaptainPhone] = useState('')
-  const [viceCaptainPhone, setViceCaptainPhone] = useState('')
-  const [scheduleNotes, setScheduleNotes] = useState('')
+  const [players, setPlayers] = useState<PlayerRow[]>([
+    emptyPlayer(true),
+    emptyPlayer(),
+    emptyPlayer(),
+    emptyPlayer(),
+  ])
 
-  // Hardcoded clause checkboxes
   const [clauseRules, setClauseRules] = useState(false)
   const [clauseMedical, setClauseMedical] = useState(false)
-  const [clauseParent, setClauseParent] = useState(false)  // under only
+  const [clauseMyFIP, setClauseMyFIP] = useState(false)
+  const [clauseParent, setClauseParent] = useState(false)
   const [consentData, setConsentData] = useState(false)
   const [consentImage, setConsentImage] = useState(false)
 
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
-  const isUnder = formType === 'under'
+  const isUnder = category.startsWith('u')
 
   function handleFormTypeChange(type: 'open' | 'under') {
     setFormType(type)
-    setCategory(type === 'open' ? 'open' : 'u14')
+    setCategory(type === 'open' ? 'open_m' : 'u14_m')
   }
 
   function updatePlayer(idx: number, field: keyof PlayerRow, value: string | boolean) {
-    setPlayers(prev => {
-      const next = prev.map((p, i) => {
-        if (i === idx) return { ...p, [field]: value }
-        // ensure only one captain
-        if (field === 'is_captain' && value === true) return { ...p, is_captain: false }
-        return p
-      })
-      return next
-    })
+    setPlayers(prev => prev.map((p, i) => {
+      if (i === idx) return { ...p, [field]: value }
+      if (field === 'is_captain' && value === true) return { ...p, is_captain: false }
+      if (field === 'is_vice_captain' && value === true) return { ...p, is_vice_captain: false }
+      return p
+    }))
   }
 
-  function addPlayer() {
-    if (players.length < 4) setPlayers(prev => [...prev, emptyPlayer()])
+  function setPlayerRole(idx: number, role: 'none' | 'captain' | 'vice') {
+    setPlayers(prev => prev.map((p, i) => {
+      if (i === idx) return { ...p, is_captain: role === 'captain', is_vice_captain: role === 'vice' }
+      if (role === 'captain') return { ...p, is_captain: false }
+      if (role === 'vice') return { ...p, is_vice_captain: false }
+      return p
+    }))
   }
 
   function removePlayer(idx: number) {
-    if (players.length <= 3) return
+    const activePlayers = players.filter(p => p.name.trim())
+    if (activePlayers.length <= 3) return
     setPlayers(prev => {
-      const next = prev.filter((_, i) => i !== idx)
-      // if we removed the captain, make first player captain
-      if (!next.some(p => p.is_captain)) next[0].is_captain = true
+      const next = [...prev]
+      next[idx] = emptyPlayer()
+      // if we cleared the captain, make first active player captain
+      if (prev[idx].is_captain) {
+        const firstActive = next.findIndex(p => p.name.trim())
+        if (firstActive !== -1) next[firstActive] = { ...next[firstActive], is_captain: true }
+        else next[0] = { ...next[0], is_captain: true }
+      }
       return next
     })
   }
 
   function validate(): string | null {
     if (!teamName.trim()) return 'Inserisci il nome della squadra.'
-    if (players.length < 3) return 'Servono almeno 3 giocatori.'
-    if (!players.some(p => p.is_captain)) return 'Seleziona il capitano.'
-    for (let i = 0; i < players.length; i++) {
-      const p = players[i]
-      if (!p.name.trim()) return `Inserisci il nome del giocatore ${i + 1}.`
+    const active = players.filter(p => p.name.trim())
+    if (active.length < 3) return 'Servono almeno 3 giocatori.'
+    if (!active.some(p => p.is_captain)) return 'Seleziona il capitano.'
+    if (active.filter(p => p.is_vice_captain).length > 1) return 'Può esserci solo un vice-capitano.'
+    for (let i = 0; i < active.length; i++) {
+      const p = active[i]
       if (!p.birth_date) return `Inserisci la data di nascita del giocatore ${i + 1}.`
       if (!CF_REGEX.test(p.codice_fiscale)) return `Codice fiscale non valido per il giocatore ${i + 1}.`
+      if (!p.email.trim()) return `Inserisci l'email del giocatore ${i + 1}.`
+      if (!p.city.trim()) return `Inserisci la città di residenza del giocatore ${i + 1}.`
+      if ((p.is_captain || p.is_vice_captain) && !p.phone.trim()) {
+        return `Inserisci il numero di telefono del ${p.is_captain ? 'capitano' : 'vice-capitano'} (giocatore ${i + 1}).`
+      }
     }
-    if (!captainEmail.trim()) return 'Inserisci l\'email del capitano.'
     if (!clauseRules) return 'Devi accettare il rispetto del regolamento.'
-    if (!clauseMedical) return 'Devi dichiarare il possesso del certificato medico.'
+    if (!clauseMedical) return 'Devi dichiarare il possesso del certificato medico per tutti i giocatori.'
+    if (!clauseMyFIP) return 'Devi confermare l\'iscrizione MyFIP di tutti i giocatori.'
     if (isUnder && !clauseParent) return 'Devi dichiarare l\'autorizzazione del genitore/tutore.'
     if (!consentData) return 'Devi accettare il trattamento dei dati personali.'
     if (!consentImage) return 'Devi autorizzare l\'utilizzo di immagini e video.'
@@ -126,25 +149,25 @@ export default function RegisterForm({ editionId }: Props) {
     setStatus('loading')
     setErrorMsg(null)
 
-    const playersPayload = players.map(p => ({
+    const activePlayers = players.filter(p => p.name.trim())
+    const playersPayload = activePlayers.map(p => ({
       name: p.name.trim(),
       birth_date: p.birth_date,
       codice_fiscale: p.codice_fiscale.toUpperCase(),
       instagram: p.instagram.trim() || null,
       club: isUnder ? (p.club.trim() || null) : null,
+      email: p.email.trim(),
+      phone: p.phone.trim() || null,
+      city: p.city.trim(),
       is_captain: p.is_captain,
+      is_vice_captain: p.is_vice_captain,
     }))
 
     const { error } = await supabase.rpc('register_team', {
-      p_edition_id:     editionId,
-      p_name:           teamName.trim(),
-      p_category:       category,
-      p_captain_email:  captainEmail.trim(),
-      p_captain_phone:  captainPhone.trim() || null,
-      p_schedule_notes: isUnder
-        ? (viceCaptainPhone ? `Vice-capitano: ${viceCaptainPhone}` : null)
-        : (scheduleNotes.trim() || null),
-      p_players: playersPayload,
+      p_edition_id: editionId,
+      p_name:       teamName.trim(),
+      p_category:   category,
+      p_players:    playersPayload,
     })
 
     if (error) {
@@ -194,9 +217,12 @@ export default function RegisterForm({ editionId }: Props) {
           ))}
         </div>
 
-        {isUnder && (
+        {formType === 'open' && (
           <div className="flex gap-3 flex-wrap">
-            {(['u14', 'u16', 'u18'] as TeamCategory[]).map(cat => (
+            {([
+              ['open_m', 'Open Maschile'],
+              ['open_f', 'Open Femminile'],
+            ] as [TeamCategory, string][]).map(([cat, label]) => (
               <button
                 key={cat}
                 type="button"
@@ -207,10 +233,31 @@ export default function RegisterForm({ editionId }: Props) {
                     : 'border-court-border text-court-muted hover:border-court-muted hover:text-court-gray'
                 }`}
               >
-                {CATEGORY_LABELS[cat]}
-                {cat === 'u14' && <span className="ml-2 text-court-muted normal-case font-body">nati 2011/12</span>}
-                {cat === 'u16' && <span className="ml-2 text-court-muted normal-case font-body">nati 2009/10/11</span>}
-                {cat === 'u18' && <span className="ml-2 text-court-muted normal-case font-body">nati 2007/08/09/10</span>}
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {formType === 'under' && (
+          <div className="flex gap-3 flex-wrap">
+            {([
+              ['u14_m', 'U14 Maschile', 'nati 2011/12'],
+              ['u16_m', 'U16 Maschile', 'nati 2009/10/11'],
+              ['u18_m', 'U18 Maschile', 'nati 2007/08/09/10'],
+            ] as [TeamCategory, string, string][]).map(([cat, label, years]) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setCategory(cat)}
+                className={`px-4 py-1.5 font-display uppercase tracking-wide text-xs border transition-colors ${
+                  category === cat
+                    ? 'bg-court-surface border-court-muted text-court-white'
+                    : 'border-court-border text-court-muted hover:border-court-muted hover:text-court-gray'
+                }`}
+              >
+                {label}
+                <span className="ml-2 text-court-muted normal-case font-body">{years}</span>
               </button>
             ))}
           </div>
@@ -246,148 +293,126 @@ export default function RegisterForm({ editionId }: Props) {
         )}
 
         <div className="space-y-4">
-          {players.map((player, idx) => (
-            <div key={idx} className="card p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-display uppercase tracking-wide text-court-muted">
-                  Giocatore {idx + 1}
-                </span>
-                <div className="flex items-center gap-3">
-                  <label className="flex items-center gap-1.5 text-xs text-court-gray cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={player.is_captain}
-                      onChange={e => updatePlayer(idx, 'is_captain', e.target.checked)}
-                      className="accent-brand-orange"
-                    />
-                    Capitano
-                  </label>
-                  {players.length > 3 && (
-                    <button
-                      type="button"
-                      onClick={() => removePlayer(idx)}
-                      className="text-court-muted hover:text-red-400 transition-colors"
+          {players.map((player, idx) => {
+            const isActive = !!player.name.trim()
+            return (
+              <div key={idx} className="card p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-display uppercase tracking-wide text-court-muted">
+                    Giocatore {idx + 1}
+                    {idx === 3 && <span className="ml-2 text-court-muted normal-case font-body">(riserva, opzionale)</span>}
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <select
+                      value={player.is_captain ? 'captain' : player.is_vice_captain ? 'vice' : 'none'}
+                      onChange={e => setPlayerRole(idx, e.target.value as 'none' | 'captain' | 'vice')}
+                      className="input py-1 text-xs"
                     >
-                      <Trash2 size={13} />
-                    </button>
-                  )}
+                      <option value="none">— Ruolo</option>
+                      <option value="captain">Capitano</option>
+                      <option value="vice">Vice-capitano</option>
+                    </select>
+                    {isActive && idx === 3 && (
+                      <button
+                        type="button"
+                        onClick={() => removePlayer(idx)}
+                        className="text-court-muted hover:text-red-400 transition-colors"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              <div className="grid sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="label text-xs">Nome e cognome *</label>
-                  <input
-                    className="input py-2 text-sm"
-                    value={player.name}
-                    onChange={e => updatePlayer(idx, 'name', e.target.value)}
-                    placeholder="Mario Rossi"
-                  />
-                </div>
-                <div>
-                  <label className="label text-xs">Data di nascita *</label>
-                  <input
-                    type="date"
-                    className="input py-2 text-sm"
-                    value={player.birth_date}
-                    onChange={e => updatePlayer(idx, 'birth_date', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="label text-xs">Codice fiscale *</label>
-                  <input
-                    className="input py-2 text-sm font-mono uppercase"
-                    value={player.codice_fiscale}
-                    onChange={e => updatePlayer(idx, 'codice_fiscale', e.target.value)}
-                    placeholder="RSSMRA85M01H501Z"
-                    maxLength={16}
-                  />
-                </div>
-                <div>
-                  <label className="label text-xs">Instagram <span className="text-court-muted">(opzionale)</span></label>
-                  <input
-                    className="input py-2 text-sm"
-                    value={player.instagram}
-                    onChange={e => updatePlayer(idx, 'instagram', e.target.value)}
-                    placeholder="@username"
-                  />
-                </div>
-                {isUnder && (
-                  <div className="sm:col-span-2">
-                    <label className="label text-xs">Società <span className="text-court-muted">(squadra presso cui si è giocato quest'anno)</span></label>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="label text-xs">Nome e cognome {idx < 3 && '*'}</label>
                     <input
                       className="input py-2 text-sm"
-                      value={player.club}
-                      onChange={e => updatePlayer(idx, 'club', e.target.value)}
-                      placeholder="Pallacanestro Jesi, ..."
+                      value={player.name}
+                      onChange={e => updatePlayer(idx, 'name', e.target.value)}
+                      placeholder="Mario Rossi"
                     />
                   </div>
-                )}
+                  <div>
+                    <label className="label text-xs">Data di nascita {idx < 3 && '*'}</label>
+                    <input
+                      type="date"
+                      className="input py-2 text-sm"
+                      value={player.birth_date}
+                      onChange={e => updatePlayer(idx, 'birth_date', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="label text-xs">Codice fiscale {idx < 3 && '*'}</label>
+                    <input
+                      className="input py-2 text-sm font-mono uppercase"
+                      value={player.codice_fiscale}
+                      onChange={e => updatePlayer(idx, 'codice_fiscale', e.target.value)}
+                      placeholder="RSSMRA85M01H501Z"
+                      maxLength={16}
+                    />
+                  </div>
+                  <div>
+                    <label className="label text-xs">Email {idx < 3 && '*'}</label>
+                    <input
+                      type="email"
+                      className="input py-2 text-sm"
+                      value={player.email}
+                      onChange={e => updatePlayer(idx, 'email', e.target.value)}
+                      placeholder="giocatore@email.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="label text-xs">Città di residenza {idx < 3 && '*'}</label>
+                    <input
+                      className="input py-2 text-sm"
+                      value={player.city}
+                      onChange={e => updatePlayer(idx, 'city', e.target.value)}
+                      placeholder="Jesi"
+                    />
+                  </div>
+                  <div>
+                    <label className="label text-xs">Instagram <span className="text-court-muted">(opzionale)</span></label>
+                    <input
+                      className="input py-2 text-sm"
+                      value={player.instagram}
+                      onChange={e => updatePlayer(idx, 'instagram', e.target.value)}
+                      placeholder="@username"
+                    />
+                  </div>
+                  <div>
+                    <label className="label text-xs">
+                      Telefono{' '}
+                      {player.is_captain || player.is_vice_captain
+                        ? '*'
+                        : <span className="text-court-muted">(opzionale)</span>
+                      }
+                    </label>
+                    <input
+                      type="tel"
+                      className="input py-2 text-sm"
+                      value={player.phone}
+                      onChange={e => updatePlayer(idx, 'phone', e.target.value)}
+                      placeholder="+39 333 0000000"
+                    />
+                  </div>
+                  {isUnder && (
+                    <div className="sm:col-span-2">
+                      <label className="label text-xs">Società <span className="text-court-muted">(squadra presso cui si è giocato quest'anno)</span></label>
+                      <input
+                        className="input py-2 text-sm"
+                        value={player.club}
+                        onChange={e => updatePlayer(idx, 'club', e.target.value)}
+                        placeholder="Pallacanestro Jesi, ..."
+                      />
+                    </div>
+                  )}
+                </div>
+
               </div>
-            </div>
-          ))}
-        </div>
-
-        {players.length < 4 && (
-          <button
-            type="button"
-            onClick={addPlayer}
-            className="btn-ghost text-xs px-4 py-2 mt-3"
-          >
-            <Plus size={12} /> Aggiungi riserva
-          </button>
-        )}
-      </section>
-
-      {/* Contact */}
-      <section>
-        <h3 className="font-display font-bold uppercase tracking-widest text-court-white border-b border-court-border pb-3 mb-5">
-          Contatti
-        </h3>
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div>
-            <label className="label">Email capitano *</label>
-            <input
-              type="email"
-              className="input"
-              value={captainEmail}
-              onChange={e => setCaptainEmail(e.target.value)}
-              placeholder="capitano@email.com"
-            />
-          </div>
-          <div>
-            <label className="label">Telefono capitano {isUnder && '*'}</label>
-            <input
-              type="tel"
-              className="input"
-              value={captainPhone}
-              onChange={e => setCaptainPhone(e.target.value)}
-              placeholder="+39 333 0000000"
-            />
-          </div>
-          {isUnder && (
-            <div>
-              <label className="label">Telefono vice-capitano</label>
-              <input
-                type="tel"
-                className="input"
-                value={viceCaptainPhone}
-                onChange={e => setViceCaptainPhone(e.target.value)}
-                placeholder="+39 333 0000000"
-              />
-            </div>
-          )}
-          {!isUnder && (
-            <div className="sm:col-span-2">
-              <label className="label">Esigenze orari <span className="text-court-muted text-xs">(opzionale)</span></label>
-              <input
-                className="input"
-                value={scheduleNotes}
-                onChange={e => setScheduleNotes(e.target.value)}
-                placeholder="es. non disponibili sabato mattina"
-              />
-            </div>
-          )}
+            )
+          })}
         </div>
       </section>
 
@@ -405,10 +430,7 @@ export default function RegisterForm({ editionId }: Props) {
               className="mt-0.5 accent-brand-orange shrink-0"
             />
             <span className="text-sm text-court-gray">
-              {isUnder
-                ? 'Dichiaro di iscrivere mio figlio al torneo come giocatore della suddetta squadra, rispettando le regole del torneo durante tutto lo svolgimento della manifestazione.'
-                : 'Dichiaro di iscrivermi al torneo come giocatore della suddetta squadra, rispettando le regole del torneo durante tutto lo svolgimento della manifestazione.'
-              }
+              Dichiaro che tutti i giocatori della squadra partecipano al torneo rispettando le regole durante tutto lo svolgimento della manifestazione. *
             </span>
           </label>
 
@@ -420,10 +442,19 @@ export default function RegisterForm({ editionId }: Props) {
               className="mt-0.5 accent-brand-orange shrink-0"
             />
             <span className="text-sm text-court-gray">
-              {isUnder
-                ? 'Dichiaro che il giocatore è in possesso del certificato medico agonistico valido necessario per partecipare a questa attività sportiva.'
-                : 'Dichiaro di essere in possesso del certificato medico agonistico valido necessario per partecipare a questa attività sportiva.'
-              }
+              Dichiaro che tutti i giocatori della squadra sono in possesso del certificato medico agonistico valido necessario per partecipare a questa attività sportiva. *
+            </span>
+          </label>
+
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={clauseMyFIP}
+              onChange={e => setClauseMyFIP(e.target.checked)}
+              className="mt-0.5 accent-brand-orange shrink-0"
+            />
+            <span className="text-sm text-court-gray">
+              Dichiaro che tutti i giocatori della squadra sono iscritti sull&apos;app <strong>MyFIP</strong>, come richiesto per la copertura assicurativa federale. *
             </span>
           </label>
 
@@ -436,8 +467,8 @@ export default function RegisterForm({ editionId }: Props) {
                 className="mt-0.5 accent-brand-orange shrink-0"
               />
               <span className="text-sm text-court-gray">
-                Dichiaro che il genitore o tutore autorizza la partecipazione al torneo.
-                {' '}<span className="text-court-muted">(Per i giocatori U18 maggiorenni è sufficiente la firma dell'interessato.)</span>
+                Dichiaro che i genitori o tutori di tutti i giocatori minorenni della squadra autorizzano la loro partecipazione al torneo. *
+                {' '}<span className="text-court-muted">(Per i giocatori U18 maggiorenni è sufficiente la firma dell&apos;interessato.)</span>
               </span>
             </label>
           )}

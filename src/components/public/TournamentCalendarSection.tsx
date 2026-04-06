@@ -9,11 +9,12 @@ interface Props {
 }
 
 const categories: { value: TeamCategory | 'all'; label: string }[] = [
-  { value: 'all', label: 'Tutte' },
-  { value: 'open', label: 'Open' },
-  { value: 'u18', label: 'U18' },
-  { value: 'u16', label: 'U16' },
-  { value: 'u14', label: 'U14' },
+  { value: 'all',    label: 'Tutte' },
+  { value: 'open_m', label: 'Open M' },
+  { value: 'open_f', label: 'Open F' },
+  { value: 'u18_m',  label: 'U18 M' },
+  { value: 'u16_m',  label: 'U16 M' },
+  { value: 'u14_m',  label: 'U14 M' },
 ]
 
 function formatDay(iso: string): string {
@@ -67,7 +68,7 @@ export default function TournamentCalendarSection({ matches }: Props) {
         <div className="card p-10 text-center">
           <p className="text-court-gray">
             Nessuna partita programmata
-            {cat !== 'all' ? ` per la categoria ${cat.toUpperCase()}` : ' ancora'}.
+            {cat !== 'all' ? ` per la categoria ${categories.find(c => c.value === cat)?.label ?? cat}` : ' ancora'}.
           </p>
         </div>
       ) : (

@@ -14,7 +14,8 @@ const statusLabel: Record<string, string> = {
 }
 
 const categoryLabel: Record<TeamCategory, string> = {
-  open: 'Open', u14: 'U14', u16: 'U16', u18: 'U18',
+  open_m: 'Open Maschile', open_f: 'Open Femminile',
+  u14_m: 'U14 Maschile', u16_m: 'U16 Maschile', u18_m: 'U18 Maschile',
 }
 
 interface Props {
@@ -47,7 +48,7 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
       .order('created_at', { ascending: false })
 
     const categoryFilter = searchParams.category as TeamCategory | undefined
-    if (categoryFilter && ['open', 'u14', 'u16', 'u18'].includes(categoryFilter)) {
+    if (categoryFilter && ['open_m', 'open_f', 'u14_m', 'u16_m', 'u18_m'].includes(categoryFilter)) {
       query = query.eq('category', categoryFilter)
     }
 
@@ -166,10 +167,15 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
                         {sortedPlayers.map(p => (
                           <div key={p.id} className="text-xs text-court-muted flex flex-wrap gap-x-3 gap-y-0.5">
                             <span className="text-court-light">
-                              {p.name}{p.is_captain && <span className="ml-1 text-brand-orange text-[10px]">cap</span>}
+                              {p.name}
+                              {p.is_captain && <span className="ml-1 text-brand-orange text-[10px]">cap</span>}
+                              {p.is_vice_captain && <span className="ml-1 text-court-gray text-[10px]">vice</span>}
                             </span>
                             <span className="font-mono">{new Date(p.birth_date).toLocaleDateString('it-IT')}</span>
                             <span className="font-mono uppercase">{p.codice_fiscale}</span>
+                            {p.email && <span className="text-court-muted">{p.email}</span>}
+                            {p.phone && <span className="text-court-muted">{p.phone}</span>}
+                            {p.city && <span className="text-court-muted">{p.city}</span>}
                             {p.instagram && <span className="text-court-muted">{p.instagram}</span>}
                             {p.club && <span className="text-court-muted italic">{p.club}</span>}
                           </div>

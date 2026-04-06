@@ -18,15 +18,20 @@ interface PlayerRow {
   codice_fiscale: string
   instagram: string
   club: string
+  email: string
+  phone: string
+  city: string
   is_captain: boolean
+  is_vice_captain: boolean
   isNew: boolean // track whether this needs an insert vs update
 }
 
 const CATEGORY_OPTIONS: { value: TeamCategory; label: string }[] = [
-  { value: 'open', label: 'Open' },
-  { value: 'u14', label: 'Under 14' },
-  { value: 'u16', label: 'Under 16' },
-  { value: 'u18', label: 'Under 18' },
+  { value: 'open_m', label: 'Open Maschile' },
+  { value: 'open_f', label: 'Open Femminile' },
+  { value: 'u14_m', label: 'Under 14 Maschile' },
+  { value: 'u16_m', label: 'Under 16 Maschile' },
+  { value: 'u18_m', label: 'Under 18 Maschile' },
 ]
 
 const STATUS_OPTIONS: { value: TeamStatus; label: string }[] = [
@@ -44,7 +49,11 @@ function playerToRow(p: Player): PlayerRow {
     codice_fiscale: p.codice_fiscale,
     instagram: p.instagram ?? '',
     club: p.club ?? '',
+    email: p.email ?? '',
+    phone: p.phone ?? '',
+    city: p.city ?? '',
     is_captain: p.is_captain,
+    is_vice_captain: p.is_vice_captain,
     isNew: false,
   }
 }
@@ -57,7 +66,11 @@ function emptyPlayer(): PlayerRow {
     codice_fiscale: '',
     instagram: '',
     club: '',
+    email: '',
+    phone: '',
+    city: '',
     is_captain: false,
+    is_vice_captain: false,
     isNew: true,
   }
 }
@@ -69,7 +82,7 @@ export default function TeamEditor({ team, editionId, editions }: Props) {
   const [form, setForm] = useState({
     edition_id:     team?.edition_id     ?? editionId,
     name:           team?.name           ?? '',
-    category:       team?.category       ?? 'open' as TeamCategory,
+    category:       team?.category       ?? 'open_m' as TeamCategory,
     captain_email:  team?.captain_email  ?? '',
     captain_phone:  team?.captain_phone  ?? '',
     schedule_notes: team?.schedule_notes ?? '',
@@ -93,6 +106,16 @@ export default function TeamEditor({ team, editionId, editions }: Props) {
     setPlayers(prev => prev.map(p => {
       if (p.id === id) return { ...p, [field]: value }
       if (field === 'is_captain' && value === true) return { ...p, is_captain: false }
+      if (field === 'is_vice_captain' && value === true) return { ...p, is_vice_captain: false }
+      return p
+    }))
+  }
+
+  function setPlayerRole(id: string, role: 'none' | 'captain' | 'vice') {
+    setPlayers(prev => prev.map(p => {
+      if (p.id === id) return { ...p, is_captain: role === 'captain', is_vice_captain: role === 'vice' }
+      if (role === 'captain') return { ...p, is_captain: false }
+      if (role === 'vice') return { ...p, is_vice_captain: false }
       return p
     }))
   }
@@ -114,7 +137,6 @@ export default function TeamEditor({ team, editionId, editions }: Props) {
 
   async function save() {
     if (!form.name.trim()) { setMsg('Il nome della squadra è obbligatorio.'); return }
-    if (!form.captain_email.trim()) { setMsg('L\'email del capitano è obbligatoria.'); return }
 
     setSaving(true)
     setMsg(null)
@@ -168,7 +190,11 @@ export default function TeamEditor({ team, editionId, editions }: Props) {
         codice_fiscale: p.codice_fiscale.toUpperCase().trim(),
         instagram: p.instagram.trim() || null,
         club: p.club.trim() || null,
+        email: p.email.trim() || null,
+        phone: p.phone.trim() || null,
+        city: p.city.trim() || null,
         is_captain: p.is_captain,
+        is_vice_captain: p.is_vice_captain,
         sort_order: i,
       })).filter(p => p.name) // skip empty player rows
 
@@ -292,15 +318,15 @@ export default function TeamEditor({ team, editionId, editions }: Props) {
                     Giocatore {idx + 1}
                   </span>
                   <div className="flex items-center gap-3">
-                    <label className="flex items-center gap-1.5 text-xs text-court-gray cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={player.is_captain}
-                        onChange={e => updatePlayer(player.id, 'is_captain', e.target.checked)}
-                        className="accent-brand-orange"
-                      />
-                      Capitano
-                    </label>
+                    <select
+                      value={player.is_captain ? 'captain' : player.is_vice_captain ? 'vice' : 'none'}
+                      onChange={e => setPlayerRole(player.id, e.target.value as 'none' | 'captain' | 'vice')}
+                      className="input py-1 text-xs"
+                    >
+                      <option value="none">— Ruolo</option>
+                      <option value="captain">Capitano</option>
+                      <option value="vice">Vice-capitano</option>
+                    </select>
                     <button
                       type="button"
                       onClick={() => removePlayer(player.id)}
@@ -323,6 +349,18 @@ export default function TeamEditor({ team, editionId, editions }: Props) {
                   <div>
                     <label className="label text-xs">Codice fiscale</label>
                     <input className="input py-2 text-sm font-mono uppercase" value={player.codice_fiscale} onChange={e => updatePlayer(player.id, 'codice_fiscale', e.target.value)} placeholder="RSSMRA85M01H501Z" maxLength={16} />
+                  </div>
+                  <div>
+                    <label className="label text-xs">Email</label>
+                    <input type="email" className="input py-2 text-sm" value={player.email} onChange={e => updatePlayer(player.id, 'email', e.target.value)} placeholder="giocatore@email.com" />
+                  </div>
+                  <div>
+                    <label className="label text-xs">Telefono</label>
+                    <input type="tel" className="input py-2 text-sm" value={player.phone} onChange={e => updatePlayer(player.id, 'phone', e.target.value)} placeholder="+39 333 0000000" />
+                  </div>
+                  <div>
+                    <label className="label text-xs">Città di residenza</label>
+                    <input className="input py-2 text-sm" value={player.city} onChange={e => updatePlayer(player.id, 'city', e.target.value)} placeholder="Jesi" />
                   </div>
                   <div>
                     <label className="label text-xs">Instagram</label>

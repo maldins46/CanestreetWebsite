@@ -10,7 +10,8 @@ import Link from 'next/link'
 import clsx from 'clsx'
 
 const categoryLabel: Record<TeamCategory, string> = {
-  open: 'Open', u14: 'U14', u16: 'U16', u18: 'U18',
+  open_m: 'Open Maschile', open_f: 'Open Femminile',
+  u14_m: 'U14 Maschile', u16_m: 'U16 Maschile', u18_m: 'U18 Maschile',
 }
 
 interface Props {
@@ -34,7 +35,7 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
   if (!activeEdition && editions.length > 0) activeEdition = editions[0]
 
   const tab = searchParams.tab ?? 'gironi'
-  const category = (searchParams.category as TeamCategory) ?? 'open'
+  const category = (searchParams.category as TeamCategory) ?? 'open_m'
 
   let groups: GroupWithTeams[] = []
   let approvedTeams: { id: string; name: string; category: string }[] = []

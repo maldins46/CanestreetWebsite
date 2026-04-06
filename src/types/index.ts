@@ -4,7 +4,7 @@
 
 export type AdminRole = 'superadmin' | 'editor'
 export type TeamStatus = 'pending' | 'approved' | 'rejected' | 'waitlisted'
-export type TeamCategory = 'open' | 'u14' | 'u16' | 'u18'
+export type TeamCategory = 'open_m' | 'open_f' | 'u14_m' | 'u16_m' | 'u18_m'
 export type SponsorTier = 'main' | 'gold' | 'silver' | 'bronze'
 
 export interface Admin {
@@ -53,7 +53,11 @@ export interface Player {
   codice_fiscale: string
   instagram: string | null
   club: string | null
+  email: string | null
+  phone: string | null
+  city: string | null
   is_captain: boolean
+  is_vice_captain: boolean
   sort_order: number
   created_at: string
 }

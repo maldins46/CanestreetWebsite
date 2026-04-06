@@ -289,13 +289,14 @@ export function BracketView({ matches }: BracketViewProps) {
 // ─── BracketSection (with category filter) ────────────────────────────────────
 
 const categoryLabels: Record<TeamCategory, string> = {
-  open: 'Open',
-  u18: 'U18',
-  u16: 'U16',
-  u14: 'U14',
+  open_m: 'Open Maschile',
+  open_f: 'Open Femminile',
+  u18_m: 'U18 Maschile',
+  u16_m: 'U16 Maschile',
+  u14_m: 'U14 Maschile',
 }
 
-const categoryOrder: TeamCategory[] = ['open', 'u18', 'u16', 'u14']
+const categoryOrder: TeamCategory[] = ['open_m', 'open_f', 'u18_m', 'u16_m', 'u14_m']
 
 interface BracketSectionProps {
   matches: MatchWithTeams[]
@@ -309,7 +310,7 @@ export default function BracketSection({ matches }: BracketSectionProps) {
   )
 
   const [selectedCat, setSelectedCat] = useState<TeamCategory>(
-    availableCategories[0] ?? 'open',
+    availableCategories[0] ?? 'open_m',
   )
 
   if (availableCategories.length === 0) {

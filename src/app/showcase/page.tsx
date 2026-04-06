@@ -13,12 +13,20 @@ type ShowcaseMode = 'open' | 'under' | 'tpc_open' | 'tpc_under' | 'sponsors'
 const AUTO_REFRESH_INTERVAL = 15000
 const UNDER_CATEGORY_CYCLE_MS = 20000
 
-const CATEGORY_ORDER: TeamCategory[] = ['u14', 'u16', 'u18']
+const CATEGORY_ORDER: TeamCategory[] = ['u14_m', 'u16_m', 'u18_m']
 const CATEGORY_COLORS: Record<TeamCategory, string> = {
-  open: 'bg-brand-orange',
-  u18: 'bg-blue-500',
-  u16: 'bg-purple-500',
-  u14: 'bg-green-600',
+  open_m: 'bg-brand-orange',
+  open_f: 'bg-pink-500',
+  u18_m: 'bg-blue-500',
+  u16_m: 'bg-purple-500',
+  u14_m: 'bg-green-600',
+}
+const CATEGORY_SHORT: Record<TeamCategory, string> = {
+  open_m: 'Open M',
+  open_f: 'Open F',
+  u18_m: 'U18',
+  u16_m: 'U16',
+  u14_m: 'U14',
 }
 
 function formatTime(iso: string | null): string {
@@ -727,7 +735,7 @@ export default function ShowcasePage() {
               <ShowcaseCalendar matches={data.matches} theme={theme} />
             </div>
             <div className="w-[40%]">
-              <ShowcaseStandings groups={data.groups} matches={data.matches} category="open" theme={theme} />
+              <ShowcaseStandings groups={data.groups} matches={data.matches} category="open_m" theme={theme} />
             </div>
           </div>
         )}
@@ -753,14 +761,14 @@ export default function ShowcasePage() {
                   key={cat}
                   className={clsx(
                     'px-3 py-1 rounded text-xs font-display uppercase tracking-wide transition-all',
-                    idx === underCategoryIndex 
-                      ? 'bg-brand-orange text-white' 
-                      : lightMode 
-                        ? 'bg-gray-200 text-gray-700' 
+                    idx === underCategoryIndex
+                      ? 'bg-brand-orange text-white'
+                      : lightMode
+                        ? 'bg-gray-200 text-gray-700'
                         : 'bg-court-surface text-court-muted'
                   )}
                 >
-                  {cat}
+                  {CATEGORY_SHORT[cat]}
                 </span>
               ))}
             </div>

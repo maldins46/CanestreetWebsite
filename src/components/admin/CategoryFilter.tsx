@@ -3,11 +3,12 @@ import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import type { TeamCategory } from '@/types'
 
 const options: { value: TeamCategory | 'all'; label: string }[] = [
-  { value: 'all',  label: 'Tutte' },
-  { value: 'open', label: 'Open' },
-  { value: 'u14',  label: 'U14' },
-  { value: 'u16',  label: 'U16' },
-  { value: 'u18',  label: 'U18' },
+  { value: 'all',    label: 'Tutte' },
+  { value: 'open_m', label: 'Open M' },
+  { value: 'open_f', label: 'Open F' },
+  { value: 'u14_m',  label: 'U14 M' },
+  { value: 'u16_m',  label: 'U16 M' },
+  { value: 'u18_m',  label: 'U18 M' },
 ]
 
 export default function CategoryFilter() {
