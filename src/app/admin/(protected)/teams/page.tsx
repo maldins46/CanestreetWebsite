@@ -119,9 +119,6 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
         <div className="space-y-3">
           {teams.map(team => {
             const hasPlayers = team.players && team.players.length > 0
-            const captain = hasPlayers
-              ? team.players.find(p => p.is_captain)
-              : null
             const sortedPlayers = hasPlayers
               ? [...team.players].sort((a, b) => a.sort_order - b.sort_order)
               : null
@@ -147,19 +144,6 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
                         {statusLabel[team.status]}
                       </span>
                     </div>
-
-                    {/* Captain / contact info */}
-                    <p className="text-court-gray text-sm">
-                      {hasPlayers && captain ? (
-                        <>Capitano: <span className="text-court-light">{captain.name}</span>{' · '}</>
-                      ) : team.captain_name ? (
-                        <>Capitano: <span className="text-court-light">{team.captain_name}</span>{' · '}</>
-                      ) : null}
-                      <a href={`mailto:${team.captain_email}`} className="hover:text-brand-orange transition-colors">
-                        {team.captain_email}
-                      </a>
-                      {team.captain_phone && ` · ${team.captain_phone}`}
-                    </p>
 
                     {/* Players */}
                     {sortedPlayers ? (
