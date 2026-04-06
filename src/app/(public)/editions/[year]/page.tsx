@@ -41,6 +41,7 @@ export default async function EditionDetailPage({ params }: Props) {
             fill
             className="object-cover opacity-60"
             priority
+            quality={60}
             sizes="100vw"
           />
         ) : null}

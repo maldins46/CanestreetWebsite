@@ -58,6 +58,7 @@ export default async function HomePage() {
           fill
           className="object-cover object-center"
           priority
+          quality={60}
           sizes="100vw"
         />
         {/* Gradient — heavy at bottom so title always sits on dark */}
@@ -359,6 +360,7 @@ export default async function HomePage() {
           alt=""
           fill
           className="object-cover opacity-40"
+          quality={50}
           sizes="100vw"
         />
         <div className="absolute inset-0 bg-court-black/60" />

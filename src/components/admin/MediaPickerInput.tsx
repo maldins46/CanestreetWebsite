@@ -102,7 +102,7 @@ export default function MediaPickerInput({
                   }`}
                   title={f.name}
                 >
-                  <Image src={f.url} alt={f.name} fill className="object-contain p-1" sizes="80px" />
+                  <Image src={f.url} alt={f.name} fill className="object-contain p-1" sizes="80px" unoptimized />
                 </button>
               ))}
             </div>
@@ -112,7 +112,7 @@ export default function MediaPickerInput({
 
       {value && (
         <div className={`mt-3 relative ${PREVIEW_CONTAINER[preview]} overflow-hidden border border-court-border ${PREVIEW_BG[preview]}`}>
-          <Image src={value} alt="Anteprima" fill className={PREVIEW_IMG[preview]} sizes="512px" />
+          <Image src={value} alt="Anteprima" fill className={PREVIEW_IMG[preview]} sizes="512px" unoptimized />
         </div>
       )}
     </div>

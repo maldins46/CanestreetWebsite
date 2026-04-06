@@ -41,7 +41,7 @@ export default async function AdminStaffPage() {
               {/* Square thumbnail */}
               <div className="relative w-12 h-12 shrink-0 overflow-hidden border border-court-border bg-court-dark">
                 {m.photo_url ? (
-                  <Image src={m.photo_url} alt={m.name} fill className="object-cover object-top" sizes="48px" />
+                  <Image src={m.photo_url} alt={m.name} fill className="object-cover object-top" sizes="48px" unoptimized />
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center">
                     <span className="font-display font-bold text-lg text-brand-orange/60">{m.name.charAt(0)}</span>
