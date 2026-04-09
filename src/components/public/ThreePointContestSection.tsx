@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import clsx from 'clsx'
 import type { TpcCategory, TpcContestFull, TpcRoundWithEntries } from '@/types'
 
@@ -13,22 +13,23 @@ const CATEGORIES: { key: TpcCategory; label: string }[] = [
 ]
 
 export default function ThreePointContestSection({ contests }: Props) {
-  const [activeCategory, setActiveCategory] = useState<TpcCategory>('open')
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+  const catParam = searchParams.get('cat') as TpcCategory | null
+  const validTpcCats: TpcCategory[] = ['open', 'under']
+  const activeCategory: TpcCategory = catParam && validTpcCats.includes(catParam) ? catParam : 'open'
+
+  function setActiveCategory(value: TpcCategory) {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('cat', value)
+    router.replace(`/torneo?${params}`)
+  }
 
   const contest = contests.find(c => c.category === activeCategory) ?? null
   const sortedRounds = contest
     ? [...contest.tpc_rounds].sort((a, b) => a.round_number - b.round_number)
     : []
-
-  if (contests.length === 0) {
-    return (
-      <div className="card p-10 text-center">
-        <p className="text-court-gray font-body">
-          La gara sarà disponibile durante il torneo.
-        </p>
-      </div>
-    )
-  }
 
   return (
     <div>
@@ -52,7 +53,7 @@ export default function ThreePointContestSection({ contests }: Props) {
 
       {!contest ? (
         <div className="card p-10 text-center">
-          <p className="text-court-gray font-body">Nessuna gara disponibile per questa categoria.</p>
+          <p className="text-court-gray font-body">La gara sarà disponibile durante il torneo.</p>
         </div>
       ) : sortedRounds.length === 0 ? (
         <div className="card p-10 text-center">

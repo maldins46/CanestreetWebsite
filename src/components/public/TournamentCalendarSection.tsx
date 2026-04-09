@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import MatchCard from './MatchCard'
 import type { MatchWithTeams, TeamCategory } from '@/types'
 import clsx from 'clsx'
@@ -32,7 +32,18 @@ function getDayKey(iso: string | null): string {
 }
 
 export default function TournamentCalendarSection({ matches }: Props) {
-  const [cat, setCat] = useState<TeamCategory | 'all'>('all')
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+  const catParam = searchParams.get('cat') as TeamCategory | 'all' | null
+  const validValues = categories.map(c => c.value)
+  const cat: TeamCategory | 'all' = catParam && validValues.includes(catParam) ? catParam : 'all'
+
+  function setCat(value: TeamCategory | 'all') {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('cat', value)
+    router.replace(`/torneo?${params}`)
+  }
 
   const filtered = cat === 'all' ? matches : matches.filter(m => m.category === cat)
 

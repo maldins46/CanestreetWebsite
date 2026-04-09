@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import clsx from 'clsx'
 import type { BracketRound, MatchWithTeams, TeamCategory } from '@/types'
 
@@ -289,11 +290,11 @@ export function BracketView({ matches }: BracketViewProps) {
 // ─── BracketSection (with category filter) ────────────────────────────────────
 
 const categoryLabels: Record<TeamCategory, string> = {
-  open_m: 'Open Maschile',
-  open_f: 'Open Femminile',
-  u18_m: 'U18 Maschile',
-  u16_m: 'U16 Maschile',
-  u14_m: 'U14 Maschile',
+  open_m: 'Open M',
+  open_f: 'Open F',
+  u18_m: 'U18 M',
+  u16_m: 'U16 M',
+  u14_m: 'U14 M',
 }
 
 const categoryOrder: TeamCategory[] = ['open_m', 'open_f', 'u18_m', 'u16_m', 'u14_m']
@@ -303,33 +304,28 @@ interface BracketSectionProps {
 }
 
 export default function BracketSection({ matches }: BracketSectionProps) {
-  const bracketMatches = matches.filter(m => m.phase === 'bracket')
+  const searchParams = useSearchParams()
+  const router = useRouter()
 
-  const availableCategories = categoryOrder.filter(cat =>
-    bracketMatches.some(m => m.category === cat),
-  )
+  const catParam = searchParams.get('cat') as TeamCategory | null
+  const selectedCat: TeamCategory = catParam && (categoryOrder as string[]).includes(catParam)
+    ? catParam as TeamCategory
+    : 'open_m'
 
-  const [selectedCat, setSelectedCat] = useState<TeamCategory>(
-    availableCategories[0] ?? 'open_m',
-  )
-
-  if (availableCategories.length === 0) {
-    return (
-      <div className="card p-10 text-center">
-        <p className="text-court-gray font-body">
-          Il tabellone sarà disponibile al termine dei gironi
-        </p>
-      </div>
-    )
+  function setSelectedCat(value: TeamCategory) {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('cat', value)
+    router.replace(`/torneo?${params}`)
   }
 
+  const bracketMatches = matches.filter(m => m.phase === 'bracket')
   const filteredMatches = bracketMatches.filter(m => m.category === selectedCat)
 
   return (
     <div>
       {/* Category pills */}
       <div className="flex gap-2 flex-wrap mb-6">
-        {availableCategories.map(cat => (
+        {categoryOrder.map(cat => (
           <button
             key={cat}
             onClick={() => setSelectedCat(cat)}
