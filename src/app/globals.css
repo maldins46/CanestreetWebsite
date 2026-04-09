@@ -107,6 +107,12 @@
     color-scheme: dark;
   }
 
+  /* iOS Safari renders input[type="date"] taller than other inputs */
+  .input[type="date"] {
+    line-height: 1.25;
+    min-height: 0;
+  }
+
   .label {
     @apply block text-xs font-display font-semibold uppercase tracking-wider
            text-court-gray mb-1.5;
