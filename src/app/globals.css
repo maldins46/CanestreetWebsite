@@ -104,6 +104,7 @@
     @apply w-full bg-court-dark border border-court-border text-court-white
            placeholder:text-court-muted px-4 py-3
            focus:outline-none focus:border-brand-orange transition-colors;
+    color-scheme: dark;
   }
 
   .label {

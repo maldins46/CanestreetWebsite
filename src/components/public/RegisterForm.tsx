@@ -60,7 +60,7 @@ export default function RegisterForm({ editionId }: Props) {
   const [teamName, setTeamName] = useState('')
   const [players, setPlayers] = useState<PlayerRow[]>([
     emptyPlayer(true),
-    emptyPlayer(),
+    { ...emptyPlayer(), is_vice_captain: true },
     emptyPlayer(),
     emptyPlayer(),
   ])
@@ -71,6 +71,7 @@ export default function RegisterForm({ editionId }: Props) {
   const [clauseParent, setClauseParent] = useState(false)
   const [consentData, setConsentData] = useState(false)
   const [consentImage, setConsentImage] = useState(false)
+  const [consentNewBeetle, setConsentNewBeetle] = useState(false)
 
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
@@ -164,10 +165,11 @@ export default function RegisterForm({ editionId }: Props) {
     }))
 
     const { error } = await supabase.rpc('register_team', {
-      p_edition_id: editionId,
-      p_name:       teamName.trim(),
-      p_category:   category,
-      p_players:    playersPayload,
+      p_edition_id:          editionId,
+      p_name:                teamName.trim(),
+      p_category:            category,
+      p_players:             playersPayload,
+      p_consent_new_beetle:  consentNewBeetle,
     })
 
     if (error) {
@@ -303,15 +305,12 @@ export default function RegisterForm({ editionId }: Props) {
                     {idx === 3 && <span className="ml-2 text-court-muted normal-case font-body">(riserva, opzionale)</span>}
                   </span>
                   <div className="flex items-center gap-3">
-                    <select
-                      value={player.is_captain ? 'captain' : player.is_vice_captain ? 'vice' : 'none'}
-                      onChange={e => setPlayerRole(idx, e.target.value as 'none' | 'captain' | 'vice')}
-                      className="input py-1 text-xs"
-                    >
-                      <option value="none">— Ruolo</option>
-                      <option value="captain">Capitano</option>
-                      <option value="vice">Vice-capitano</option>
-                    </select>
+                    {idx === 0 && (
+                      <span className="text-xs font-display uppercase tracking-wide text-brand-orange">Capitano</span>
+                    )}
+                    {idx === 1 && (
+                      <span className="text-xs font-display uppercase tracking-wide text-court-gray">Vice-capitano</span>
+                    )}
                     {isActive && idx === 3 && (
                       <button
                         type="button"
@@ -507,6 +506,19 @@ export default function RegisterForm({ editionId }: Props) {
             />
             <span className="text-sm text-court-gray">
               Autorizzo la pubblicazione di materiale fotografico e video ripreso durante la manifestazione a fini promozionali e/o artistici, su cartaceo e web. *
+            </span>
+          </label>
+
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={consentNewBeetle}
+              onChange={e => setConsentNewBeetle(e.target.checked)}
+              className="mt-0.5 accent-brand-orange shrink-0"
+            />
+            <span className="text-sm text-court-gray">
+              Acconsento all&apos;agenzia viaggi New Beetle di accedere ai dati personali forniti in fase di iscrizione per una ricerca statistica e invio pacchetto promozionale per gli iscritti al torneo.{' '}
+              <span className="text-court-muted">(opzionale)</span>
             </span>
           </label>
         </div>
