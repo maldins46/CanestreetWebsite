@@ -17,12 +17,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function NewsArticlePage({ params }: Props) {
   const supabase = createPublicServerSupabaseClient()
-  const { data: article } = await supabase
+  const { data: article, error } = await supabase
     .from('news')
     .select('*')
     .eq('slug', params.slug)
     .eq('published', true)
     .single<NewsArticle>()
+  if (error && error.code !== 'PGRST116') console.error('[news/slug] article query failed:', error)
 
   if (!article) notFound()
 

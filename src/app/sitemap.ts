@@ -18,10 +18,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]
 
   // Dynamic: published news articles
-  const { data: news } = await supabase
+  const { data: news, error: newsErr } = await supabase
     .from('news')
     .select('slug, updated_at')
     .eq('published', true)
+  if (newsErr) console.error('[sitemap] news query failed:', newsErr)
 
   const newsPages: MetadataRoute.Sitemap = (news ?? []).map((article) => ({
     url: `${BASE_URL}/news/${article.slug}`,
@@ -31,9 +32,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }))
 
   // Dynamic: edition years
-  const { data: editions } = await supabase
+  const { data: editions, error: editionsErr } = await supabase
     .from('editions')
     .select('year, updated_at')
+  if (editionsErr) console.error('[sitemap] editions query failed:', editionsErr)
 
   const editionPages: MetadataRoute.Sitemap = (editions ?? []).map((edition) => ({
     url: `${BASE_URL}/editions/${edition.year}`,

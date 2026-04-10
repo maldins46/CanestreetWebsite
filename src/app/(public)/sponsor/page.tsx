@@ -4,8 +4,9 @@ import Link from 'next/link'
 import { createPublicServerSupabaseClient } from "@/lib/supabase/server"
 import type { Sponsor, SponsorTier } from '@/types'
 
-export const revalidate = 60
 import { ExternalLink, Mail, Phone } from 'lucide-react'
+
+export const revalidate = 60
 
 export const metadata: Metadata = {
   title: 'Sponsor e Partner',
@@ -129,11 +130,12 @@ function LogoCard({ sponsor }: { sponsor: Sponsor }) {
 
 export default async function SponsorPage() {
   const supabase = createPublicServerSupabaseClient()
-  const { data: sponsors } = await supabase
+  const { data: sponsors, error } = await supabase
     .from('sponsors')
     .select('*')
     .order('sort_order', { ascending: true })
-    .order('name', { ascending: true }) as { data: Sponsor[] | null }
+    .order('name', { ascending: true }) as { data: Sponsor[] | null; error: unknown }
+  if (error) console.error('[sponsor] query failed:', error)
 
   const grouped: Record<SponsorTier, Sponsor[]> = {
     main:   sponsors?.filter(s => s.tier === 'main')   ?? [],

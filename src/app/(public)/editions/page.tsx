@@ -10,11 +10,12 @@ export const metadata: Metadata = { title: 'Edizioni' }
 
 export default async function EditionsPage() {
   const supabase = createPublicServerSupabaseClient()
-  const { data: editions } = await supabase
+  const { data: editions, error } = await supabase
     .from('editions')
     .select('*')
     .order('year', { ascending: false })
     .returns<Edition[]>()
+  if (error) console.error('[editions] query failed:', error)
 
   const past = editions?.filter(e => !e.is_current) ?? []
 

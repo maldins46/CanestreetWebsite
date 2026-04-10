@@ -3,9 +3,9 @@ import Image from 'next/image'
 import { Play } from 'lucide-react'
 import { createPublicServerSupabaseClient } from "@/lib/supabase/server"
 import type { Edition, NewsArticle, Sponsor } from '@/types'
+import SponsorCarousel from '@/components/public/SponsorCarousel'
 
 export const revalidate = 60
-import SponsorCarousel from '@/components/public/SponsorCarousel'
 
 const MEDIA = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/media`
 const AFTERMOVIE_URL = 'https://youtu.be/diOnX3Am1Yg'
@@ -21,16 +21,20 @@ function formatDate(dateStr: string) {
 export default async function HomePage() {
   const supabase = createPublicServerSupabaseClient()
 
-  const { data: edition } = await supabase
+  const { data: edition, error: editionErr } = await supabase
     .from('editions')
     .select('*')
     .eq('is_current', true)
     .single<Edition>()
+  if (editionErr && editionErr.code !== 'PGRST116') console.error('[home] editions query failed:', editionErr)
 
   const year = edition?.year ?? new Date().getFullYear() - 1
 
-  const [{ data: news }, { data: allEditions }, { data: sponsors }] =
-    await Promise.all([
+  const [
+    { data: news, error: newsErr },
+    { data: allEditions, error: allEditionsErr },
+    { data: sponsors, error: sponsorsErr },
+  ] = await Promise.all([
       supabase
         .from('news')
         .select<'*', NewsArticle>('*')
@@ -47,6 +51,9 @@ export default async function HomePage() {
         .eq('is_active', true)
         .order('sort_order', { ascending: true }),
     ])
+  if (newsErr) console.error('[home] news query failed:', newsErr)
+  if (allEditionsErr) console.error('[home] all editions query failed:', allEditionsErr)
+  if (sponsorsErr) console.error('[home] sponsors query failed:', sponsorsErr)
 
   const pastEditions = allEditions?.filter((e) => !e.is_current) ?? []
 

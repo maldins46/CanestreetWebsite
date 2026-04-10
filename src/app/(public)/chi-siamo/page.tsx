@@ -3,8 +3,9 @@ import Image from 'next/image'
 import { createPublicServerSupabaseClient } from "@/lib/supabase/server"
 import type { StaffMember } from '@/types'
 
-export const revalidate = 60
 import StaffCard from '@/components/public/StaffCard'
+
+export const revalidate = 60
 
 export const metadata: Metadata = {
   title: 'Chi siamo',
@@ -12,10 +13,11 @@ export const metadata: Metadata = {
 
 export default async function ChiSiamoPage() {
   const supabase = createPublicServerSupabaseClient()
-  const { data: staff } = await supabase
+  const { data: staff, error } = await supabase
     .from('staff')
     .select('*')
-    .order('sort_order', { ascending: true }) as { data: StaffMember[] | null }
+    .order('sort_order', { ascending: true }) as { data: StaffMember[] | null; error: unknown }
+  if (error) console.error('[chi-siamo] staff query failed:', error)
 
   const jesiImageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/media/jesi.png`
 

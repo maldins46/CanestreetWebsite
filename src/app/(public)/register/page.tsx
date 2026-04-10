@@ -8,11 +8,12 @@ export const revalidate = 60
 
 export default async function RegisterPage() {
   const supabase = createPublicServerSupabaseClient()
-  const { data: edition } = await supabase
+  const { data: edition, error } = await supabase
     .from('editions')
     .select('id, title, year, registration_open')
     .eq('is_current', true)
     .single()
+  if (error && error.code !== 'PGRST116') console.error('[register] edition query failed:', error)
 
   const isOpen = edition?.registration_open === true
 

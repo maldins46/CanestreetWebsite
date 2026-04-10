@@ -20,11 +20,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function EditionDetailPage({ params }: Props) {
   const supabase = createPublicServerSupabaseClient()
-  const { data: edition } = await supabase
+  const { data: edition, error } = await supabase
     .from('editions')
     .select('*, edition_winners(*)')
     .eq('year', parseInt(params.year))
     .single<EditionWithWinners>()
+  if (error && error.code !== 'PGRST116') console.error('[editions/year] edition query failed:', error)
 
   if (!edition) notFound()
 

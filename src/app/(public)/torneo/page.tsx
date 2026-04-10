@@ -11,12 +11,13 @@ export const metadata: Metadata = { title: 'Torneo' }
 export default async function TorneoPage() {
   const supabase = createPublicServerSupabaseClient()
 
-  const { data: edition } = await supabase
+  const { data: edition, error: editionErr } = await supabase
     .from('editions')
     .select('id, year, title')
     .eq('is_current', true)
     .maybeSingle()
     .returns<Pick<Edition, 'id' | 'year' | 'title'>>()
+  if (editionErr) console.error('[torneo] edition query failed:', editionErr)
 
   if (!edition) {
     return (
@@ -39,7 +40,11 @@ export default async function TorneoPage() {
     )
   }
 
-  const [{ data: matchData }, { data: groupData }, { data: tpcData }] = await Promise.all([
+  const [
+    { data: matchData, error: matchErr },
+    { data: groupData, error: groupErr },
+    { data: tpcData, error: tpcErr },
+  ] = await Promise.all([
     supabase
       .from('matches')
       .select(
@@ -63,6 +68,10 @@ export default async function TorneoPage() {
       .eq('edition_id', edition.id)
       .returns<TpcContestFull[]>(),
   ])
+
+  if (matchErr) console.error('[torneo] matches query failed:', matchErr)
+  if (groupErr) console.error('[torneo] groups query failed:', groupErr)
+  if (tpcErr) console.error('[torneo] tpc query failed:', tpcErr)
 
   const matches = matchData ?? []
   const groups = groupData ?? []

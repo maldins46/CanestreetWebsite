@@ -10,12 +10,13 @@ export const metadata: Metadata = { title: 'News' }
 
 export default async function NewsPage() {
   const supabase = createPublicServerSupabaseClient()
-  const { data: articles } = await supabase
+  const { data: articles, error } = await supabase
     .from('news')
     .select('*')
     .eq('published', true)
     .order('published_at', { ascending: false })
     .returns<NewsArticle[]>()
+  if (error) console.error('[news] articles query failed:', error)
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-16">
