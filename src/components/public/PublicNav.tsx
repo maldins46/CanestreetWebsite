@@ -47,7 +47,6 @@ export default function PublicNav() {
               flex items-center gap-2
             "
           >
-            <Image src="/lion.png" alt="Canestreet 3×3" width={36} height={36} className="h-9 w-auto" priority />
             <Image
               src="/canestreet-vector.svg"
               alt="Canestreet"
