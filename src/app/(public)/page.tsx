@@ -1,8 +1,10 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Play } from 'lucide-react'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createPublicServerSupabaseClient } from "@/lib/supabase/server"
 import type { Edition, NewsArticle, Sponsor } from '@/types'
+
+export const revalidate = 60
 import SponsorCarousel from '@/components/public/SponsorCarousel'
 
 const MEDIA = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/media`
@@ -17,7 +19,7 @@ function formatDate(dateStr: string) {
 }
 
 export default async function HomePage() {
-  const supabase = createServerSupabaseClient()
+  const supabase = createPublicServerSupabaseClient()
 
   const { data: edition } = await supabase
     .from('editions')

@@ -1,13 +1,15 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createPublicServerSupabaseClient } from "@/lib/supabase/server"
 import type { Edition } from '@/types'
+
+export const revalidate = 60
 
 export const metadata: Metadata = { title: 'Edizioni' }
 
 export default async function EditionsPage() {
-  const supabase = createServerSupabaseClient()
+  const supabase = createPublicServerSupabaseClient()
   const { data: editions } = await supabase
     .from('editions')
     .select('*')

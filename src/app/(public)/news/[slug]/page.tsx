@@ -3,20 +3,20 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import sanitizeHtml from 'sanitize-html'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createPublicServerSupabaseClient } from "@/lib/supabase/server"
 import type { NewsArticle } from '@/types'
 
 interface Props { params: { slug: string } }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const supabase = createServerSupabaseClient()
+  const supabase = createPublicServerSupabaseClient()
   const { data } = await supabase.from('news').select('title, excerpt').eq('slug', params.slug).single<NewsArticle>()
   if (!data) return { title: 'Articolo non trovato' }
   return { title: data.title, description: data.excerpt ?? undefined }
 }
 
 export default async function NewsArticlePage({ params }: Props) {
-  const supabase = createServerSupabaseClient()
+  const supabase = createPublicServerSupabaseClient()
   const { data: article } = await supabase
     .from('news')
     .select('*')

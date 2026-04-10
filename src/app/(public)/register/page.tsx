@@ -1,11 +1,13 @@
 import type { Metadata } from 'next'
 import RegisterForm from '@/components/public/RegisterForm'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createPublicServerSupabaseClient } from "@/lib/supabase/server"
 
 export const metadata: Metadata = { title: 'Registra la squadra' }
 
+export const revalidate = 60
+
 export default async function RegisterPage() {
-  const supabase = createServerSupabaseClient()
+  const supabase = createPublicServerSupabaseClient()
   const { data: edition } = await supabase
     .from('editions')
     .select('id, title, year, registration_open')

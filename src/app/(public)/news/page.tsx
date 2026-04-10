@@ -1,13 +1,15 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createPublicServerSupabaseClient } from "@/lib/supabase/server"
 import type { NewsArticle } from '@/types'
+
+export const revalidate = 60
 
 export const metadata: Metadata = { title: 'News' }
 
 export default async function NewsPage() {
-  const supabase = createServerSupabaseClient()
+  const supabase = createPublicServerSupabaseClient()
   const { data: articles } = await supabase
     .from('news')
     .select('*')

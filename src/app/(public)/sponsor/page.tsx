@@ -1,8 +1,10 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createPublicServerSupabaseClient } from "@/lib/supabase/server"
 import type { Sponsor, SponsorTier } from '@/types'
+
+export const revalidate = 60
 import { ExternalLink, Mail, Phone } from 'lucide-react'
 
 export const metadata: Metadata = {
@@ -126,7 +128,7 @@ function LogoCard({ sponsor }: { sponsor: Sponsor }) {
 }
 
 export default async function SponsorPage() {
-  const supabase = createServerSupabaseClient()
+  const supabase = createPublicServerSupabaseClient()
   const { data: sponsors } = await supabase
     .from('sponsors')
     .select('*')

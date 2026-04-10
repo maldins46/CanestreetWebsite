@@ -1,7 +1,9 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createPublicServerSupabaseClient } from "@/lib/supabase/server"
 import type { StaffMember } from '@/types'
+
+export const revalidate = 60
 import StaffCard from '@/components/public/StaffCard'
 
 export const metadata: Metadata = {
@@ -9,7 +11,7 @@ export const metadata: Metadata = {
 }
 
 export default async function ChiSiamoPage() {
-  const supabase = createServerSupabaseClient()
+  const supabase = createPublicServerSupabaseClient()
   const { data: staff } = await supabase
     .from('staff')
     .select('*')

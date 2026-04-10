@@ -58,5 +58,12 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  // Run on every request so Supabase can refresh expired tokens via getUser().
+  // Without this, public pages served to a logged-in user can have stale
+  // sb-*-auth-token cookies that PostgREST rejects (401 JWT expired), making
+  // all DB queries return null and the page appear empty.
+  // Exclude Next.js internals and static file extensions to keep middleware fast.
+  matcher: [
+    '/((?!_next/static|_next/image|favicon\\.ico|icons|manifest\\.json|sw\\.js|workbox-|sitemap\\.xml|robots\\.txt).*)',
+  ],
 }

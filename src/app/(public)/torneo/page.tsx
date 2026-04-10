@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createPublicServerSupabaseClient } from "@/lib/supabase/server"
 import type { Edition, GroupWithTeams, MatchWithTeams, TpcContestFull } from '@/types'
 import TorneoPageClient from '@/components/public/TorneoPageClient'
 
@@ -9,7 +9,7 @@ export const revalidate = 15
 export const metadata: Metadata = { title: 'Torneo' }
 
 export default async function TorneoPage() {
-  const supabase = createServerSupabaseClient()
+  const supabase = createPublicServerSupabaseClient()
 
   const { data: edition } = await supabase
     .from('editions')
