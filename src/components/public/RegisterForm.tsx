@@ -55,7 +55,6 @@ function emptyPlayer(isCaptain = false): PlayerRow {
 export default function RegisterForm({ editionId }: Props) {
   const supabase = createClient()
 
-  const [formType, setFormType] = useState<'open' | 'under'>('open')
   const [category, setCategory] = useState<TeamCategory>('open_m')
   const [teamName, setTeamName] = useState('')
   const [players, setPlayers] = useState<PlayerRow[]>([
@@ -78,10 +77,6 @@ export default function RegisterForm({ editionId }: Props) {
 
   const isUnder = category.startsWith('u')
 
-  function handleFormTypeChange(type: 'open' | 'under') {
-    setFormType(type)
-    setCategory(type === 'open' ? 'open_m' : 'u14_m')
-  }
 
   function updatePlayer(idx: number, field: keyof PlayerRow, value: string | boolean) {
     setPlayers(prev => prev.map((p, i) => {
@@ -202,68 +197,29 @@ export default function RegisterForm({ editionId }: Props) {
         <h3 className="font-display font-bold uppercase tracking-widest text-court-white border-b border-court-border pb-3 mb-5">
           Categoria
         </h3>
-        <div className="flex gap-3 mb-4">
-          {(['open', 'under'] as const).map(t => (
+        <div className="flex gap-3 flex-wrap">
+          {([
+            ['open_m', 'Open Maschile'],
+            ['open_f', 'Open Femminile'],
+            ['u14_m', 'U14 Maschile', 'nati 2012/13'],
+            ['u16_m', 'U16 Maschile', 'nati 2010/11/12'],
+            ['u18_m', 'U18 Maschile', 'nati 2008/09/10/11'],
+          ] as [TeamCategory, string, string?][]).map(([cat, label, years]) => (
             <button
-              key={t}
+              key={cat}
               type="button"
-              onClick={() => handleFormTypeChange(t)}
-              className={`px-5 py-2 font-display uppercase tracking-wide text-sm border transition-colors ${
-                formType === t
+              onClick={() => setCategory(cat)}
+              className={`px-4 py-1.5 font-display uppercase tracking-wide text-xs border transition-colors ${
+                category === cat
                   ? 'bg-brand-orange border-brand-orange text-court-dark'
-                  : 'border-court-border text-court-gray hover:border-court-muted hover:text-court-white'
+                  : 'border-court-border text-court-muted hover:border-court-muted hover:text-court-gray'
               }`}
             >
-              {t === 'open' ? 'Open' : 'Under'}
+              {label}
+              {years && <span className="ml-2 text-court-muted normal-case font-body">{years}</span>}
             </button>
           ))}
         </div>
-
-        {formType === 'open' && (
-          <div className="flex gap-3 flex-wrap">
-            {([
-              ['open_m', 'Open Maschile'],
-              ['open_f', 'Open Femminile'],
-            ] as [TeamCategory, string][]).map(([cat, label]) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setCategory(cat)}
-                className={`px-4 py-1.5 font-display uppercase tracking-wide text-xs border transition-colors ${
-                  category === cat
-                    ? 'bg-court-surface border-court-muted text-court-white'
-                    : 'border-court-border text-court-muted hover:border-court-muted hover:text-court-gray'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {formType === 'under' && (
-          <div className="flex gap-3 flex-wrap">
-            {([
-              ['u14_m', 'U14 Maschile', 'nati 2011/12'],
-              ['u16_m', 'U16 Maschile', 'nati 2009/10/11'],
-              ['u18_m', 'U18 Maschile', 'nati 2007/08/09/10'],
-            ] as [TeamCategory, string, string][]).map(([cat, label, years]) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setCategory(cat)}
-                className={`px-4 py-1.5 font-display uppercase tracking-wide text-xs border transition-colors ${
-                  category === cat
-                    ? 'bg-court-surface border-court-muted text-court-white'
-                    : 'border-court-border text-court-muted hover:border-court-muted hover:text-court-gray'
-                }`}
-              >
-                {label}
-                <span className="ml-2 text-court-muted normal-case font-body">{years}</span>
-              </button>
-            ))}
-          </div>
-        )}
       </section>
 
       {/* Team name */}
