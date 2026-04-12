@@ -60,7 +60,7 @@ Email capitano: ${data.captainEmail}
 Telefono capitano: ${data.captainPhone || 'non fornito'}
 Orario iscrizione: ${now}
 
-Visita il backoffice per approvare o rifiutare l'iscrizione.`
+Visita il backoffice per approvare o rifiutare l'iscrizione. Oppure mmazzade`
 
     const html = `
 <!DOCTYPE html>
@@ -69,7 +69,7 @@ Visita il backoffice per approvare o rifiutare l'iscrizione.`
 <body style="font-family: Barlow, Arial, sans-serif; color: #333; line-height: 1.6;">
   <div style="max-width: 600px; margin: 0 auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
     <div style="background: #333; color: white; padding: 20px; text-align: center;">
-      <h1 style="margin: 0; font-size: 24px;">Nuova Iscrizione</h1>
+      <h1 style="margin: 0; font-size: 24px;">Nuova Iscrizione 🏀🦁</h1>
     </div>
     <div style="padding: 20px;">
       <p><strong>Squadra:</strong> ${data.teamName}</p>
@@ -78,8 +78,8 @@ Visita il backoffice per approvare o rifiutare l'iscrizione.`
       <p><strong>Email capitano:</strong> ${data.captainEmail}</p>
       <p><strong>Telefono capitano:</strong> ${data.captainPhone || 'non fornito'}</p>
       <p><strong>Orario iscrizione:</strong> ${now}</p>
-      <p style="margin-top: 30px; font-size: 14px; color: #666;">
-        Accedi al backoffice per approvare, rifiutare o inserire in lista d'attesa l'iscrizione.
+      <p style="margin-top: 30px; font-size: 14px; color: #333;">
+        Accedi al backoffice per approvare, rifiutare o inserire in lista d'attesa l'iscrizione. Oppure mazzade
       </p>
     </div>
   </div>
@@ -126,7 +126,7 @@ Ti contatteremo presto per confermare l'accettazione o comunicarti lo stato dell
 
 Per qualsiasi domanda contattaci a: canestreet3vs3@gmail.com
 
-A presto! 🏀🦁`
+A presto!`
 
     const html = `
 <!DOCTYPE html>
@@ -134,8 +134,8 @@ A presto! 🏀🦁`
 <head><meta charset="utf-8"></head>
 <body style="font-family: Barlow, Arial, sans-serif; color: #333; line-height: 1.6;">
   <div style="max-width: 600px; margin: 0 auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
-    <div style="background: #FF6B35; color: white; padding: 20px; text-align: center;">
-      <h1 style="margin: 0; font-size: 24px;">Iscrizione Ricevuta 🏀🦁</h1>
+    <div style="background: #333; color: white; padding: 20px; text-align: center;">
+      <h1 style="margin: 0; font-size: 24px;">Richiesta di iscrizione Ricevuta 🏀🦁</h1>
     </div>
     <div style="padding: 20px;">
       <p>Ciao!</p>
@@ -144,7 +144,6 @@ A presto! 🏀🦁`
       <p style="margin-top: 30px; border-top: 1px solid #ddd; padding-top: 20px; font-size: 14px; color: #666;">
         Per qualsiasi domanda contattaci a: <strong>canestreet3vs3@gmail.com</strong>
       </p>
-      <p style="text-align: center; font-size: 40px; margin-top: 20px;">🏀</p>
     </div>
   </div>
 </body>
@@ -184,28 +183,28 @@ export async function sendStatusChangeNotification(
 
     switch (data.newStatus) {
       case 'approved':
-        subject = 'Canestreet 3vs3 — Iscrizione Approvata! 🎉'
-        message = `La squadra "${data.teamName}" è stata approvata! Vi aspettiamo in piazza, a presto 🏀🦁`
+        subject = 'Canestreet 3x3 — Iscrizione Approvata! 🎉'
+        message = `La squadra "${data.teamName}" è stata approvata! Vi aspettiamo in piazza, a presto!`
         break
       case 'rejected':
-        subject = 'Canestreet 3vs3 — Iscrizione Non Accettata'
+        subject = 'Canestreet 3x3 — Iscrizione Non Accettata'
         message = `Purtroppo la squadra "${data.teamName}" non è stata accettata per questa edizione del torneo. Per informazioni contattaci a canestreet3vs3@gmail.com.`
         break
       case 'waitlisted':
-        subject = 'Canestreet 3vs3 — Lista d\'Attesa'
+        subject = 'Canestreet 3x3 — Lista d\'Attesa'
         message = `La squadra "${data.teamName}" è stata inserita in lista d'attesa. Vi aggiorneremo al più presto in caso di posti disponibili.`
         break
       default:
         return { success: false, error: `Unknown status: ${data.newStatus}` }
     }
 
-    const text = `Canestreet 3x3 — Aggiornamento Iscrizione
+    const text = `Canestreet 3x3 — Aggiornamento Iscrizione 🏀🦁
 
 ${message}
 
 Per qualsiasi domanda contattaci a: canestreet3vs3@gmail.com
 
-Grazie! 🏀🦁`
+Grazie!`
 
     const html = `
 <!DOCTYPE html>
@@ -213,7 +212,7 @@ Grazie! 🏀🦁`
 <head><meta charset="utf-8"></head>
 <body style="font-family: Barlow, Arial, sans-serif; color: #333; line-height: 1.6;">
   <div style="max-width: 600px; margin: 0 auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
-    <div style="background: #FF6B35; color: white; padding: 20px; text-align: center;">
+    <div style="background: #333; color: white; padding: 20px; text-align: center;">
       <h1 style="margin: 0; font-size: 24px;">Aggiornamento Iscrizione 🏀🦁</h1>
     </div>
     <div style="padding: 20px;">
