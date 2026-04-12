@@ -279,7 +279,7 @@ export default function RegisterForm({ editionId }: Props) {
                   </div>
                 </div>
 
-                <div className="grid sm:grid-cols-2 gap-3">
+                <div className="grid lg:grid-cols-2 gap-3">
                   <div>
                     <label className="label text-xs">Nome e cognome {idx < 3 && '*'}</label>
                     <input

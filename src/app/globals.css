@@ -111,6 +111,17 @@
   .input[type="date"] {
     line-height: 1.25;
     min-height: 0;
+    width: 100%;
+  }
+
+  /* iOS date picker fixes */
+  input[type="date"] {
+    font-size: 16px; /* Prevent iOS zoom on focus */
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    color: rgb(var(--color-court-muted));
   }
 
   .label {
