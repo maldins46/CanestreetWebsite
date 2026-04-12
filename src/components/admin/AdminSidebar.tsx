@@ -84,7 +84,7 @@ export default function AdminSidebar({
         {/* Logo */}
         <div className="p-6 border-b border-court-border flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Image src="/lion.png" alt="Lion" width={32} height={32} className="shrink-0" />
+            <Image src="/lion.png" alt="Lion" width={32} height={41} className="shrink-0" />
             <div>
               <p className="font-display font-extrabold tracking-widest text-brand-orange text-sm">
                 CANESTREET

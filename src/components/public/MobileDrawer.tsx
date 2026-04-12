@@ -95,8 +95,8 @@ export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
           style={{ paddingTop: 'env(safe-area-inset-top)' }}
         >
           <Link href="/" className="flex items-center gap-2" onClick={onClose}>
-            <Image src="/lion.png" alt="" width={32} height={32} className="h-8 w-auto" />
-            <Image src="/canestreet-vector.svg" alt="Canestreet" width={120} height={19} className="h-[19px] w-auto brightness-0 invert" />
+            <Image src="/lion.png" alt="" width={32} height={41} className="h-10" />
+            <Image src="/canestreet-vector.svg" alt="Canestreet" width={120} height={19} className="h-[19px] brightness-0 invert" />
           </Link>
           <button
             onClick={onClose}

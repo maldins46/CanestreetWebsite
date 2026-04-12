@@ -47,6 +47,7 @@ export const metadata: Metadata = {
     ],
   },
   other: {
+    'mobile-web-app-capable': 'yes',
     'msapplication-TileColor': '#0a0a0a',
     'msapplication-TileImage': '/icons/ms-icon-144x144.png',
     'msapplication-config': '/browserconfig.xml',

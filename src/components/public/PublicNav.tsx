@@ -74,7 +74,7 @@ export default function PublicNav() {
           {/* ── Desktop layout ── */}
           {/* Logo — left */}
           <Link href="/" className="hidden md:flex items-center shrink-0">
-            <Image src="/lion.png" alt="Canestreet 3×3" width={40} height={40} className="h-10 w-auto" priority />
+            <Image src="/lion.png" alt="Canestreet 3×3" width={32} height={41} className="h-10 shrink-0" priority />
           </Link>
 
           {/* Desktop nav */}
