@@ -483,7 +483,7 @@ export default function RegolamentoPage() {
         </div>
 
         <div className="text-center">
-          <Link href="/iscriviti" className="btn-primary px-10 py-3">
+          <Link href="/register" className="btn-primary px-10 py-3">
             Iscriviti ora →
           </Link>
         </div>

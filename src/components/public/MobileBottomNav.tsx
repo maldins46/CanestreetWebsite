@@ -5,10 +5,10 @@ import { Home, Trophy, Users, Calendar, Newspaper } from 'lucide-react'
 import clsx from 'clsx'
 
 const tabs = [
-  { href: '/torneo',    label: 'Torneo',    Icon: Calendar },
-  { href: '/news',      label: 'News',      Icon: Newspaper },
-  { href: '/',          label: 'Home',      Icon: Home },
-  { href: '/chi-siamo', label: 'Chi siamo', Icon: Users },
+  { href: '/tournament', label: 'Torneo',    Icon: Calendar },
+  { href: '/news',       label: 'News',      Icon: Newspaper },
+  { href: '/',           label: 'Home',      Icon: Home },
+  { href: '/about',      label: 'Chi siamo', Icon: Users },
   { href: '/editions',  label: 'Edizioni',  Icon: Trophy },
 ]
 

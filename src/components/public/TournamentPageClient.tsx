@@ -25,7 +25,7 @@ interface Props {
   tpcContests: TpcContestFull[]
 }
 
-export default function TorneoPageClient({ matches, groups, tpcContests }: Props) {
+export default function TournamentPageClient({ matches, groups, tpcContests }: Props) {
   const searchParams = useSearchParams()
   const tabParam = searchParams.get('tab') as TabKey | null
   const router = useRouter()
@@ -79,7 +79,7 @@ export default function TorneoPageClient({ matches, groups, tpcContests }: Props
               {TABS.map(tab => (
                 <button
                   key={tab.key}
-                  onClick={() => router.push(`/torneo?tab=${tab.key}`)}
+                  onClick={() => router.push(`/tournament?tab=${tab.key}`)}
                   className={clsx(
                     'shrink-0 px-5 py-3 font-display uppercase tracking-wide text-sm border-b-2 transition-colors',
                     activeTab === tab.key

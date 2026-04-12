@@ -23,7 +23,7 @@ export default function ThreePointContestSection({ contests }: Props) {
   function setActiveCategory(value: TpcCategory) {
     const params = new URLSearchParams(searchParams.toString())
     params.set('cat', value)
-    router.replace(`/torneo?${params}`)
+    router.replace(`/tournament?${params}`)
   }
 
   const contest = contests.find(c => c.category === activeCategory) ?? null

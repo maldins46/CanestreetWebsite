@@ -115,7 +115,7 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
         {tabs.map(t => (
           <Link
             key={t.key}
-            href={`/admin/torneo?${new URLSearchParams({
+            href={`/admin/tournament?${new URLSearchParams({
               ...(searchParams.edition ? { edition: searchParams.edition } : {}),
               ...(searchParams.category ? { category: searchParams.category } : {}),
               tab: t.key,

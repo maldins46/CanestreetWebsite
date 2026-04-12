@@ -9,10 +9,10 @@ import clsx from 'clsx'
 const navLinks = [
   { href: '/',             label: 'Home' },
   { href: '/news',         label: 'News' },
-  { href: '/torneo',       label: 'Torneo' },
+  { href: '/tournament',   label: 'Torneo' },
   { href: '/editions',     label: 'Edizioni' },
-  { href: '/chi-siamo',    label: 'Chi siamo' },
-  { href: '/regolamento',  label: 'Regolamento' },
+  { href: '/about',        label: 'Chi siamo' },
+  { href: '/rules',        label: 'Regolamento' },
   { href: '/sponsor',      label: 'Sponsor' },
 ]
 

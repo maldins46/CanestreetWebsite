@@ -13,7 +13,7 @@ const nav = [
   { href: '/admin',                  label: 'Dashboard',       icon: Home },
   { href: '/admin/teams',            label: 'Squadre',         icon: Users },
   { href: '/admin/editions',         label: 'Edizioni',        icon: Trophy },
-  { href: '/admin/torneo',           label: 'Torneo',          icon: Calendar },
+  { href: '/admin/tournament',       label: 'Torneo',          icon: Calendar },
   { href: '/admin/three-point-contest', label: '3-Point Contest', icon: Target },
   { href: '/admin/news',            label: 'News',       icon: Newspaper },
   { href: '/admin/staff',           label: 'Staff',      icon: UserCircle },

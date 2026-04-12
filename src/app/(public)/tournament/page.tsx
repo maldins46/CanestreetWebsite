@@ -2,13 +2,13 @@ import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import { createPublicServerSupabaseClient } from "@/lib/supabase/server"
 import type { Edition, GroupWithTeams, MatchWithTeams, TpcContestFull } from '@/types'
-import TorneoPageClient from '@/components/public/TorneoPageClient'
+import TournamentPageClient from '@/components/public/TournamentPageClient'
 
 export const revalidate = 15
 
 export const metadata: Metadata = { title: 'Torneo' }
 
-export default async function TorneoPage() {
+export default async function TournamentPage() {
   const supabase = createPublicServerSupabaseClient()
 
   const { data: edition, error: editionErr } = await supabase
@@ -17,7 +17,7 @@ export default async function TorneoPage() {
     .eq('is_current', true)
     .maybeSingle()
     .returns<Pick<Edition, 'id' | 'year' | 'title'>>()
-  if (editionErr) console.error('[torneo] edition query failed:', editionErr)
+  if (editionErr) console.error('[tournament] edition query failed:', editionErr)
 
   if (!edition) {
     return (
@@ -34,7 +34,7 @@ export default async function TorneoPage() {
           </div>
         </section>
         <Suspense fallback={null}>
-          <TorneoPageClient matches={[]} groups={[]} tpcContests={[]} />
+          <TournamentPageClient matches={[]} groups={[]} tpcContests={[]} />
         </Suspense>
       </div>
     )
@@ -69,9 +69,9 @@ export default async function TorneoPage() {
       .returns<TpcContestFull[]>(),
   ])
 
-  if (matchErr) console.error('[torneo] matches query failed:', matchErr)
-  if (groupErr) console.error('[torneo] groups query failed:', groupErr)
-  if (tpcErr) console.error('[torneo] tpc query failed:', tpcErr)
+  if (matchErr) console.error('[tournament] matches query failed:', matchErr)
+  if (groupErr) console.error('[tournament] groups query failed:', groupErr)
+  if (tpcErr) console.error('[tournament] tpc query failed:', tpcErr)
 
   const matches = matchData ?? []
   const groups = groupData ?? []
@@ -94,7 +94,7 @@ export default async function TorneoPage() {
 
       {/* Tabs + Content */}
       <Suspense fallback={<div className="max-w-6xl mx-auto px-6 py-12"><div className="card p-10 text-center"><p className="text-court-gray">Caricamento...</p></div></div>}>
-        <TorneoPageClient
+        <TournamentPageClient
           matches={matches}
           groups={groups}
           tpcContests={tpcContests}

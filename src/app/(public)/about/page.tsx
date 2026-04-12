@@ -17,7 +17,7 @@ export default async function ChiSiamoPage() {
     .from('staff')
     .select('*')
     .order('sort_order', { ascending: true }) as { data: StaffMember[] | null; error: unknown }
-  if (error) console.error('[chi-siamo] staff query failed:', error)
+  if (error) console.error('[about] staff query failed:', error)
 
   const jesiImageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/media/jesi.png`
 

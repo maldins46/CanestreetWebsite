@@ -147,7 +147,7 @@ export default function StandingsSection({ groups, matches }: StandingsSectionPr
   function setSelectedCat(value: TeamCategory) {
     const params = new URLSearchParams(searchParams.toString())
     params.set('cat', value)
-    router.replace(`/torneo?${params}`)
+    router.replace(`/tournament?${params}`)
   }
 
   const groupsForCat = groups.filter(g => g.category === selectedCat)

@@ -315,7 +315,7 @@ export default function BracketSection({ matches }: BracketSectionProps) {
   function setSelectedCat(value: TeamCategory) {
     const params = new URLSearchParams(searchParams.toString())
     params.set('cat', value)
-    router.replace(`/torneo?${params}`)
+    router.replace(`/tournament?${params}`)
   }
 
   const bracketMatches = matches.filter(m => m.phase === 'bracket')

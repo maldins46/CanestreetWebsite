@@ -42,7 +42,7 @@ export default function TournamentCalendarSection({ matches }: Props) {
   function setCat(value: TeamCategory | 'all') {
     const params = new URLSearchParams(searchParams.toString())
     params.set('cat', value)
-    router.replace(`/torneo?${params}`)
+    router.replace(`/tournament?${params}`)
   }
 
   const filtered = cat === 'all' ? matches : matches.filter(m => m.category === cat)
