@@ -32,11 +32,7 @@ export default async function ChiSiamoPage() {
           Chi siamo
         </h1>
         <p className="text-court-gray max-w-2xl leading-relaxed">
-          Il Canestreet è un torneo estivo di basket 3×3, parte del circuito FIP, nato su iniziativa
-          di alcuni amici appassionati di basket. Da piccolo torneo parrocchiale, siamo cresciuti sempre
-          di più, fino all&apos;approdo nel circuito nazionale 3×3. La nostra ambizione è quella di dare
-          un torneo estivo di basket alla nostra piccola città, con l&apos;obiettivo di fare sempre meglio,
-          ogni anno che passa!
+          Il Canestreet è il risultato degli sforzi e dell'impegno posto da un gruppo di amici jesini, accomunati dalla passione per il basket. Questa pagina parla di noi!
         </p>
       </div>
 
@@ -92,7 +88,6 @@ export default async function ChiSiamoPage() {
               </a>
             </div>
           </div>
-
         </div>
       </div>
     </div>

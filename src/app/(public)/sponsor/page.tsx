@@ -29,7 +29,7 @@ const TIER_CONFIG: Record<SponsorTier, TierConfig> = {
   },
   gold: {
     label: 'Gold Sponsor',
-    description: 'Partner gold che contribuiscono a rendere il torneo un successo.',
+    description: '',
     gridClass: 'grid grid-cols-2 md:grid-cols-3 gap-5',
     showDescription: true,
   },
