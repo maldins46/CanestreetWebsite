@@ -176,6 +176,21 @@ export default function RegisterForm({ editionId }: Props) {
       return
     }
 
+    // Fire-and-forget: send notification emails
+    const captain = activePlayers.find(p => p.is_captain)
+    if (captain?.email) {
+      fetch('/api/email/registration', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          teamName: teamName.trim(),
+          captainEmail: captain.email.trim(),
+          category,
+          playerCount: activePlayers.length,
+        }),
+      }).catch(() => {}) // silently ignore email failures
+    }
+
     setStatus('success')
   }
 

@@ -169,6 +169,15 @@ export default function TeamEditor({ team, editionId, editions }: Props) {
 
     if (error) { setSaving(false); setMsg('Errore: ' + error.message); return }
 
+    // Fire-and-forget: notify captain if status is being set to approved/rejected/waitlisted
+    if (team && ['approved', 'rejected', 'waitlisted'].includes(form.status)) {
+      fetch('/api/email/status-change', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teamId: team.id, newStatus: form.status }),
+      }).catch(() => {}) // silently ignore email failures
+    }
+
     // Handle players
     if (teamId) {
       const originalIds = (team?.players ?? []).map(p => p.id)

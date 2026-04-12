@@ -15,6 +15,14 @@ export default function TeamStatusButton({ teamId, status, label }: Props) {
   async function update() {
     setLoading(true)
     await supabase.from('teams').update({ status }).eq('id', teamId)
+
+    // Fire-and-forget: notify captain of status change
+    fetch('/api/email/status-change', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ teamId, newStatus: status }),
+    }).catch(() => {}) // silently ignore email failures
+
     router.refresh()
     setLoading(false)
   }
