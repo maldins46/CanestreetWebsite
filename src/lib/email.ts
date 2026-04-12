@@ -68,8 +68,8 @@ Visita il backoffice per approvare o rifiutare l'iscrizione.`
 <head><meta charset="utf-8"></head>
 <body style="font-family: Barlow, Arial, sans-serif; color: #333; line-height: 1.6;">
   <div style="max-width: 600px; margin: 0 auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
-    <div style="background: #FF6B35; color: white; padding: 20px; text-align: center;">
-      <h1 style="margin: 0; font-size: 24px;">Nuova Iscrizione 🏀🦁</h1>
+    <div style="background: #333; color: white; padding: 20px; text-align: center;">
+      <h1 style="margin: 0; font-size: 24px;">Nuova Iscrizione</h1>
     </div>
     <div style="padding: 20px;">
       <p><strong>Squadra:</strong> ${data.teamName}</p>

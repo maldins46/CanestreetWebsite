@@ -4,7 +4,7 @@ import type { TeamCategory } from '@/types'
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { teamName, captainEmail, category, playerCount } = body
+    const { teamName, captainEmail, captainPhone, category, playerCount } = body
 
     if (!teamName || !captainEmail || !category || !playerCount) {
       return new Response(
@@ -19,6 +19,7 @@ export async function POST(request: Request) {
         teamName,
         category: category as TeamCategory,
         captainEmail,
+        captainPhone: captainPhone || null,
         playerCount: parseInt(playerCount, 10),
       }),
       sendRegistrationConfirmation({

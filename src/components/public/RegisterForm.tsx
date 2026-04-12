@@ -185,6 +185,7 @@ export default function RegisterForm({ editionId }: Props) {
         body: JSON.stringify({
           teamName: teamName.trim(),
           captainEmail: captain.email.trim(),
+          captainPhone: captain.phone?.trim() || null,
           category,
           playerCount: activePlayers.length,
         }),
