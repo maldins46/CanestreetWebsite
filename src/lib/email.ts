@@ -51,7 +51,7 @@ export async function sendRegistrationAdminNotification(
     const categoryLabel = categoryLabels[data.category] || data.category
     const now = new Date().toLocaleString('it-IT')
 
-    const text = `Nuova iscrizione al torneo Canestreet 3x3
+    const text = `Nuova iscrizione al torneo Canestreet 3×3
 
 Squadra: ${data.teamName}
 Categoria: ${categoryLabel}
@@ -60,7 +60,10 @@ Email capitano: ${data.captainEmail}
 Telefono capitano: ${data.captainPhone || 'non fornito'}
 Orario iscrizione: ${now}
 
-Visita il backoffice per approvare o rifiutare l'iscrizione. Oppure mmazzade`
+Visita il backoffice per approvare o rifiutare l'iscrizione. Oppure mmazzade
+
+---
+Questo messaggio è stato generato automaticamente.`
 
     const html = `
 <!DOCTYPE html>
@@ -81,13 +84,16 @@ Visita il backoffice per approvare o rifiutare l'iscrizione. Oppure mmazzade`
       <p style="margin-top: 30px; font-size: 14px; color: #333;">
         Accedi al backoffice per approvare, rifiutare o inserire in lista d'attesa l'iscrizione. Oppure mazzade
       </p>
+      <p style="margin-top: 30px; border-top: 1px solid #ddd; padding-top: 20px; font-size: 12px; color: #999;">
+        Questo messaggio è stato generato automaticamente.
+      </p>
     </div>
   </div>
 </body>
 </html>`
 
     await transporter.sendMail({
-      from: gmailUser,
+      from: `Canestreet 3×3 <${gmailUser}>`,
       to: gmailUser,
       subject: `Nuova iscrizione: ${data.teamName} (${categoryLabel})`,
       text,
@@ -117,16 +123,17 @@ export async function sendRegistrationConfirmation(
   try {
     const categoryLabel = categoryLabels[data.category] || data.category
 
-    const text = `Canestreet 3x3 — Richiesta di iscrizione ricevuta
+    const text = `Canestreet 3×3 — Richiesta di iscrizione ricevuta
 
 Ciao!
 La tua richiesta di iscrizione con la squadra "${data.teamName}" nella categoria "${categoryLabel}" è stata registrata con successo.
 
 Ti contatteremo presto per confermare l'accettazione o comunicarti lo stato della tua iscrizione.
 
-Per qualsiasi domanda contattaci a: canestreet3vs3@gmail.com
+A presto!
 
-A presto!`
+---
+Questo messaggio è stato generato automaticamente. Puoi rispondere direttamente a questa email per qualsiasi chiarimento.`
 
     const html = `
 <!DOCTYPE html>
@@ -141,8 +148,8 @@ A presto!`
       <p>Ciao!</p>
       <p>La tua richiesta d'iscrizione con la squadra <strong>"${data.teamName}"</strong> nella categoria <strong>"${categoryLabel}"</strong> è stata registrata con successo.</p>
       <p>Ti contatteremo presto per confermare l'accettazione o comunicarti lo stato della tua iscrizione.</p>
-      <p style="margin-top: 30px; border-top: 1px solid #ddd; padding-top: 20px; font-size: 14px; color: #666;">
-        Per qualsiasi domanda contattaci a: <strong>canestreet3vs3@gmail.com</strong>
+      <p style="margin-top: 20px; border-top: 1px solid #ddd; padding-top: 20px; font-size: 12px; color: #999;">
+        Questo messaggio è stato generato automaticamente. Puoi rispondere direttamente a questa email per qualsiasi chiarimento.
       </p>
     </div>
   </div>
@@ -150,9 +157,9 @@ A presto!`
 </html>`
 
     await transporter.sendMail({
-      from: gmailUser,
+      from: `Canestreet 3×3 <${gmailUser}>`,
       to: data.captainEmail,
-      subject: 'Canestreet 3x3 — Iscrizione ricevuta',
+      subject: 'Canestreet 3×3 — Iscrizione ricevuta',
       text,
       html,
     })
@@ -183,28 +190,29 @@ export async function sendStatusChangeNotification(
 
     switch (data.newStatus) {
       case 'approved':
-        subject = 'Canestreet 3x3 — Iscrizione Approvata! 🎉'
+        subject = 'Canestreet 3×3 — Iscrizione Approvata! 🎉'
         message = `La squadra "${data.teamName}" è stata approvata! Vi aspettiamo in piazza, a presto!`
         break
       case 'rejected':
-        subject = 'Canestreet 3x3 — Iscrizione Non Accettata'
+        subject = 'Canestreet 3×3 — Iscrizione Non Accettata'
         message = `Purtroppo la squadra "${data.teamName}" non è stata accettata per questa edizione del torneo. Per informazioni contattaci a canestreet3vs3@gmail.com.`
         break
       case 'waitlisted':
-        subject = 'Canestreet 3x3 — Lista d\'Attesa'
+        subject = 'Canestreet 3×3 — Lista d\'Attesa'
         message = `La squadra "${data.teamName}" è stata inserita in lista d'attesa. Vi aggiorneremo al più presto in caso di posti disponibili.`
         break
       default:
         return { success: false, error: `Unknown status: ${data.newStatus}` }
     }
 
-    const text = `Canestreet 3x3 — Aggiornamento Iscrizione 🏀🦁
+    const text = `Canestreet 3×3 — Aggiornamento Iscrizione 🏀🦁
 
 ${message}
 
-Per qualsiasi domanda contattaci a: canestreet3vs3@gmail.com
+Grazie!
 
-Grazie!`
+---
+Questo messaggio è stato generato automaticamente. Puoi rispondere direttamente a questa email per qualsiasi chiarimento.`
 
     const html = `
 <!DOCTYPE html>
@@ -217,8 +225,8 @@ Grazie!`
     </div>
     <div style="padding: 20px;">
       <p>${message}</p>
-      <p style="margin-top: 30px; border-top: 1px solid #ddd; padding-top: 20px; font-size: 14px; color: #666;">
-        Per qualsiasi domanda contattaci a: <strong>canestreet3vs3@gmail.com</strong>
+      <p style="margin-top: 20px; border-top: 1px solid #ddd; padding-top: 20px; font-size: 12px; color: #999;">
+        Questo messaggio è stato generato automaticamente. Puoi rispondere direttamente a questa email per qualsiasi chiarimento.
       </p>
     </div>
   </div>
@@ -226,7 +234,7 @@ Grazie!`
 </html>`
 
     await transporter.sendMail({
-      from: gmailUser,
+      from: `Canestreet 3×3 <${gmailUser}>`,
       to: data.captainEmail,
       subject,
       text,
