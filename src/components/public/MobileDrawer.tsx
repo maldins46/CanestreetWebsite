@@ -3,8 +3,9 @@ import { useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { X, ClipboardList } from 'lucide-react'
+import { X, ClipboardList, Bell, BellRing, BellOff } from 'lucide-react'
 import clsx from 'clsx'
+import { usePushSubscription } from '@/hooks/usePushSubscription'
 
 const navLinks = [
   { href: '/',             label: 'Home' },
@@ -49,6 +50,7 @@ interface MobileDrawerProps {
 
 export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
   const pathname = usePathname()
+  const { supported, ready, subscribed, denied, busy, subscribe, unsubscribe } = usePushSubscription()
 
   // Lock body scroll when open
   useEffect(() => {
@@ -128,6 +130,24 @@ export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
               )
             })}
           </ul>
+
+          {/* Notifications row */}
+          {supported && ready && (
+            <button
+              onClick={subscribed ? unsubscribe : subscribe}
+              disabled={busy}
+              className="flex items-center gap-3 w-full px-6 py-3 border-t border-court-border text-left transition-colors hover:bg-court-black/20 disabled:opacity-40"
+            >
+              {denied
+                ? <BellOff size={18} className="text-court-muted shrink-0" />
+                : subscribed
+                ? <BellRing size={18} className="text-brand-orange shrink-0" />
+                : <Bell size={18} className="text-court-gray shrink-0" />}
+              <span className="font-display font-semibold uppercase tracking-wider text-sm text-court-light">
+                {denied ? 'Notifiche bloccate' : subscribed ? 'Notifiche attive' : 'Abilita notifiche'}
+              </span>
+            </button>
+          )}
 
           {/* Iscriviti CTA */}
           <div className="px-5 pt-3 pb-2">

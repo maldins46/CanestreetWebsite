@@ -59,6 +59,7 @@ export default async function ThreePointContestPage({ searchParams }: Props) {
         <Suspense>
           <TpcAdmin
             editionId={activeEdition.id}
+            editionYear={activeEdition.year}
             contests={tpcContests}
             initialCategory={(searchParams.category as 'open' | 'under') ?? 'open'}
           />

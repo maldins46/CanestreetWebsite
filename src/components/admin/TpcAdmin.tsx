@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Plus, Trash2, ChevronDown, ChevronUp, Radio, GripVertical } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronUp, Radio, GripVertical, Trophy } from 'lucide-react'
 import clsx from 'clsx'
 import { createClient } from '@/lib/supabase/client'
 import type { TpcCategory, TpcContestFull, TpcEntryWithPlayer, TpcRoundWithEntries } from '@/types'
@@ -25,6 +25,7 @@ import { CSS } from '@dnd-kit/utilities'
 
 interface Props {
   editionId: string
+  editionYear: number
   contests: TpcContestFull[]
   initialCategory?: TpcCategory
 }
@@ -34,7 +35,7 @@ const CATEGORIES: { key: TpcCategory; label: string }[] = [
   { key: 'under', label: 'Under' },
 ]
 
-export default function TpcAdmin({ editionId, contests, initialCategory = 'open' }: Props) {
+export default function TpcAdmin({ editionId, editionYear, contests, initialCategory = 'open' }: Props) {
   const supabase = createClient()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -88,7 +89,7 @@ export default function TpcAdmin({ editionId, contests, initialCategory = 'open'
           </button>
         </div>
       ) : (
-        <ContestManager contest={contest} />
+        <ContestManager contest={contest} editionYear={editionYear} />
       )}
     </div>
   )
@@ -97,7 +98,7 @@ export default function TpcAdmin({ editionId, contests, initialCategory = 'open'
 // ─────────────────────────────────────────────────────────────────
 // Contest manager: players + rounds
 // ─────────────────────────────────────────────────────────────────
-function ContestManager({ contest }: { contest: TpcContestFull }) {
+function ContestManager({ contest, editionYear }: { contest: TpcContestFull; editionYear: number }) {
   const supabase = createClient()
   const router = useRouter()
   const [saving, setSaving] = useState(false)
@@ -150,6 +151,36 @@ function ContestManager({ contest }: { contest: TpcContestFull }) {
     await supabase.from('tpc_rounds').delete().eq('id', roundId)
     router.refresh()
     setSaving(false)
+  }
+
+  async function notifyWinner() {
+    const sortedRounds = [...contest.tpc_rounds].sort((a, b) => b.round_number - a.round_number)
+    const finalRound = sortedRounds[0]
+    if (!finalRound) return
+
+    const topEntry = [...finalRound.tpc_entries]
+      .filter(e => e.score != null)
+      .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))[0]
+
+    const winnerName = topEntry
+      ? `${topEntry.tpc_players.name} (${topEntry.score} punti)`
+      : 'Vincitore TBD'
+
+    const label = contest.category === 'open' ? 'Open' : 'Under'
+
+    await fetch('/api/push/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'winners',
+        payload: {
+          title: `La categoria 3-Point Contest ${label} termina qua 🏆`,
+          body: `Congratulazioni a ${winnerName} per la vittoria!`,
+          url: `/editions/${editionYear}`,
+          tag: `tpc-winner-${contest.id}`,
+        },
+      }),
+    })
   }
 
   function toggleRound(roundId: string) {
@@ -232,6 +263,18 @@ function ContestManager({ contest }: { contest: TpcContestFull }) {
           </div>
         </div>
       </section>
+
+      {/* Winner notification */}
+      <div className="flex justify-end">
+        <button
+          onClick={notifyWinner}
+          className="flex items-center gap-2 text-sm text-court-gray hover:text-brand-orange transition-colors font-display uppercase tracking-wide"
+          title="Invia notifica push con il vincitore"
+        >
+          <Trophy size={14} />
+          Notifica vincitore
+        </button>
+      </div>
     </div>
   )
 }
