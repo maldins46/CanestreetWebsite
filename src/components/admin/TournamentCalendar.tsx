@@ -74,14 +74,6 @@ export default function TournamentCalendar({ editionId, matches, category }: Pro
 
     await supabase.from('matches').update(updates).eq('id', match.id)
 
-    if (updates.status === 'completed') {
-      fetch('/api/push/match-completed', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ matchId: match.id }),
-      })
-    }
-
     router.refresh()
     setSaving(null)
   }
@@ -95,12 +87,6 @@ export default function TournamentCalendar({ editionId, matches, category }: Pro
       .eq('status', 'in_progress')
     // Set this match as live
     await supabase.from('matches').update({ status: 'in_progress' }).eq('id', matchId)
-
-    fetch('/api/push/match-live', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ matchId }),
-    })
 
     router.refresh()
     setSaving(null)

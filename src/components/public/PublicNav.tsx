@@ -3,10 +3,9 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import Image from 'next/image'
-import { Menu, ClipboardList, Bell, BellRing } from 'lucide-react'
+import { Menu, ClipboardList } from 'lucide-react'
 import clsx from 'clsx'
 import MobileDrawer from './MobileDrawer'
-import { usePushSubscription } from '@/hooks/usePushSubscription'
 
 const links = [
   { href: '/',             label: 'Home' },
@@ -22,8 +21,6 @@ const links = [
 export default function PublicNav() {
   const pathname = usePathname()
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const { supported, ready, subscribed, busy, subscribe, unsubscribe } = usePushSubscription()
-
   return (
     <>
       <header className="safe-area-top sticky top-0 z-50 border-b border-court-border bg-court-black/90 backdrop-blur-sm">
@@ -81,25 +78,6 @@ export default function PublicNav() {
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-0">
-            {/* Bell icon — push notifications */}
-            {supported && ready && (
-              <div className="relative group mr-1">
-                <button
-                  onClick={subscribed ? unsubscribe : subscribe}
-                  disabled={busy}
-                  className="p-2 text-court-gray hover:text-court-white transition-colors disabled:opacity-40"
-                  aria-label={subscribed ? 'Disabilita notifiche' : 'Abilita notifiche push'}
-                >
-                  {subscribed
-                    ? <BellRing size={18} className="text-brand-orange" />
-                    : <Bell size={18} />}
-                </button>
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-1.5 bg-court-dark border border-court-border rounded text-xs text-court-white whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
-                  {subscribed ? 'Notifiche attive — clicca per disabilitare' : 'Abilita notifiche push'}
-                  <div className="absolute -top-[5px] left-1/2 -translate-x-1/2 w-2 h-2 bg-court-dark border-l border-t border-court-border rotate-45" />
-                </div>
-              </div>
-            )}
             {links.map(({ href, label, accent }) => (
               <Link
                 key={href}

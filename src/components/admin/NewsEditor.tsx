@@ -50,24 +50,6 @@ export default function NewsEditor({ article }: Props) {
     setSaving(false)
     if (error) { setMsg('Errore: ' + error.message); return }
 
-    // Notify subscribers when an article is published for the first time
-    const isFirstPublish = form.published && !article?.published
-    if (isFirstPublish) {
-      fetch('/api/push/notify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'news',
-          payload: {
-            title: form.title,
-            body: form.excerpt,
-            url: `/news/${form.slug}`,
-            tag: `news-${article?.id ?? form.slug}`,
-          },
-        }),
-      })
-    }
-
     setMsg('Salvato!')
     router.push('/admin/news?t=' + Date.now())
   }

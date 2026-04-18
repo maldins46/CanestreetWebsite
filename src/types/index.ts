@@ -264,20 +264,3 @@ export interface ShowcaseModeRow {
   updated_by: string | null
 }
 
-// ============================================================
-// Push notifications
-// ============================================================
-
-export type PushNotificationType = 'news' | 'matches' | 'results' | 'winners'
-
-export interface PushSubscription {
-  id: string
-  endpoint: string
-  p256dh: string
-  auth: string
-  notify_news: boolean
-  notify_matches: boolean
-  notify_results: boolean
-  notify_winners: boolean
-  created_at: string
-}
