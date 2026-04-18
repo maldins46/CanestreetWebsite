@@ -1,5 +1,5 @@
 -- ============================================================
--- Canestreet 3x3 — Historical content seed
+-- Canestreet 3×3 — Historical content seed
 -- Run this in the Supabase SQL editor AFTER 001_initial_schema.sql
 -- ============================================================
 

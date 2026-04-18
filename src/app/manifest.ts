@@ -2,9 +2,9 @@ import type { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Canestreet 3x3',
+    name: 'Canestreet 3×3',
     short_name: 'Canestreet',
-    description: 'Il torneo estivo di basket 3x3 — Canestreet.',
+    description: 'Il torneo estivo di basket 3×3 — Canestreet.',
     start_url: '/',
     display: 'standalone',
     background_color: '#0a0a0a',

@@ -17,7 +17,7 @@ import type { LucideIcon } from 'lucide-react'
 export const metadata: Metadata = {
   title: 'Regolamento',
   description:
-    'Tutto quello che devi sapere sul basket 3x3: regole FIBA, circuito FIP e le regole specifiche del torneo Canestreet.',
+    'Tutto quello che devi sapere sul basket 3×3: regole FIBA, circuito FIP e le regole specifiche del torneo Canestreet.',
 }
 
 // ─── Local helper components ────────────────────────────────────────────────
@@ -326,7 +326,7 @@ export default function RegolamentoPage() {
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
             {[
-              'Tesseramento FIP obbligatorio (può essere 3x3 o 5c5).',
+              'Tesseramento FIP obbligatorio (può essere 3×3 o 5c5).',
               'Certificato medico di idoneità agonistica in corso di validità.',
               'Categorie: Open (adulti), Under 18, Under 16, Under 14.',
               'Atleti nati negli anni 2010–2013 non ammessi al Circuito.',

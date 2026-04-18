@@ -55,7 +55,7 @@ export default async function EditionDetailPage({ params }: Props) {
 
         <div className="absolute bottom-0 left-0 p-8 md:p-12">
           <p className="text-brand-orange font-display uppercase tracking-widest text-xs font-semibold mb-2">
-            Canestreet 3x3 · {edition.year}
+            Canestreet 3×3 · {edition.year}
           </p>
           <h1 className="font-display font-extrabold text-4xl md:text-6xl text-court-white uppercase leading-tight">
             {edition.title}

@@ -33,12 +33,12 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  title: { default: 'Canestreet 3x3', template: '%s · Canestreet 3x3' },
-  description: 'A FIP 3x3 Summer Tournament. In the heart of Jesi.',
+  title: { default: 'Canestreet 3×3', template: '%s · Canestreet 3×3' },
+  description: 'A FIP 3×3 Summer Tournament. In the heart of Jesi.',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Canestreet 3x3',
+    title: 'Canestreet 3×3',
   },
   formatDetection: { telephone: false },
   icons: {
@@ -54,7 +54,7 @@ export const metadata: Metadata = {
   },
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://canestreet3x3.vercel.app'),
   openGraph: {
-    siteName: 'Canestreet 3x3',
+    siteName: 'Canestreet 3×3',
     type: 'website',
     images: [{ url: '/icons/android-icon-512x512.png', width: 512, height: 512 }],
   },
