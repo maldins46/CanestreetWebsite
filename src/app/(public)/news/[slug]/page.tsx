@@ -41,7 +41,6 @@ export default async function NewsArticlePage({ params }: Props) {
             src={article.cover_url}
             alt={article.title}
             fill
-            unoptimized
             className="object-cover opacity-60"
             priority
             sizes="100vw"

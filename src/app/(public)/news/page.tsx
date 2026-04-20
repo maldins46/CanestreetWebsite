@@ -48,7 +48,6 @@ export default async function NewsPage() {
                     src={article.cover_url}
                     alt={article.title}
                     fill
-                    unoptimized
                     className="object-cover group-hover:scale-105 transition-transform duration-500"
                     sizes="(max-width: 640px) 100vw, 50vw"
                   />

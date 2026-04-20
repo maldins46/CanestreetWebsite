@@ -57,7 +57,7 @@ export default async function AdminSponsorsPage() {
               {/* Logo thumbnail */}
               <div className="relative w-16 h-12 shrink-0 overflow-hidden border border-court-border bg-white flex items-center justify-center">
                 {s.logo_url ? (
-                  <Image src={s.logo_url} alt={s.name} fill className="object-contain p-1" sizes="64px" unoptimized />
+                  <Image src={s.logo_url} alt={s.name} fill className="object-contain p-1" sizes="64px" />
                 ) : (
                   <span className="font-display font-bold text-lg text-brand-orange/60">{s.name.charAt(0)}</span>
                 )}

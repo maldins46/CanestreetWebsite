@@ -87,7 +87,7 @@ export default function MediaManager() {
           {files.map(f => (
             <div key={f.name} className="group relative card overflow-hidden">
               <div className="relative aspect-square">
-                <Image src={f.url} alt={f.name} fill className="object-cover" unoptimized />
+                <Image src={f.url} alt={f.name} fill className="object-cover" />
               </div>
               <button
                 onClick={() => copyUrl(f.url)}
