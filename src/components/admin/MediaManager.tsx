@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
+import imageCompression from 'browser-image-compression'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
 import { Upload, Copy, Check } from 'lucide-react'
@@ -40,9 +41,10 @@ export default function MediaManager() {
       return
     }
     setUploading(true)
+    const compressed = await imageCompression(file, { maxSizeMB: 0.8, maxWidthOrHeight: 1920, useWebWorker: true })
     const ext = file.name.split('.').pop()
     const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-    const { error } = await supabase.storage.from('media').upload(path, file)
+    const { error } = await supabase.storage.from('media').upload(path, compressed)
     setUploading(false)
     if (!error) loadFiles()
     if (inputRef.current) inputRef.current.value = ''
