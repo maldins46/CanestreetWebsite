@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Barlow_Condensed, Barlow, Anton } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/next'
 import { ServiceWorkerCleanup } from '@/components/ServiceWorkerCleanup'
 import './globals.css'
 
@@ -66,6 +67,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="bg-court-black text-court-white font-body antialiased">
         <ServiceWorkerCleanup />
         {children}
+        <Analytics />
       </body>
     </html>
   )
