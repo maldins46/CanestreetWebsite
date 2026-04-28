@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Barlow_Condensed, Barlow, Anton } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import { ServiceWorkerCleanup } from '@/components/ServiceWorkerCleanup'
 import './globals.css'
 
@@ -68,6 +69,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ServiceWorkerCleanup />
         {children}
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )
