@@ -2,6 +2,7 @@
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { saveArticle, deleteArticle as deleteArticleAction } from '@/app/admin/news/actions'
 import type { NewsArticle } from '@/types'
 import { Save, Trash2, Eye, EyeOff, Image as ImageIcon } from 'lucide-react'
 import MediaPickerInput from './MediaPickerInput'
@@ -15,7 +16,7 @@ function slugify(s: string) {
 }
 
 export default function NewsEditor({ article }: Props) {
-  const supabase = createClient()
+  const supabase = createClient() // used only for image picker storage list
   const router = useRouter()
   const bodyRef = useRef<HTMLTextAreaElement>(null)
   const [form, setForm] = useState({
@@ -74,20 +75,18 @@ export default function NewsEditor({ article }: Props) {
     setSaving(true)
     setMsg(null)
     const payload = {
-      ...form,
+      title: form.title,
+      slug: form.slug,
+      excerpt: form.excerpt || null,
       cover_url: form.cover_url || null,
+      body: form.body,
+      published: form.published,
       published_at: form.published ? (article?.published_at ?? new Date().toISOString()) : null,
       updated_at: new Date().toISOString(),
     }
-    let error
-    if (article) {
-      ({ error } = await supabase.from('news').update(payload).eq('id', article.id))
-    } else {
-      ({ error } = await supabase.from('news').insert({ ...payload, created_at: new Date().toISOString() }))
-    }
+    const { error } = await saveArticle(article?.id ?? null, payload)
     setSaving(false)
-    if (error) { setMsg('Errore: ' + error.message); return }
-
+    if (error) { setMsg('Errore: ' + error); return }
     setMsg('Salvato!')
     router.push('/admin/news?t=' + Date.now())
   }
@@ -95,7 +94,8 @@ export default function NewsEditor({ article }: Props) {
   async function deleteArticle() {
     if (!article || !confirm('Eliminare questo articolo?')) return
     setDeleting(true)
-    await supabase.from('news').delete().eq('id', article.id)
+    const { error } = await deleteArticleAction(article.id)
+    if (error) { setDeleting(false); setMsg('Errore: ' + error); return }
     router.push('/admin/news?t=' + Date.now())
   }
 

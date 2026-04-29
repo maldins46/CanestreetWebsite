@@ -6,6 +6,8 @@ import { createPublicServerSupabaseClient } from "@/lib/supabase/server"
 import type { NewsArticle } from '@/types'
 import MarkdownContent from '@/components/MarkdownContent'
 
+export const revalidate = 60
+
 interface Props { params: { slug: string } }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
