@@ -1,10 +1,11 @@
 'use client'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Edition, EditionWinner } from '@/types'
-import { Save, Trash2, Plus, Star, StarOff, LockOpen, Lock } from 'lucide-react'
+import { Save, Trash2, Plus, Star, StarOff, LockOpen, Lock, Image as ImageIcon } from 'lucide-react'
 import MediaPickerInput from './MediaPickerInput'
+import MarkdownContent from '@/components/MarkdownContent'
 
 interface Props {
   edition: Edition | null
@@ -29,12 +30,49 @@ export default function EditionEditor({ edition, winners }: Props) {
   const [rows, setRows] = useState<WinnerRow[]>(
     winners.map(w => ({ ...w }))
   )
-  const [saving, setSaving] = useState(false)
+  const descRef = useRef<HTMLTextAreaElement>(null)
+  const [descMode, setDescMode] = useState<'edit' | 'preview'>('edit')
+  const [imgOpen,  setImgOpen]  = useState(false)
+  const [imgFiles, setImgFiles] = useState<{ name: string; url: string }[]>([])
+  const [saving,   setSaving]   = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const [msg, setMsg] = useState<string | null>(null)
+  const [msg,      setMsg]      = useState<string | null>(null)
 
   function set(field: string, value: string | number | boolean) {
     setForm(prev => ({ ...prev, [field]: value }))
+  }
+
+  async function openImgPicker() {
+    if (imgFiles.length === 0) {
+      const { data } = await supabase.storage.from('media').list('', {
+        sortBy: { column: 'created_at', order: 'desc' },
+      })
+      if (data) {
+        const base = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/media/`
+        setImgFiles(
+          data
+            .filter(f => f.name !== '.emptyFolderPlaceholder')
+            .map(f => ({ name: f.name, url: base + f.name }))
+        )
+      }
+    }
+    setImgOpen(v => !v)
+  }
+
+  function insertImage(url: string) {
+    const ta = descRef.current
+    const snippet = `\n![](${url})\n`
+    if (!ta) {
+      set('description', form.description + snippet)
+    } else {
+      const pos = ta.selectionStart
+      set('description', form.description.slice(0, pos) + snippet + form.description.slice(pos))
+      setTimeout(() => {
+        ta.focus()
+        ta.selectionStart = ta.selectionEnd = pos + snippet.length
+      }, 0)
+    }
+    setImgOpen(false)
   }
 
   function addWinner() {
@@ -165,13 +203,86 @@ export default function EditionEditor({ edition, winners }: Props) {
 
       <div>
         <label className="label">Descrizione</label>
-        <textarea
-          className="input resize-none"
-          rows={4}
-          value={form.description}
-          onChange={e => set('description', e.target.value)}
-          placeholder="Racconta questa edizione..."
-        />
+        <div className="flex items-center gap-2 mb-2">
+          <div className="flex border border-court-border rounded overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setDescMode('edit')}
+              className={`px-3 py-1.5 text-xs font-display uppercase tracking-wide transition-colors ${
+                descMode === 'edit'
+                  ? 'bg-brand-orange text-white'
+                  : 'text-court-gray hover:text-court-white'
+              }`}
+            >
+              Modifica
+            </button>
+            <button
+              type="button"
+              onClick={() => setDescMode('preview')}
+              className={`px-3 py-1.5 text-xs font-display uppercase tracking-wide transition-colors ${
+                descMode === 'preview'
+                  ? 'bg-brand-orange text-white'
+                  : 'text-court-gray hover:text-court-white'
+              }`}
+            >
+              Anteprima
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={openImgPicker}
+            className="flex items-center gap-1.5 btn-ghost text-xs px-3 py-1.5"
+          >
+            <ImageIcon size={12} />
+            Inserisci immagine
+          </button>
+        </div>
+
+        {imgOpen && (
+          <div className="mb-2 card p-3 max-h-48 overflow-y-auto">
+            {imgFiles.length === 0 ? (
+              <p className="text-court-muted text-sm text-center py-4">Caricamento...</p>
+            ) : (
+              <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                {imgFiles.map(f => (
+                  <button
+                    key={f.name}
+                    type="button"
+                    onClick={() => insertImage(f.url)}
+                    className="relative aspect-square overflow-hidden border-2 border-court-border hover:border-brand-orange transition-colors"
+                    title={f.name}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={f.url} alt={f.name} className="w-full h-full object-contain p-1" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {descMode === 'edit' ? (
+          <textarea
+            ref={descRef}
+            className="input resize-none font-mono text-sm w-full"
+            rows={6}
+            value={form.description}
+            onChange={e => set('description', e.target.value)}
+            placeholder="Racconta questa edizione..."
+          />
+        ) : (
+          <div className="input min-h-[9rem] overflow-y-auto">
+            {form.description.trim() ? (
+              <MarkdownContent>{form.description}</MarkdownContent>
+            ) : (
+              <p className="text-court-muted text-sm italic">_(vuoto)_</p>
+            )}
+          </div>
+        )}
+
+        <p className="text-court-muted text-xs mt-1">
+          Markdown: <code className="text-court-gray">**grassetto**</code>, <code className="text-court-gray">## titolo</code>, <code className="text-court-gray">[link](url)</code>, <code className="text-court-gray">![alt](url)</code>, liste con <code className="text-court-gray">-</code>.
+        </p>
       </div>
 
       <MediaPickerInput

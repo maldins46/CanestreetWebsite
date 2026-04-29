@@ -3,6 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createPublicServerSupabaseClient } from "@/lib/supabase/server"
+import MarkdownContent from '@/components/MarkdownContent'
 import type { EditionWithWinners } from '@/types'
 
 interface Props { params: { year: string } }
@@ -83,9 +84,7 @@ export default async function EditionDetailPage({ params }: Props) {
             <p className="text-brand-orange font-display uppercase tracking-widest text-xs font-semibold mb-4">
               L&apos;edizione
             </p>
-            <p className="text-court-gray leading-relaxed text-lg whitespace-pre-line">
-              {edition.description}
-            </p>
+            <MarkdownContent>{edition.description}</MarkdownContent>
           </div>
         )}
 
