@@ -10,9 +10,19 @@ interface Props { params: { slug: string } }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const supabase = createPublicServerSupabaseClient()
-  const { data } = await supabase.from('news').select('title, excerpt').eq('slug', params.slug).single<NewsArticle>()
+  const { data } = await supabase.from('news').select('title, excerpt, cover_url, slug').eq('slug', params.slug).single<NewsArticle>()
   if (!data) return { title: 'Articolo non trovato' }
-  return { title: data.title, description: data.excerpt ?? undefined }
+  return {
+    title: data.title,
+    description: data.excerpt ?? undefined,
+    openGraph: {
+      title: data.title,
+      description: data.excerpt ?? undefined,
+      type: 'article',
+      url: `/news/${data.slug}`,
+      ...(data.cover_url ? { images: [{ url: data.cover_url }] } : {}),
+    },
+  }
 }
 
 export default async function NewsArticlePage({ params }: Props) {
