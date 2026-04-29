@@ -94,10 +94,10 @@
   }
 
   /* Status badge */
-  .badge-pending    { @apply bg-yellow-900/40 text-yellow-400 border border-yellow-800; }
-  .badge-approved   { @apply bg-green-900/40  text-green-400  border border-green-800; }
-  .badge-rejected   { @apply bg-red-900/40    text-red-400    border border-red-800; }
-  .badge-waitlisted { @apply bg-blue-900/40   text-blue-400   border border-blue-800; }
+  .badge-pending    { @apply px-2 py-0.5 text-xs font-display uppercase tracking-wide bg-yellow-900/40 text-yellow-400 border border-yellow-800; }
+  .badge-approved   { @apply px-2 py-0.5 text-xs font-display uppercase tracking-wide bg-green-900/40  text-green-400  border border-green-800; }
+  .badge-rejected   { @apply px-2 py-0.5 text-xs font-display uppercase tracking-wide bg-red-900/40    text-red-400    border border-red-800; }
+  .badge-waitlisted { @apply px-2 py-0.5 text-xs font-display uppercase tracking-wide bg-blue-900/40   text-blue-400   border border-blue-800; }
 
   /* Form inputs */
   .input {

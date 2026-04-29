@@ -257,12 +257,8 @@ export default async function AdminDashboard() {
                       {new Date(article.created_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </p>
                   </div>
-                  <span className={`flex-shrink-0 text-xs font-display uppercase tracking-wide px-2 py-0.5 rounded border ${
-                    article.published
-                      ? 'text-green-400 border-green-400/30 bg-green-400/10'
-                      : 'text-court-gray border-court-border bg-court-surface'
-                  }`}>
-                    {article.published ? 'Pub.' : 'Bozza'}
+                  <span className={`flex-shrink-0 ${article.published ? 'badge-approved' : 'badge-pending'}`}>
+                    {article.published ? 'Pubblicato' : 'Bozza'}
                   </span>
                 </div>
               ))}
