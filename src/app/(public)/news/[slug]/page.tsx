@@ -2,9 +2,9 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import sanitizeHtml from 'sanitize-html'
 import { createPublicServerSupabaseClient } from "@/lib/supabase/server"
 import type { NewsArticle } from '@/types'
+import MarkdownContent from '@/components/MarkdownContent'
 
 interface Props { params: { slug: string } }
 
@@ -26,11 +26,6 @@ export default async function NewsArticlePage({ params }: Props) {
   if (error && error.code !== 'PGRST116') console.error('[news/slug] article query failed:', error)
 
   if (!article) notFound()
-
-  const safeBody = sanitizeHtml(article.body, {
-    allowedTags: ['p', 'h2', 'h3', 'strong', 'em', 'ul', 'ol', 'li', 'a', 'br', 'blockquote'],
-    allowedAttributes: { 'a': ['href', 'target', 'rel'] },
-  })
 
   return (
     <>
@@ -66,10 +61,7 @@ export default async function NewsArticlePage({ params }: Props) {
           ← News
         </Link>
 
-        <div
-          className="prose prose-invert prose-sm max-w-none text-court-gray leading-relaxed"
-          dangerouslySetInnerHTML={{ __html: safeBody }}
-        />
+        <MarkdownContent>{article.body}</MarkdownContent>
       </article>
     </>
   )
