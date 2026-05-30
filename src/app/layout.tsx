@@ -1,29 +1,28 @@
 import type { Metadata, Viewport } from 'next'
-import { Barlow_Condensed, Barlow, Anton } from 'next/font/google'
+import { Rajdhani, Nunito_Sans, Teko } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { ServiceWorkerCleanup } from '@/components/ServiceWorkerCleanup'
 import './globals.css'
 
-// Display font — condensed, sporty, authoritative
-const barlowCondensed = Barlow_Condensed({
+// Display font — condensed geometric, more open than Barlow Condensed
+const rajdhani = Rajdhani({
   subsets: ['latin'],
-  weight: ['400', '600', '700', '800'],
-  style: ['normal', 'italic'],
+  weight: ['400', '500', '600', '700'],
   variable: '--font-display',
 })
 
-// Ultra-heavy condensed display font for the hero title
-const anton = Anton({
+// Hero font — bold slab-like impact
+const teko = Teko({
   subsets: ['latin'],
-  weight: '400',
+  weight: ['400', '500', '600', '700'],
   variable: '--font-hero',
 })
 
-// Body font — readable, clean
-const barlow = Barlow({
+// Body font — rounded, warm, very readable at all sizes
+const nunitoSans = Nunito_Sans({
   subsets: ['latin'],
-  weight: ['400', '500', '600'],
+  weight: ['400', '500', '600', '700'],
   variable: '--font-body',
 })
 
@@ -64,7 +63,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="it" suppressHydrationWarning data-scroll-behavior="smooth" className={`${barlowCondensed.variable} ${barlow.variable} ${anton.variable}`}>
+    <html lang="it" suppressHydrationWarning data-scroll-behavior="smooth" className={`${rajdhani.variable} ${teko.variable} ${nunitoSans.variable}`}>
       <body className="bg-court-black text-court-white font-body antialiased">
         <ServiceWorkerCleanup />
         {children}
