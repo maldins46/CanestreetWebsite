@@ -53,9 +53,6 @@
     box-sizing: border-box;
   }
 
-  html {
-    scroll-behavior: smooth;
-  }
 
   /* Scrollbar */
   ::-webkit-scrollbar { width: 4px; height: 4px; }
