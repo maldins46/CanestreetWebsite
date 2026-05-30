@@ -47,7 +47,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               <div className="flex flex-col gap-1 text-court-muted text-xs">
                 <span>Piazza della Repubblica, Jesi (AN) 60035</span>
                 <span><a href="tel:+393291581724" className="hover:text-court-white transition-colors">+39 329 158 1724</a> (Michele)</span>
-                <span><a href="mailto:canestreet3vs3@gmail.com" className="hover:text-court-white transition-colors">canestreet3vs3@gmail.com</a></span>
+                <span><a href={`mailto:${process.env.NEXT_PUBLIC_CONTACT_EMAIL}`} className="hover:text-court-white transition-colors">{process.env.NEXT_PUBLIC_CONTACT_EMAIL}</a></span>
               </div>
             </div>
 

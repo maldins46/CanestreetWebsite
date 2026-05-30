@@ -83,8 +83,8 @@ export default async function ChiSiamoPage() {
             </div>
             <div className="card p-6">
               <p className="text-brand-orange font-display uppercase tracking-widest text-xs font-semibold mb-2">Email</p>
-              <a href="mailto:canestreet3vs3@gmail.com" className="text-court-light text-sm hover:text-brand-orange transition-colors break-all">
-                canestreet3vs3@gmail.com
+              <a href={`mailto:${process.env.NEXT_PUBLIC_CONTACT_EMAIL}`} className="text-court-light text-sm hover:text-brand-orange transition-colors break-all">
+                {process.env.NEXT_PUBLIC_CONTACT_EMAIL}
               </a>
             </div>
           </div>

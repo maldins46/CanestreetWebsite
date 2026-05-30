@@ -37,8 +37,8 @@ export default function PrivacyPage() {
         </p>
         <p>
           Per qualsiasi questione relativa al trattamento dei tuoi dati, puoi scrivere a{' '}
-          <a href="mailto:canestreet3vs3@gmail.com" className="text-brand-orange hover:text-brand-orange/80 transition-colors">
-            canestreet3vs3@gmail.com
+          <a href={`mailto:${process.env.NEXT_PUBLIC_CONTACT_EMAIL}`} className="text-brand-orange hover:text-brand-orange/80 transition-colors">
+            {process.env.NEXT_PUBLIC_CONTACT_EMAIL}
           </a>.
         </p>
       </Section>
@@ -110,8 +110,8 @@ export default function PrivacyPage() {
         </ul>
         <p>
           Per esercitare questi diritti, scrivi a{' '}
-          <a href="mailto:canestreet3vs3@gmail.com" className="text-brand-orange hover:text-brand-orange/80 transition-colors">
-            canestreet3vs3@gmail.com
+          <a href={`mailto:${process.env.NEXT_PUBLIC_CONTACT_EMAIL}`} className="text-brand-orange hover:text-brand-orange/80 transition-colors">
+            {process.env.NEXT_PUBLIC_CONTACT_EMAIL}
           </a>.
           Risponderemo entro 30 giorni dalla ricezione della richiesta.
         </p>

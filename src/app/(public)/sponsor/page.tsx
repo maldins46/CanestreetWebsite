@@ -226,10 +226,10 @@ export default async function SponsorPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <Link
-              href="mailto:canestreet3vs3@gmail.com"
+              href={`mailto:${process.env.NEXT_PUBLIC_CONTACT_EMAIL}`}
               className="btn-primary text-sm px-6 py-3 inline-flex items-center gap-2"
             >
-              <Mail size={14} /> canestreet3vs3@gmail.com
+              <Mail size={14} /> {process.env.NEXT_PUBLIC_CONTACT_EMAIL}
             </Link>
             <Link
               href="tel:+393291581724"

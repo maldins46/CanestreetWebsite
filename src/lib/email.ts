@@ -7,6 +7,11 @@ const gmailAppPassword = process.env.GMAIL_APP_PASSWORD
 let transporter: ReturnType<typeof nodemailer.createTransport> | null = null
 
 function getTransporter() {
+  if (process.env.DISABLE_EMAILS === 'true') {
+    console.warn('[email] DISABLE_EMAILS=true, skipping send')
+    return null
+  }
+
   if (!gmailUser || !gmailAppPassword) {
     console.warn('[email] Gmail credentials not configured, email sending disabled')
     return null
@@ -195,7 +200,7 @@ export async function sendStatusChangeNotification(
         break
       case 'rejected':
         subject = 'Canestreet 3×3 — Iscrizione Non Accettata'
-        message = `Purtroppo la squadra "${data.teamName}" non è stata accettata per questa edizione del torneo. Per informazioni contattaci a canestreet3vs3@gmail.com.`
+        message = `Purtroppo la squadra "${data.teamName}" non è stata accettata per questa edizione del torneo. Per informazioni contattaci a ${gmailUser}.`
         break
       case 'waitlisted':
         subject = 'Canestreet 3×3 — Lista d\'Attesa'

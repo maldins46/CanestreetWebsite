@@ -534,7 +534,7 @@ export default function RegolamentoPage() {
         <p className="text-court-gray text-sm mb-4">
           Contattaci direttamente per qualsiasi informazione sul torneo.
         </p>
-        <a href="mailto:canestreet3vs3@gmail.com" className="btn-primary inline-block px-8 py-3">
+        <a href={`mailto:${process.env.NEXT_PUBLIC_CONTACT_EMAIL}`} className="btn-primary inline-block px-8 py-3">
           Scrivici →
         </a>
       </div>

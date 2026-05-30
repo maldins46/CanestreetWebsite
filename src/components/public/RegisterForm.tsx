@@ -31,9 +31,9 @@ const GDPR_TEXT = `Ai sensi del D.Lgs. n. 196 del 30 giugno 2003 ("Codice in mat
 
 4. COMUNICAZIONE E DIFFUSIONE: I dati possono essere comunicati al personale incaricato per finalità funzionali all'attività.
 
-5. DIRITTI DELL'INTERESSATO: Ai sensi degli artt. 15-22 del GDPR, Lei ha diritto di ottenere l'accesso, la rettifica, la cancellazione, la limitazione del trattamento e la portabilità dei propri dati personali, nonché di opporsi al loro trattamento. Per esercitare tali diritti può contattarci a: canestreet3vs3@gmail.com.
+5. DIRITTI DELL'INTERESSATO: Ai sensi degli artt. 15-22 del GDPR, Lei ha diritto di ottenere l'accesso, la rettifica, la cancellazione, la limitazione del trattamento e la portabilità dei propri dati personali, nonché di opporsi al loro trattamento. Per esercitare tali diritti può contattarci a: ${process.env.NEXT_PUBLIC_CONTACT_EMAIL}.
 
-6. TITOLARE DEL TRATTAMENTO: Canestreet — canestreet3vs3@gmail.com.`
+6. TITOLARE DEL TRATTAMENTO: Canestreet — ${process.env.NEXT_PUBLIC_CONTACT_EMAIL}.`
 
 const CF_REGEX = /^[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]$/i
 
