@@ -6,25 +6,27 @@ import { createPublicServerSupabaseClient } from "@/lib/supabase/server"
 import MarkdownContent from '@/components/MarkdownContent'
 import type { EditionWithWinners } from '@/types'
 
-interface Props { params: { year: string } }
+interface Props { params: Promise<{ year: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { year } = await params
   const supabase = createPublicServerSupabaseClient()
   const { data } = await supabase
     .from('editions')
     .select('title, year')
-    .eq('year', parseInt(params.year))
+    .eq('year', parseInt(year))
     .single<{ title: string; year: number }>()
   if (!data) return { title: 'Edizione non trovata' }
   return { title: `${data.year} · ${data.title}` }
 }
 
 export default async function EditionDetailPage({ params }: Props) {
+  const { year } = await params
   const supabase = createPublicServerSupabaseClient()
   const { data: edition, error } = await supabase
     .from('editions')
     .select('*, edition_winners(*)')
-    .eq('year', parseInt(params.year))
+    .eq('year', parseInt(year))
     .single<EditionWithWinners>()
   if (error && error.code !== 'PGRST116') console.error('[editions/year] edition query failed:', error)
 

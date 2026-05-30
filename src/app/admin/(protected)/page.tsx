@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Users, Newspaper, ArrowRight, Clock, User } from 'lucide-react'
 
 export default async function AdminDashboard() {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
 
   const { data: edition } = await supabase
     .from('editions')

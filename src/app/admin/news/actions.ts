@@ -22,7 +22,7 @@ export async function saveArticle(
   id: string | null,
   payload: NewsPayload,
 ): Promise<{ error?: string }> {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   let error
   if (id) {
     ;({ error } = await supabase.from('news').update(payload).eq('id', id))
@@ -38,7 +38,7 @@ export async function saveArticle(
 }
 
 export async function deleteArticle(id: string): Promise<{ error?: string }> {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   const { error } = await supabase.from('news').delete().eq('id', id)
   if (error) return { error: error.message }
   bustNewsCache()

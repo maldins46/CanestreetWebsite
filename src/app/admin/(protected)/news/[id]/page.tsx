@@ -3,15 +3,16 @@ import { notFound } from 'next/navigation'
 import NewsEditor from '@/components/admin/NewsEditor'
 import type { NewsArticle } from '@/types'
 
-interface Props { params: { id: string } }
+interface Props { params: Promise<{ id: string }> }
 
 export default async function AdminNewsEditorPage({ params }: Props) {
-  const isNew = params.id === 'new'
+  const { id } = await params
+  const isNew = id === 'new'
   let article: NewsArticle | null = null
 
   if (!isNew) {
-    const supabase = createServerSupabaseClient()
-    const { data } = await supabase.from('news').select('*').eq('id', params.id).single<NewsArticle>()
+    const supabase = await createServerSupabaseClient()
+    const { data } = await supabase.from('news').select('*').eq('id', id).single<NewsArticle>()
     if (!data) notFound()
     article = data
   }

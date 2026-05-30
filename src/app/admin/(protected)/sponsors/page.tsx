@@ -19,7 +19,7 @@ const TIER_BADGE: Record<SponsorTier, string> = {
 }
 
 export default async function AdminSponsorsPage() {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   const { data: sponsors } = await supabase
     .from('sponsors')
     .select('*')

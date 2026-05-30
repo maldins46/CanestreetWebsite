@@ -8,11 +8,12 @@ import MarkdownContent from '@/components/MarkdownContent'
 
 export const revalidate = 60
 
-interface Props { params: { slug: string } }
+interface Props { params: Promise<{ slug: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params
   const supabase = createPublicServerSupabaseClient()
-  const { data } = await supabase.from('news').select('title, excerpt, cover_url, slug').eq('slug', params.slug).single<NewsArticle>()
+  const { data } = await supabase.from('news').select('title, excerpt, cover_url, slug').eq('slug', slug).single<NewsArticle>()
   if (!data) return { title: 'Articolo non trovato' }
   return {
     title: data.title,
@@ -28,11 +29,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function NewsArticlePage({ params }: Props) {
+  const { slug } = await params
   const supabase = createPublicServerSupabaseClient()
   const { data: article, error } = await supabase
     .from('news')
     .select('*')
-    .eq('slug', params.slug)
+    .eq('slug', slug)
     .eq('published', true)
     .single<NewsArticle>()
   if (error && error.code !== 'PGRST116') console.error('[news/slug] article query failed:', error)

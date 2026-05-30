@@ -15,11 +15,12 @@ const categoryLabel: Record<TeamCategory, string> = {
 }
 
 interface Props {
-  searchParams: { category?: string; edition?: string; tab?: string }
+  searchParams: Promise<{ category?: string; edition?: string; tab?: string }>
 }
 
 export default async function AdminTorneoPage({ searchParams }: Props) {
-  const supabase = createServerSupabaseClient()
+  const sp = await searchParams
+  const supabase = await createServerSupabaseClient()
 
   // Fetch all editions for the switcher
   const { data: allEditions } = await supabase
@@ -29,13 +30,13 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
     .returns<Pick<Edition, 'id' | 'year' | 'title' | 'is_current' | 'registration_open'>[]>()
 
   const editions = allEditions ?? []
-  let activeEdition = searchParams.edition
-    ? editions.find(e => e.id === searchParams.edition)
+  let activeEdition = sp.edition
+    ? editions.find(e => e.id === sp.edition)
     : editions.find(e => e.is_current)
   if (!activeEdition && editions.length > 0) activeEdition = editions[0]
 
-  const tab = searchParams.tab ?? 'gironi'
-  const category = (searchParams.category as TeamCategory) ?? 'open_m'
+  const tab = sp.tab ?? 'gironi'
+  const category = (sp.category as TeamCategory) ?? 'open_m'
 
   let groups: GroupWithTeams[] = []
   let approvedTeams: { id: string; name: string; category: string }[] = []
@@ -116,8 +117,8 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
           <Link
             key={t.key}
             href={`/admin/tournament?${new URLSearchParams({
-              ...(searchParams.edition ? { edition: searchParams.edition } : {}),
-              ...(searchParams.category ? { category: searchParams.category } : {}),
+              ...(sp.edition ? { edition: sp.edition } : {}),
+              ...(sp.category ? { category: sp.category } : {}),
               tab: t.key,
             }).toString()}`}
             className={clsx(
@@ -149,7 +150,7 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
         <TournamentCalendar
           editionId={activeEdition.id}
           matches={matches}
-          category={searchParams.category as TeamCategory | undefined}
+          category={sp.category as TeamCategory | undefined}
         />
       ) : (
         <TournamentBracket

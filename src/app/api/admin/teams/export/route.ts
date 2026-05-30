@@ -28,7 +28,7 @@ export async function GET(request: Request) {
     return new Response('edition param required', { status: 400 })
   }
 
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
 
   // Auth check
   const { data: { user } } = await supabase.auth.getUser()

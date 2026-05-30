@@ -5,11 +5,12 @@ import TpcAdmin from '@/components/admin/TpcAdmin'
 import { Suspense } from 'react'
 
 interface Props {
-  searchParams: { category?: string; edition?: string }
+  searchParams: Promise<{ category?: string; edition?: string }>
 }
 
 export default async function ThreePointContestPage({ searchParams }: Props) {
-  const supabase = createServerSupabaseClient()
+  const sp = await searchParams
+  const supabase = await createServerSupabaseClient()
 
   const { data: allEditions } = await supabase
     .from('editions')
@@ -18,8 +19,8 @@ export default async function ThreePointContestPage({ searchParams }: Props) {
     .returns<Pick<Edition, 'id' | 'year' | 'title' | 'is_current' | 'registration_open'>[]>()
 
   const editions = allEditions ?? []
-  let activeEdition = searchParams.edition
-    ? editions.find(e => e.id === searchParams.edition)
+  let activeEdition = sp.edition
+    ? editions.find(e => e.id === sp.edition)
     : editions.find(e => e.is_current)
   if (!activeEdition && editions.length > 0) activeEdition = editions[0]
 
@@ -60,7 +61,7 @@ export default async function ThreePointContestPage({ searchParams }: Props) {
           <TpcAdmin
             editionId={activeEdition.id}
             contests={tpcContests}
-            initialCategory={(searchParams.category as 'open' | 'under') ?? 'open'}
+            initialCategory={(sp.category as 'open' | 'under') ?? 'open'}
           />
         </Suspense>
       )}

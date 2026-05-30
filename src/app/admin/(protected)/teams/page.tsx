@@ -19,11 +19,12 @@ const categoryLabel: Record<TeamCategory, string> = {
 }
 
 interface Props {
-  searchParams: { category?: string; edition?: string }
+  searchParams: Promise<{ category?: string; edition?: string }>
 }
 
 export default async function AdminTeamsPage({ searchParams }: Props) {
-  const supabase = createServerSupabaseClient()
+  const sp = await searchParams
+  const supabase = await createServerSupabaseClient()
 
   // Fetch all editions for the switcher
   const { data: allEditions } = await supabase
@@ -34,8 +35,8 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
 
   // Determine active edition: from URL param or fallback to is_current
   const editions = allEditions ?? []
-  let activeEdition = searchParams.edition
-    ? editions.find(e => e.id === searchParams.edition)
+  let activeEdition = sp.edition
+    ? editions.find(e => e.id === sp.edition)
     : editions.find(e => e.is_current)
   if (!activeEdition && editions.length > 0) activeEdition = editions[0]
 
@@ -47,7 +48,7 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
       .eq('edition_id', activeEdition.id)
       .order('created_at', { ascending: false })
 
-    const categoryFilter = searchParams.category as TeamCategory | undefined
+    const categoryFilter = sp.category as TeamCategory | undefined
     if (categoryFilter && ['open_m', 'open_f', 'u14_m', 'u16_m', 'u18_m'].includes(categoryFilter)) {
       query = query.eq('category', categoryFilter)
     }
@@ -56,7 +57,7 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
     teams = data ?? []
   }
 
-  const categoryFilter = searchParams.category as TeamCategory | undefined
+  const categoryFilter = sp.category as TeamCategory | undefined
 
   return (
     <div>

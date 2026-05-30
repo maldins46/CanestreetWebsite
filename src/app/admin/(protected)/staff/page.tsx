@@ -5,7 +5,7 @@ import type { StaffMember } from '@/types'
 import { Plus } from 'lucide-react'
 
 export default async function AdminStaffPage() {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   const { data: members } = await supabase
     .from('staff')
     .select('*')

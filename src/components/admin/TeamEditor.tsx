@@ -210,11 +210,9 @@ export default function TeamEditor({ team, editionId, editions }: Props) {
       if (playersPayload.length > 0) {
         // Split into updates and inserts
         const toUpdate = playersPayload.filter(p => p.id)
-        const toInsert = playersPayload.map(p => {
-          if (p.id) return null
-          const { id: _, ...rest } = p
-          return rest
-        }).filter(Boolean)
+        const toInsert = playersPayload
+          .filter(p => !p.id)
+          .map(p => { const { id: _, ...rest } = p; return rest })
 
         for (const p of toUpdate) {
           const { id, ...rest } = p

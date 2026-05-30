@@ -3,7 +3,7 @@ import type { Admin } from '@/types'
 import AddAdminForm from '@/components/admin/AddAdminForm'
 
 export default async function AdminsPage() {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   const { data: admins } = await supabase
     .from('admins').select('*')
     .order('created_at', { ascending: true })

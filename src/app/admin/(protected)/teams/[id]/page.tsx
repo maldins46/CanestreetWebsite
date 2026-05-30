@@ -4,13 +4,15 @@ import TeamEditor from '@/components/admin/TeamEditor'
 import type { TeamWithPlayers, Edition } from '@/types'
 
 interface Props {
-  params: { id: string }
-  searchParams: { edition?: string }
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ edition?: string }>
 }
 
 export default async function AdminTeamEditorPage({ params, searchParams }: Props) {
-  const supabase = createServerSupabaseClient()
-  const isNew = params.id === 'new'
+  const { id } = await params
+  const sp = await searchParams
+  const supabase = await createServerSupabaseClient()
+  const isNew = id === 'new'
 
   // Fetch editions for the selector
   const { data: editions } = await supabase
@@ -20,13 +22,13 @@ export default async function AdminTeamEditorPage({ params, searchParams }: Prop
     .returns<Pick<Edition, 'id' | 'year' | 'title' | 'is_current'>[]>()
 
   let team: TeamWithPlayers | null = null
-  let editionId = searchParams.edition ?? ''
+  let editionId = sp.edition ?? ''
 
   if (!isNew) {
     const { data } = await supabase
       .from('teams')
       .select('*, players(*)')
-      .eq('id', params.id)
+      .eq('id', id)
       .single<TeamWithPlayers>()
     if (!data) notFound()
     team = data

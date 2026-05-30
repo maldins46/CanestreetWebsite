@@ -5,7 +5,7 @@ import { Plus } from 'lucide-react'
 import clsx from 'clsx'
 
 export default async function AdminEditionsPage() {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   const { data: editions } = await supabase
     .from('editions').select('*')
     .order('year', { ascending: false })

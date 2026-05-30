@@ -3,18 +3,19 @@ import { notFound } from 'next/navigation'
 import SponsorEditor from '@/components/admin/SponsorEditor'
 import type { Sponsor } from '@/types'
 
-interface Props { params: { id: string } }
+interface Props { params: Promise<{ id: string }> }
 
 export default async function AdminSponsorEditorPage({ params }: Props) {
-  const isNew = params.id === 'new'
+  const { id } = await params
+  const isNew = id === 'new'
   let sponsor: Sponsor | null = null
 
   if (!isNew) {
-    const supabase = createServerSupabaseClient()
+    const supabase = await createServerSupabaseClient()
     const { data } = await supabase
       .from('sponsors')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .single() as { data: Sponsor | null }
     if (!data) notFound()
     sponsor = data

@@ -5,7 +5,7 @@ import { Plus } from 'lucide-react'
 import clsx from 'clsx'
 
 export default async function AdminNewsPage() {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   const { data: articles } = await supabase
     .from('news').select('*')
     .order('created_at', { ascending: false })

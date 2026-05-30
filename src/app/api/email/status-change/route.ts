@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     }
 
     // Auth: verify caller is admin
-    const supabase = createServerSupabaseClient()
+    const supabase = await createServerSupabaseClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       return new Response(

@@ -3,23 +3,24 @@ import { notFound } from 'next/navigation'
 import EditionEditor from '@/components/admin/EditionEditor'
 import type { Edition, EditionWinner } from '@/types'
 
-interface Props { params: { id: string } }
+interface Props { params: Promise<{ id: string }> }
 
 export default async function AdminEditionEditorPage({ params }: Props) {
-  const isNew = params.id === 'new'
+  const { id } = await params
+  const isNew = id === 'new'
   let edition: Edition | null = null
   let winners: EditionWinner[] = []
 
   if (!isNew) {
-    const supabase = createServerSupabaseClient()
-    const { data } = await supabase.from('editions').select('*').eq('id', params.id).single<Edition>()
+    const supabase = await createServerSupabaseClient()
+    const { data } = await supabase.from('editions').select('*').eq('id', id).single<Edition>()
     if (!data) notFound()
     edition = data
 
     const { data: winnersData } = await supabase
       .from('edition_winners')
       .select('*')
-      .eq('edition_id', params.id)
+      .eq('edition_id', id)
       .order('sort_order')
       .returns<EditionWinner[]>()
     winners = winnersData ?? []

@@ -3,18 +3,19 @@ import { notFound } from 'next/navigation'
 import StaffEditor from '@/components/admin/StaffEditor'
 import type { StaffMember } from '@/types'
 
-interface Props { params: { id: string } }
+interface Props { params: Promise<{ id: string }> }
 
 export default async function AdminStaffEditorPage({ params }: Props) {
-  const isNew = params.id === 'new'
+  const { id } = await params
+  const isNew = id === 'new'
   let member: StaffMember | null = null
 
   if (!isNew) {
-    const supabase = createServerSupabaseClient()
+    const supabase = await createServerSupabaseClient()
     const { data } = await supabase
       .from('staff')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .single() as { data: StaffMember | null }
     if (!data) notFound()
     member = data

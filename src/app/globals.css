@@ -4,9 +4,6 @@
 
 @layer base {
   :root {
-    --font-display: 'Barlow Condensed', sans-serif;
-    --font-body:    'Barlow', sans-serif;
-
     /* Court color tokens — dark defaults (R G B channel triplets for Tailwind opacity modifier support) */
     --color-court-black:   10  10  10;
     --color-court-dark:    17  17  17;
