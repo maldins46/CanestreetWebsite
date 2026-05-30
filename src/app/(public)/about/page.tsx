@@ -76,8 +76,8 @@ export default async function ChiSiamoPage() {
             </div>
             <div className="card p-6">
               <p className="text-brand-orange font-display uppercase tracking-widest text-xs font-semibold mb-2">Telefono</p>
-              <a href="tel:+393291581724" className="text-court-light text-sm hover:text-brand-orange transition-colors">
-                +39 329 158 1724
+              <a href={`tel:${process.env.NEXT_PUBLIC_CONTACT_PHONE}`} className="text-court-light text-sm hover:text-brand-orange transition-colors">
+                {process.env.NEXT_PUBLIC_CONTACT_PHONE}
               </a>
               <p className="text-court-gray text-xs mt-1">(Michele)</p>
             </div>

@@ -1,7 +1,33 @@
 import { sendRegistrationAdminNotification, sendRegistrationConfirmation } from '@/lib/email'
 import type { TeamCategory } from '@/types'
 
+// Simple in-memory rate limiter: max 5 requests per IP per 10 minutes.
+// Resets on cold start (acceptable for serverless — prevents bulk spam, not sophisticated attacks).
+const WINDOW_MS = 10 * 60 * 1000
+const MAX_REQUESTS = 5
+const hits = new Map<string, { count: number; windowStart: number }>()
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now()
+  const entry = hits.get(ip)
+  if (!entry || now - entry.windowStart > WINDOW_MS) {
+    hits.set(ip, { count: 1, windowStart: now })
+    return false
+  }
+  if (entry.count >= MAX_REQUESTS) return true
+  entry.count++
+  return false
+}
+
 export async function POST(request: Request) {
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
+  if (isRateLimited(ip)) {
+    return new Response(
+      JSON.stringify({ success: false, error: 'Too many requests. Try again later.' }),
+      { status: 429, headers: { 'Content-Type': 'application/json' } }
+    )
+  }
+
   try {
     const body = await request.json()
     const { teamName, captainEmail, captainPhone, category, playerCount } = body

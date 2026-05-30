@@ -232,10 +232,10 @@ export default async function SponsorPage() {
               <Mail size={14} /> {process.env.NEXT_PUBLIC_CONTACT_EMAIL}
             </Link>
             <Link
-              href="tel:+393291581724"
+              href={`tel:${process.env.NEXT_PUBLIC_CONTACT_PHONE}`}
               className="btn-ghost text-sm px-6 py-3 inline-flex items-center gap-2"
             >
-              <Phone size={14} /> +39 329 158 1724
+              <Phone size={14} /> {process.env.NEXT_PUBLIC_CONTACT_PHONE}
             </Link>
           </div>
         </div>

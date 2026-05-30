@@ -29,7 +29,7 @@ The `(public)` group is a Next.js route group (parentheses = no URL segment). Al
 
 ### Auth & middleware
 
-`src/middleware.ts` guards every `/admin/*` route. It runs two checks in sequence:
+`src/proxy.ts` guards every `/admin/*` route (Next.js 16 renamed `middleware.ts` → `proxy.ts`). It runs two checks in sequence:
 
 1. Supabase session exists (`auth.getUser()`)
 2. The authenticated user has a row in the `admins` table

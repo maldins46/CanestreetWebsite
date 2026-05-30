@@ -46,7 +46,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               <p className="text-court-gray text-sm mt-1 mb-4">A FIP 3×3 summer tournament. In the heart of Jesi.</p>
               <div className="flex flex-col gap-1 text-court-muted text-xs">
                 <span>Piazza della Repubblica, Jesi (AN) 60035</span>
-                <span><a href="tel:+393291581724" className="hover:text-court-white transition-colors">+39 329 158 1724</a> (Michele)</span>
+                <span><a href={`tel:${process.env.NEXT_PUBLIC_CONTACT_PHONE}`} className="hover:text-court-white transition-colors">{process.env.NEXT_PUBLIC_CONTACT_PHONE}</a> (Michele)</span>
                 <span><a href={`mailto:${process.env.NEXT_PUBLIC_CONTACT_EMAIL}`} className="hover:text-court-white transition-colors">{process.env.NEXT_PUBLIC_CONTACT_EMAIL}</a></span>
               </div>
             </div>
