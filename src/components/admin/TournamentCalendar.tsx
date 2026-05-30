@@ -3,19 +3,13 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { MatchWithTeams, TeamCategory } from '@/types'
+import { CATEGORY_LABELS, CATEGORY_COLORS } from '@/types'
 import clsx from 'clsx'
 
 interface Props {
   editionId: string
   matches: MatchWithTeams[]
   category?: TeamCategory
-}
-
-const categoryColors: Record<string, string> = {
-  open: 'bg-brand-orange text-court-dark',
-  u18: 'bg-blue-500 text-white',
-  u16: 'bg-purple-500 text-white',
-  u14: 'bg-green-600 text-white',
 }
 
 const roundLabels: Record<string, string> = {
@@ -144,8 +138,8 @@ export default function TournamentCalendar({ editionId, matches, category }: Pro
             />
 
             {/* Category badge */}
-            <span className={clsx('text-xs px-2 py-0.5 font-display uppercase tracking-wide rounded', categoryColors[match.category])}>
-              {match.category}
+            <span className={clsx('text-xs px-2 py-0.5 font-display uppercase tracking-wide rounded', CATEGORY_COLORS[match.category])}>
+              {CATEGORY_LABELS[match.category]}
             </span>
 
             {/* Phase label */}

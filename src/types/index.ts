@@ -5,6 +5,22 @@
 export type AdminRole = 'superadmin' | 'editor'
 export type TeamStatus = 'pending' | 'approved' | 'rejected' | 'waitlisted'
 export type TeamCategory = 'open_m' | 'open_f' | 'u14_m' | 'u16_m' | 'u18_m'
+
+export const CATEGORY_LABELS: Record<TeamCategory, string> = {
+  open_m: 'Open M',
+  open_f: 'Open F',
+  u14_m: 'U14 M',
+  u16_m: 'U16 M',
+  u18_m: 'U18 M',
+}
+
+export const CATEGORY_COLORS: Record<TeamCategory, string> = {
+  open_m: 'bg-brand-orange text-white',
+  open_f: 'bg-pink-500 text-white',
+  u14_m: 'bg-green-600 text-white',
+  u16_m: 'bg-purple-500 text-white',
+  u18_m: 'bg-blue-500 text-white',
+}
 export type SponsorTier = 'main' | 'gold' | 'silver' | 'bronze'
 
 export interface Admin {
