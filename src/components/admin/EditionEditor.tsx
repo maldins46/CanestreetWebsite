@@ -125,21 +125,33 @@ export default function EditionEditor({ edition, winners }: Props) {
 
     if (error) { setSaving(false); setMsg('Errore: ' + error.message); return }
 
-    // Upsert winners
+    // Upsert winners — split existing (UPDATE path) from new (INSERT path) to avoid
+    // a PostgREST quirk where mixed batches silently drop the INSERT rows under RLS.
     if (rows.length > 0 && editionId) {
-      const winnersPayload = rows.map((r, i) => ({
+      const originalIds = new Set(winners.map(w => w.id))
+      const fullPayload = rows.map((r, i) => ({
         ...r,
         edition_id: editionId!,
         sort_order: i,
       }))
-      const { error: wErr } = await supabase.from('edition_winners').upsert(winnersPayload)
-      if (wErr) { setSaving(false); setMsg('Errore vincitori: ' + wErr.message); return }
+      const existingPayload = fullPayload.filter(r => originalIds.has(r.id))
+      const newPayload      = fullPayload.filter(r => !originalIds.has(r.id))
+
+      if (existingPayload.length > 0) {
+        const { error: wErr } = await supabase.from('edition_winners').upsert(existingPayload)
+        if (wErr) { setSaving(false); setMsg('Errore vincitori: ' + wErr.message); return }
+      }
+      if (newPayload.length > 0) {
+        const { error: wErr } = await supabase.from('edition_winners').insert(newPayload)
+        if (wErr) { setSaving(false); setMsg('Errore vincitori: ' + wErr.message); return }
+      }
     }
 
     // Delete removed winners
     const removedIds = winners.map(w => w.id).filter(id => !rows.find(r => r.id === id))
     if (removedIds.length) {
-      await supabase.from('edition_winners').delete().in('id', removedIds)
+      const { error: dErr } = await supabase.from('edition_winners').delete().in('id', removedIds)
+      if (dErr) { setSaving(false); setMsg('Errore rimozione vincitori: ' + dErr.message); return }
     }
 
     setSaving(false)
