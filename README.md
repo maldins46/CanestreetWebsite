@@ -135,9 +135,18 @@ To add new images to the project:
 2. Run the migrations in `supabase/migrations/` via the SQL editor
 3. Upload images to the production `media` bucket (Storage tab) and update `cover_url` values
 4. Set the environment variables in your hosting provider (Vercel, etc.):
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY`
+
+| Variable | Required | Description |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL (from project dashboard → Settings → API) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Supabase anon/public key — safe to expose to the browser |
+| `SUPABASE_SERVICE_ROLE_KEY` | Yes | Supabase service role key — server-side only, bypasses RLS, never expose to the client |
+| `NEXT_PUBLIC_SITE_URL` | Yes | Canonical site URL (e.g. `https://canestreet.it`) — used for sitemap and Open Graph metadata |
+| `NEXT_PUBLIC_CONTACT_EMAIL` | Yes | Public contact email shown on the site |
+| `NEXT_PUBLIC_CONTACT_PHONE` | Yes | Public contact phone number shown on the site |
+| `GMAIL_USER` | Yes | Gmail address used to send registration and status-change emails |
+| `GMAIL_APP_PASSWORD` | Yes | Gmail [App Password](https://myaccount.google.com/apppasswords) (requires 2FA enabled) — not your regular Gmail password |
+| `DISABLE_EMAILS` | No | Set to `true` to suppress all outgoing emails (useful in staging/preview environments) |
 
 
 
