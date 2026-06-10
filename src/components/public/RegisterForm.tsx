@@ -232,7 +232,7 @@ export default function RegisterForm({ editionId }: Props) {
               }`}
             >
               {label}
-              {years && <span className="ml-2 text-court-muted normal-case font-body">{years}</span>}
+              {years && <span className={`ml-2 normal-case font-body ${category === cat ? 'text-court-dark/70' : 'text-court-muted'}`}>{years}</span>}
             </button>
           ))}
         </div>
@@ -452,7 +452,7 @@ export default function RegisterForm({ editionId }: Props) {
           Privacy e consenso
         </h3>
 
-        <div className="bg-court-surface border border-court-border p-4 rounded text-xs text-court-muted leading-relaxed max-h-48 overflow-y-auto mb-5 whitespace-pre-wrap font-body">
+        <div className="bg-court-surface border border-court-border p-4 rounded text-xs text-court-light leading-relaxed max-h-48 overflow-y-auto mb-5 whitespace-pre-wrap font-body">
           {GDPR_TEXT}
         </div>
 

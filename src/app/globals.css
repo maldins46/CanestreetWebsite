@@ -9,7 +9,7 @@
     --color-court-dark:    17  17  17;
     --color-court-surface: 26  26  26;
     --color-court-border:  42  42  42;
-    --color-court-muted:   68  68  68;
+    --color-court-muted:  119 119 119;
     --color-court-gray:   136 136 136;
     --color-court-light:  204 204 204;
     --color-court-white:  245 245 240;
@@ -21,7 +21,7 @@
     --color-court-dark:    242 242 239;
     --color-court-surface: 232 232 228;
     --color-court-border:  208 208 204;
-    --color-court-muted:   160 160 160;
+    --color-court-muted:   100 100 100;
     --color-court-gray:     96  96  96;
     --color-court-light:    48  48  48;
     --color-court-white:    17  17  17;
@@ -34,7 +34,7 @@
       --color-court-dark:    242 242 239;
       --color-court-surface: 232 232 228;
       --color-court-border:  208 208 204;
-      --color-court-muted:   160 160 160;
+      --color-court-muted:   100 100 100;
       --color-court-gray:     96  96  96;
       --color-court-light:    48  48  48;
       --color-court-white:    17  17  17;
