@@ -1,6 +1,78 @@
 import nodemailer from 'nodemailer'
 import type { TeamCategory, TeamStatus } from '@/types'
 
+interface PlayerEmailData {
+  name: string
+  birth_date: string
+  codice_fiscale: string
+  city?: string | null
+  email?: string | null
+  phone?: string | null
+  instagram?: string | null
+  club?: string | null
+  is_captain: boolean
+  is_vice_captain: boolean
+}
+
+function playerRole(p: PlayerEmailData): string {
+  if (p.is_captain) return 'Capitano'
+  if (p.is_vice_captain) return 'Vice'
+  return 'Giocatore'
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('it-IT')
+}
+
+function playersTextTable(players: PlayerEmailData[]): string {
+  return players
+    .map(p => {
+      const lines = [
+        `  ${playerRole(p)}: ${p.name}`,
+        `    Nato il: ${formatDate(p.birth_date)}`,
+        `    CF: ${p.codice_fiscale}`,
+      ]
+      if (p.city) lines.push(`    Città: ${p.city}`)
+      if (p.email) lines.push(`    Email: ${p.email}`)
+      if (p.phone) lines.push(`    Telefono: ${p.phone}`)
+      if (p.instagram) lines.push(`    Instagram: ${p.instagram}`)
+      if (p.club) lines.push(`    Club: ${p.club}`)
+      return lines.join('\n')
+    })
+    .join('\n\n')
+}
+
+function playersHtmlTable(players: PlayerEmailData[]): string {
+  const th = (text: string) =>
+    `<th style="padding:8px 12px;background:#333;color:#fff;text-align:left;font-size:13px;white-space:nowrap">${text}</th>`
+  const td = (text: string) =>
+    `<td style="padding:8px 12px;border-bottom:1px solid #eee;font-size:13px;vertical-align:top">${text}</td>`
+
+  const rows = players
+    .map(p => {
+      return `<tr>
+        ${td(playerRole(p))}
+        ${td(p.name)}
+        ${td(formatDate(p.birth_date))}
+        ${td(`<code style="font-size:12px">${p.codice_fiscale}</code>`)}
+        ${td(p.city || '—')}
+        ${td(p.email || '—')}
+        ${td(p.phone || '—')}
+        ${td(p.instagram || '—')}
+        ${td(p.club || '—')}
+      </tr>`
+    })
+    .join('\n')
+
+  return `
+<table style="width:100%;border-collapse:collapse;margin-top:16px;font-family:Arial,sans-serif">
+  <thead><tr>
+    ${th('Ruolo')}${th('Nome')}${th('Nato il')}${th('Codice Fiscale')}${th('Città')}${th('Email')}${th('Telefono')}${th('Instagram')}${th('Club')}
+  </tr></thead>
+  <tbody>${rows}</tbody>
+</table>`
+}
+
 const gmailUser = process.env.GMAIL_USER
 const gmailAppPassword = process.env.GMAIL_APP_PASSWORD
 
@@ -44,6 +116,7 @@ interface RegistrationAdminData {
   captainEmail: string
   captainPhone?: string | null
   playerCount: number
+  players?: PlayerEmailData[]
 }
 
 export async function sendRegistrationAdminNotification(
@@ -56,36 +129,44 @@ export async function sendRegistrationAdminNotification(
     const categoryLabel = categoryLabels[data.category] || data.category
     const now = new Date().toLocaleString('it-IT')
 
+    const rosterText = data.players?.length
+      ? `\nROSTER:\n\n${playersTextTable(data.players)}`
+      : `\nGiocatori: ${data.playerCount}`
+
     const text = `Nuova iscrizione al torneo Canestreet 3×3
 
 Squadra: ${data.teamName}
 Categoria: ${categoryLabel}
-Giocatori: ${data.playerCount}
 Email capitano: ${data.captainEmail}
 Telefono capitano: ${data.captainPhone || 'non fornito'}
 Orario iscrizione: ${now}
+${rosterText}
 
 Visita il backoffice per approvare o rifiutare l'iscrizione. Oppure mmazzade
 
 ---
 Questo messaggio è stato generato automaticamente.`
 
+    const rosterHtml = data.players?.length
+      ? `<h2 style="margin-top:24px;font-size:16px">Roster (${data.players.length} giocatori)</h2>${playersHtmlTable(data.players)}`
+      : `<p><strong>Giocatori:</strong> ${data.playerCount}</p>`
+
     const html = `
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
 <body style="font-family: Barlow, Arial, sans-serif; color: #333; line-height: 1.6;">
-  <div style="max-width: 600px; margin: 0 auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+  <div style="max-width: 800px; margin: 0 auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
     <div style="background: #333; color: white; padding: 20px; text-align: center;">
       <h1 style="margin: 0; font-size: 24px;">Nuova Iscrizione 🏀🦁</h1>
     </div>
     <div style="padding: 20px;">
       <p><strong>Squadra:</strong> ${data.teamName}</p>
       <p><strong>Categoria:</strong> ${categoryLabel}</p>
-      <p><strong>Giocatori:</strong> ${data.playerCount}</p>
       <p><strong>Email capitano:</strong> ${data.captainEmail}</p>
       <p><strong>Telefono capitano:</strong> ${data.captainPhone || 'non fornito'}</p>
       <p><strong>Orario iscrizione:</strong> ${now}</p>
+      ${rosterHtml}
       <p style="margin-top: 30px; font-size: 14px; color: #333;">
         Accedi al backoffice per approvare, rifiutare o inserire in lista d'attesa l'iscrizione. Oppure mazzade
       </p>
@@ -117,6 +198,7 @@ interface RegistrationCaptainData {
   teamName: string
   category: TeamCategory
   captainEmail: string
+  players?: PlayerEmailData[]
 }
 
 export async function sendRegistrationConfirmation(
@@ -128,11 +210,15 @@ export async function sendRegistrationConfirmation(
   try {
     const categoryLabel = categoryLabels[data.category] || data.category
 
+    const rosterText = data.players?.length
+      ? `\nRiepilogo giocatori registrati:\n\n${playersTextTable(data.players)}\n`
+      : ''
+
     const text = `Canestreet 3×3 — Richiesta di iscrizione ricevuta
 
 Ciao!
 La tua richiesta di iscrizione con la squadra "${data.teamName}" nella categoria "${categoryLabel}" è stata registrata con successo.
-
+${rosterText}
 Ti contatteremo presto per confermare l'accettazione o comunicarti lo stato della tua iscrizione.
 
 A presto!
@@ -140,19 +226,24 @@ A presto!
 ---
 Questo messaggio è stato generato automaticamente. Puoi rispondere direttamente a questa email per qualsiasi chiarimento.`
 
+    const rosterHtml = data.players?.length
+      ? `<h2 style="margin-top:24px;font-size:16px">Riepilogo giocatori registrati</h2>${playersHtmlTable(data.players)}`
+      : ''
+
     const html = `
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
 <body style="font-family: Barlow, Arial, sans-serif; color: #333; line-height: 1.6;">
-  <div style="max-width: 600px; margin: 0 auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+  <div style="max-width: 800px; margin: 0 auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
     <div style="background: #333; color: white; padding: 20px; text-align: center;">
       <h1 style="margin: 0; font-size: 24px;">Richiesta di iscrizione Ricevuta 🏀🦁</h1>
     </div>
     <div style="padding: 20px;">
       <p>Ciao!</p>
       <p>La tua richiesta d'iscrizione con la squadra <strong>"${data.teamName}"</strong> nella categoria <strong>"${categoryLabel}"</strong> è stata registrata con successo.</p>
-      <p>Ti contatteremo presto per confermare l'accettazione o comunicarti lo stato della tua iscrizione.</p>
+      ${rosterHtml}
+      <p style="margin-top:24px">Ti contatteremo presto per confermare l'accettazione o comunicarti lo stato della tua iscrizione.</p>
       <p style="margin-top: 20px; border-top: 1px solid #ddd; padding-top: 20px; font-size: 12px; color: #999;">
         Questo messaggio è stato generato automaticamente. Puoi rispondere direttamente a questa email per qualsiasi chiarimento.
       </p>

@@ -30,7 +30,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json()
-    const { teamName, captainEmail, captainPhone, category, playerCount } = body
+    const { teamName, captainEmail, captainPhone, category, playerCount, players } = body
 
     if (!teamName || !captainEmail || !category || !playerCount) {
       return new Response(
@@ -47,11 +47,13 @@ export async function POST(request: Request) {
         captainEmail,
         captainPhone: captainPhone || null,
         playerCount: parseInt(playerCount, 10),
+        players: Array.isArray(players) ? players : undefined,
       }),
       sendRegistrationConfirmation({
         teamName,
         category: category as TeamCategory,
         captainEmail,
+        players: Array.isArray(players) ? players : undefined,
       }),
     ])
 

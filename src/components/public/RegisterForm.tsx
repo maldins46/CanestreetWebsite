@@ -188,6 +188,18 @@ export default function RegisterForm({ editionId }: Props) {
           captainPhone: captain.phone?.trim() || null,
           category,
           playerCount: activePlayers.length,
+          players: activePlayers.map(p => ({
+            name: p.name,
+            birth_date: p.birth_date,
+            codice_fiscale: p.codice_fiscale,
+            city: p.city || null,
+            email: p.email || null,
+            phone: p.phone || null,
+            instagram: p.instagram || null,
+            club: p.club || null,
+            is_captain: p.is_captain,
+            is_vice_captain: p.is_vice_captain,
+          })),
         }),
       }).catch(() => {}) // silently ignore email failures
     }
