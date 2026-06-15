@@ -126,71 +126,69 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
 
             return (
               <div key={team.id} className="card p-5">
-                <div className="flex items-start justify-between gap-4 flex-wrap">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-3 mb-1 flex-wrap">
-                      <Link href={`/admin/teams/${team.id}`} className="flex items-center gap-2 group">
-                        <h2 className="font-display font-bold uppercase text-lg text-court-white group-hover:text-brand-orange transition-colors">{team.name}</h2>
-                        <Pencil size={13} className="text-court-muted group-hover:text-brand-orange transition-colors" />
-                      </Link>
-                      <span className="text-xs px-2 py-0.5 font-display uppercase tracking-wide border border-court-border text-court-muted">
-                        {categoryLabel[team.category]}
-                      </span>
-                      <span className={clsx('text-xs px-2 py-0.5 font-display uppercase tracking-wide',
-                        team.status === 'approved'   && 'badge-approved',
-                        team.status === 'pending'    && 'badge-pending',
-                        team.status === 'rejected'   && 'badge-rejected',
-                        team.status === 'waitlisted' && 'badge-waitlisted',
-                      )}>
-                        {statusLabel[team.status]}
-                      </span>
-                    </div>
+                {/* Header: name + badges */}
+                <div className="flex items-center gap-3 mb-2 flex-wrap">
+                  <Link href={`/admin/teams/${team.id}`} className="flex items-center gap-2 group">
+                    <h2 className="font-display font-bold uppercase text-lg text-court-white group-hover:text-brand-orange transition-colors">{team.name}</h2>
+                    <Pencil size={13} className="text-court-muted group-hover:text-brand-orange transition-colors" />
+                  </Link>
+                  <span className="text-xs px-2 py-0.5 font-display uppercase tracking-wide border border-court-border text-court-muted">
+                    {categoryLabel[team.category]}
+                  </span>
+                  <span className={clsx('text-xs px-2 py-0.5 font-display uppercase tracking-wide',
+                    team.status === 'approved'   && 'badge-approved',
+                    team.status === 'pending'    && 'badge-pending',
+                    team.status === 'rejected'   && 'badge-rejected',
+                    team.status === 'waitlisted' && 'badge-waitlisted',
+                  )}>
+                    {statusLabel[team.status]}
+                  </span>
+                </div>
 
-                    {/* Players */}
-                    {sortedPlayers ? (
-                      <div className="mt-2 space-y-1">
-                        {sortedPlayers.map(p => (
-                          <div key={p.id} className="text-xs text-court-muted flex flex-wrap gap-x-3 gap-y-0.5">
-                            <span className="text-court-light">
-                              {p.name}
-                              {p.is_captain && <span className="ml-1 text-brand-orange text-[10px]">cap</span>}
-                              {p.is_vice_captain && <span className="ml-1 text-court-gray text-[10px]">vice</span>}
-                            </span>
-                            <span className="font-mono">{new Date(p.birth_date).toLocaleDateString('it-IT')}</span>
-                            <span className="font-mono uppercase">{p.codice_fiscale}</span>
-                            {p.email && <span className="text-court-muted">{p.email}</span>}
-                            {p.phone && <span className="text-court-muted">{p.phone}</span>}
-                            {p.city && <span className="text-court-muted">{p.city}</span>}
-                            {p.instagram && <span className="text-court-muted">{p.instagram}</span>}
-                            {p.club && <span className="text-court-muted italic">{p.club}</span>}
-                          </div>
-                        ))}
+                {/* Players */}
+                {sortedPlayers ? (
+                  <div className="mt-2 space-y-1">
+                    {sortedPlayers.map(p => (
+                      <div key={p.id} className="text-xs text-court-muted flex flex-wrap gap-x-3 gap-y-0.5">
+                        <span className="text-court-light">
+                          {p.name}
+                          {p.is_captain && <span className="ml-1 text-brand-orange text-[10px]">cap</span>}
+                          {p.is_vice_captain && <span className="ml-1 text-court-gray text-[10px]">vice</span>}
+                        </span>
+                        <span className="font-mono">{new Date(p.birth_date).toLocaleDateString('it-IT')}</span>
+                        <span className="font-mono uppercase">{p.codice_fiscale}</span>
+                        {p.email && <span>{p.email}</span>}
+                        {p.phone && <span>{p.phone}</span>}
+                        {p.city && <span>{p.city}</span>}
+                        {p.instagram && <span className="italic">{p.instagram}</span>}
+                        {p.club && <span className="italic">{p.club}</span>}
                       </div>
-                    ) : (
-                      // Legacy flat players
-                      <p className="text-court-muted text-xs mt-1">
-                        Giocatori: {[team.captain_name, team.player2_name, team.player3_name, team.player4_name].filter(Boolean).join(', ')}
-                      </p>
-                    )}
-
-                    {team.schedule_notes && (
-                      <p className="text-court-muted text-xs mt-2 italic">Orari: &quot;{team.schedule_notes}&quot;</p>
-                    )}
-                    {team.notes && (
-                      <p className="text-court-muted text-xs mt-1 italic">Note: &quot;{team.notes}&quot;</p>
-                    )}
+                    ))}
                   </div>
+                ) : (
+                  <p className="text-court-muted text-xs mt-1">
+                    Giocatori: {[team.captain_name, team.player2_name, team.player3_name, team.player4_name].filter(Boolean).join(', ')}
+                  </p>
+                )}
 
-                  <div className="flex gap-2 shrink-0 flex-wrap">
+                {team.schedule_notes && (
+                  <p className="text-court-muted text-xs mt-2 italic">Esigenze particolari: &quot;{team.schedule_notes}&quot;</p>
+                )}
+                {team.notes && (
+                  <p className="text-court-muted text-xs mt-1 italic">Note: &quot;{team.notes}&quot;</p>
+                )}
+
+                {/* Footer: timestamp + action buttons */}
+                <div className="flex items-center justify-between mt-4 pt-3 border-t border-court-border flex-wrap gap-3">
+                  <p className="text-court-muted text-xs font-mono">
+                    {new Date(team.created_at).toLocaleString('it-IT')}
+                  </p>
+                  <div className="flex gap-2 flex-wrap">
                     {(['approved', 'waitlisted', 'rejected'] as const).filter(s => s !== team.status).map(s => (
                       <TeamStatusButton key={s} teamId={team.id} status={s} label={statusLabel[s]} />
                     ))}
                   </div>
                 </div>
-
-                <p className="text-court-muted text-xs mt-3 font-mono">
-                  {new Date(team.created_at).toLocaleString('it-IT')}
-                </p>
               </div>
             )
           })}

@@ -57,7 +57,6 @@ export interface Team {
   player4_name: string | null  // legacy
   schedule_notes: string | null
   notes: string | null
-  consent_new_beetle: boolean
   status: TeamStatus
   created_at: string
 }

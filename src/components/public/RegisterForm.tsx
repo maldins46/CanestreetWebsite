@@ -71,6 +71,7 @@ export default function RegisterForm({ editionId }: Props) {
   const [consentData, setConsentData] = useState(false)
   const [consentImage, setConsentImage] = useState(false)
   const [consentNewBeetle, setConsentNewBeetle] = useState(false)
+  const [scheduleNotes, setScheduleNotes] = useState('')
 
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
@@ -134,6 +135,7 @@ export default function RegisterForm({ editionId }: Props) {
     if (isUnder && !clauseParent) return 'Devi dichiarare l\'autorizzazione del genitore/tutore.'
     if (!consentData) return 'Devi accettare il trattamento dei dati personali.'
     if (!consentImage) return 'Devi autorizzare l\'utilizzo di immagini e video.'
+    if (!consentNewBeetle) return 'Devi acconsentire alla comunicazione dei dati all\'agenzia viaggi New Beetle.'
     return null
   }
 
@@ -160,11 +162,11 @@ export default function RegisterForm({ editionId }: Props) {
     }))
 
     const { error } = await supabase.rpc('register_team', {
-      p_edition_id:          editionId,
-      p_name:                teamName.trim(),
-      p_category:            category,
-      p_players:             playersPayload,
-      p_consent_new_beetle:  consentNewBeetle,
+      p_edition_id:     editionId,
+      p_name:           teamName.trim(),
+      p_category:       category,
+      p_players:        playersPayload,
+      p_schedule_notes: scheduleNotes.trim() || null,
     })
 
     if (error) {
@@ -271,12 +273,6 @@ export default function RegisterForm({ editionId }: Props) {
         <h3 className="font-display font-bold uppercase tracking-widest text-court-white border-b border-court-border pb-3 mb-5">
           Giocatori
         </h3>
-
-        {isUnder && (
-          <p className="text-court-muted text-xs mb-4">
-            Nessuna deroga alle annate. N.B.: non sono ammesse deroghe alle annate.
-          </p>
-        )}
 
         <div className="space-y-4">
           {players.map((player, idx) => {
@@ -399,6 +395,26 @@ export default function RegisterForm({ editionId }: Props) {
         </div>
       </section>
 
+      {/* Esigenze particolari — open categories only */}
+      {!isUnder && (
+        <section>
+          <h3 className="font-display font-bold uppercase tracking-widest text-court-white border-b border-court-border pb-3 mb-5">
+            Esigenze particolari
+          </h3>
+          <div>
+            <label className="label">Esigenze di orario <span className="text-court-muted">(opzionale)</span></label>
+            <textarea
+              className="input py-2 text-sm"
+              value={scheduleNotes}
+              onChange={e => setScheduleNotes(e.target.value)}
+              placeholder="Es. preferenza dopo le 21, impossibilità giovedì pomeriggio…"
+              rows={3}
+            />
+            <p className="text-court-muted text-xs mt-1">Indicate eventuali esigenze di orario per i giocatori della squadra.</p>
+          </div>
+        </section>
+      )}
+
       {/* Hardcoded clauses */}
       <section>
         <h3 className="font-display font-bold uppercase tracking-widest text-court-white border-b border-court-border pb-3 mb-5">
@@ -501,8 +517,7 @@ export default function RegisterForm({ editionId }: Props) {
               className="mt-0.5 accent-brand-orange shrink-0"
             />
             <span className="text-sm text-court-gray">
-              Acconsento all&apos;agenzia viaggi New Beetle di accedere ai dati personali forniti in fase di iscrizione per una ricerca statistica e invio pacchetto promozionale per gli iscritti al torneo.{' '}
-              <span className="text-court-muted">(opzionale)</span>
+              Acconsento all&apos;agenzia viaggi New Beetle di accedere ai dati personali forniti in fase di iscrizione per una ricerca statistica e invio pacchetto promozionale per gli iscritti al torneo. *
             </span>
           </label>
         </div>
