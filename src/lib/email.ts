@@ -42,35 +42,33 @@ function playersTextTable(players: PlayerEmailData[]): string {
     .join('\n\n')
 }
 
-function playersHtmlTable(players: PlayerEmailData[]): string {
-  const th = (text: string) =>
-    `<th style="padding:8px 12px;background:#333;color:#fff;text-align:left;font-size:13px;white-space:nowrap">${text}</th>`
-  const td = (text: string) =>
-    `<td style="padding:8px 12px;border-bottom:1px solid #eee;font-size:13px;vertical-align:top">${text}</td>`
+function playersHtmlCards(players: PlayerEmailData[]): string {
+  const labelStyle = 'width:130px;padding:6px 10px;font-size:12px;color:#666;vertical-align:top;white-space:nowrap'
+  const valueStyle = 'padding:6px 10px;font-size:13px;vertical-align:top'
 
-  const rows = players
+  const row = (label: string, value: string) =>
+    `<tr><td style="${labelStyle}">${label}</td><td style="${valueStyle}">${value}</td></tr>`
+
+  const cards = players
     .map(p => {
-      return `<tr>
-        ${td(playerRole(p))}
-        ${td(p.name)}
-        ${td(formatDate(p.birth_date))}
-        ${td(`<code style="font-size:12px">${p.codice_fiscale}</code>`)}
-        ${td(p.city || '—')}
-        ${td(p.email || '—')}
-        ${td(p.phone || '—')}
-        ${td(p.instagram || '—')}
-        ${td(p.club || '—')}
-      </tr>`
+      const rows = [
+        row('Nato il', formatDate(p.birth_date)),
+        row('Codice Fiscale', `<code style="font-size:12px">${p.codice_fiscale}</code>`),
+        ...(p.city ? [row('Città', p.city)] : []),
+        ...(p.email ? [row('Email', p.email)] : []),
+        ...(p.phone ? [row('Telefono', p.phone)] : []),
+        ...(p.instagram ? [row('Instagram', p.instagram)] : []),
+        ...(p.club ? [row('Club', p.club)] : []),
+      ].join('\n')
+
+      return `<table width="100%" style="border-collapse:collapse;margin-bottom:12px;border:1px solid #ddd;font-family:Arial,sans-serif">
+  <tr><td colspan="2" style="padding:8px 10px;background:#333;color:#fff;font-size:13px;font-weight:bold">${playerRole(p)} — ${p.name}</td></tr>
+  ${rows}
+</table>`
     })
     .join('\n')
 
-  return `
-<table style="width:100%;border-collapse:collapse;margin-top:16px;font-family:Arial,sans-serif">
-  <thead><tr>
-    ${th('Ruolo')}${th('Nome')}${th('Nato il')}${th('Codice Fiscale')}${th('Città')}${th('Email')}${th('Telefono')}${th('Instagram')}${th('Club')}
-  </tr></thead>
-  <tbody>${rows}</tbody>
-</table>`
+  return `<div style="margin-top:16px">${cards}</div>`
 }
 
 const gmailUser = process.env.GMAIL_USER
@@ -148,7 +146,7 @@ Visita il backoffice per approvare o rifiutare l'iscrizione. Oppure mmazzade
 Questo messaggio è stato generato automaticamente.`
 
     const rosterHtml = data.players?.length
-      ? `<h2 style="margin-top:24px;font-size:16px">Roster (${data.players.length} giocatori)</h2>${playersHtmlTable(data.players)}`
+      ? `<h2 style="margin-top:24px;font-size:16px">Roster (${data.players.length} giocatori)</h2>${playersHtmlCards(data.players)}`
       : `<p><strong>Giocatori:</strong> ${data.playerCount}</p>`
 
     const html = `
@@ -227,7 +225,7 @@ A presto!
 Questo messaggio è stato generato automaticamente. Puoi rispondere direttamente a questa email per qualsiasi chiarimento.`
 
     const rosterHtml = data.players?.length
-      ? `<h2 style="margin-top:24px;font-size:16px">Riepilogo giocatori registrati</h2>${playersHtmlTable(data.players)}`
+      ? `<h2 style="margin-top:24px;font-size:16px">Riepilogo giocatori registrati</h2>${playersHtmlCards(data.players)}`
       : ''
 
     const html = `
