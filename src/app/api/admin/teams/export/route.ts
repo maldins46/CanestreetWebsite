@@ -86,7 +86,7 @@ export async function GET(request: Request) {
     'Nome squadra', 'Categoria', 'Stato',
     'Email capitano', 'Telefono capitano',
     ...playerHeaders,
-    'Note orari', 'Note', 'Iscritto il',
+    'Note orari', 'Consenso New Beetle', 'Note', 'Iscritto il',
   ]
 
   const rows = teams.map(team => {
@@ -119,6 +119,7 @@ export async function GET(request: Request) {
       team.captain_phone,
       ...playerCells,
       team.schedule_notes,
+      team.consent_new_beetle ? 'Sì' : 'No',
       team.notes,
       new Date(team.created_at).toLocaleString('it-IT'),
     ].map(escapeCell).join(',')
