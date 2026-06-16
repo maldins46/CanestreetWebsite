@@ -143,6 +143,13 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
                   )}>
                     {statusLabel[team.status]}
                   </span>
+                  <span className={clsx('text-xs px-2 py-0.5 font-display uppercase tracking-wide border',
+                    team.consent_new_beetle
+                      ? 'border-green-700 text-green-400'
+                      : 'border-red-700 text-red-400'
+                  )}>
+                    New Beetle {team.consent_new_beetle ? '✓' : '✗'}
+                  </span>
                 </div>
 
                 {/* Players */}
