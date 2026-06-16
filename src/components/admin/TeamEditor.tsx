@@ -291,15 +291,26 @@ export default function TeamEditor({ team, editionId, editions }: Props) {
         <textarea className="input resize-none" rows={2} value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="Visibile solo agli admin..." />
       </div>
 
-      {/* Status (existing teams only) */}
+      {/* Status + consents (existing teams only) */}
       {team && (
-        <div>
-          <label className="label">Stato</label>
-          <select className="input" value={form.status} onChange={e => set('status', e.target.value)}>
-            {STATUS_OPTIONS.map(o => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label className="label">Stato</label>
+            <select className="input" value={form.status} onChange={e => set('status', e.target.value)}>
+              {STATUS_OPTIONS.map(o => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="label">Consenso New Beetle</label>
+            <div className="input flex items-center gap-2 pointer-events-none select-none">
+              <span className={`inline-block w-2 h-2 rounded-full ${team.consent_new_beetle ? 'bg-green-400' : 'bg-red-400'}`} />
+              <span className="text-sm text-court-white">
+                {team.consent_new_beetle ? 'Fornito' : 'Non fornito'}
+              </span>
+            </div>
+          </div>
         </div>
       )}
 
