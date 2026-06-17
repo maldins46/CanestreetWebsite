@@ -172,7 +172,7 @@ export default async function AdminDashboard() {
       {/* Breakdowns */}
       <div className="grid sm:grid-cols-2 gap-4 mb-8">
         {/* Status breakdown */}
-        <div className="card p-6">
+        <div className="card p-6 min-w-0">
           <p className="font-display uppercase tracking-widest text-xs text-court-gray mb-5">Stato squadre</p>
           <div className="space-y-3">
             {statusBreakdown.map(({ label, count, color }) => {
@@ -193,7 +193,7 @@ export default async function AdminDashboard() {
         </div>
 
         {/* Category breakdown */}
-        <div className="card p-6">
+        <div className="card p-6 min-w-0">
           <p className="font-display uppercase tracking-widest text-xs text-court-gray mb-5">Categorie</p>
           <div className="space-y-3">
             {categoryBreakdown.map(({ label, count }) => {
@@ -220,7 +220,7 @@ export default async function AdminDashboard() {
       {/* Recent activity */}
       <div className="grid sm:grid-cols-2 gap-4">
         {/* Recent registrations */}
-        <div className="card p-6">
+        <div className="card p-6 min-w-0">
           <div className="flex items-center justify-between mb-5">
             <p className="font-display uppercase tracking-widest text-xs text-court-gray">Ultime iscrizioni</p>
             <Link href="/admin/teams" className="text-xs text-brand-orange hover:text-brand-light transition-colors font-display uppercase tracking-wide">
@@ -249,7 +249,7 @@ export default async function AdminDashboard() {
         </div>
 
         {/* Recent news */}
-        <div className="card p-6">
+        <div className="card p-6 min-w-0">
           <div className="flex items-center justify-between mb-5">
             <p className="font-display uppercase tracking-widest text-xs text-court-gray">Ultimi articoli</p>
             <Link href="/admin/news" className="text-xs text-brand-orange hover:text-brand-light transition-colors font-display uppercase tracking-wide">
