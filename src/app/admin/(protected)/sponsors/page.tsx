@@ -3,6 +3,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import type { Sponsor, SponsorTier } from '@/types'
 import Pagination from '@/components/admin/Pagination'
+import TierFilter from '@/components/admin/TierFilter'
 import { Suspense } from 'react'
 import { Plus } from 'lucide-react'
 
@@ -23,7 +24,7 @@ const TIER_BADGE: Record<SponsorTier, string> = {
 }
 
 interface Props {
-  searchParams: Promise<{ page?: string }>
+  searchParams: Promise<{ page?: string; tier?: string }>
 }
 
 export default async function AdminSponsorsPage({ searchParams }: Props) {
@@ -32,14 +33,18 @@ export default async function AdminSponsorsPage({ searchParams }: Props) {
 
   const page = Math.max(1, Number(sp.page ?? 1))
   const offset = (page - 1) * PAGE_SIZE
+  const activeTier = sp.tier as SponsorTier | undefined
 
-  const result = await supabase
+  let query = supabase
     .from('sponsors')
     .select('*', { count: 'exact' })
     .order('tier', { ascending: true })
     .order('sort_order', { ascending: true })
     .order('name', { ascending: true })
-    .range(offset, offset + PAGE_SIZE - 1)
+
+  if (activeTier) query = query.eq('tier', activeTier)
+
+  const result = await query.range(offset, offset + PAGE_SIZE - 1)
 
   const sponsors = (result.data ?? []) as Sponsor[]
   const total = result.count ?? 0
@@ -47,14 +52,20 @@ export default async function AdminSponsorsPage({ searchParams }: Props) {
 
   return (
     <div>
-      <div className="flex items-start justify-between mb-10">
+      <div className="flex items-start justify-between mb-10 flex-wrap gap-4">
         <div>
           <p className="text-brand-orange font-display uppercase tracking-widest text-xs mb-1">Backoffice</p>
           <h1 className="font-display font-bold uppercase text-3xl text-court-white">Gestione Sponsor</h1>
         </div>
-        <Link href="/admin/sponsors/new" className="btn-primary text-sm px-5 py-2">
+        <Link href="/admin/sponsors/new" className="btn-primary text-sm px-5 py-2 shrink-0">
           <Plus size={14} /> Nuovo sponsor
         </Link>
+      </div>
+
+      <div className="mb-6">
+        <Suspense>
+          <TierFilter />
+        </Suspense>
       </div>
 
       {!sponsors.length && total === 0 ? (
