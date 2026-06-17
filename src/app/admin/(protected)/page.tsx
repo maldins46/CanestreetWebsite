@@ -44,7 +44,7 @@ export default async function AdminDashboard() {
     supabase.from('news').select('*', { count: 'exact', head: true }),
     supabase.from('news').select('*', { count: 'exact', head: true }).eq('published', true),
     supabase.from('teams').select('id, name, category, status, created_at').eq('edition_id', editionId).order('created_at', { ascending: false }).limit(5),
-    supabase.from('news').select('id, title, published, published_at, created_at').order('created_at', { ascending: false }).limit(3),
+    supabase.from('news').select('id, title, published, published_at, created_at').order('created_at', { ascending: false }).limit(5),
   ])
 
   const draftNews = (totalNews ?? 0) - (publishedNews ?? 0)
@@ -98,6 +98,10 @@ export default async function AdminDashboard() {
     { label: 'U16 M',  count: teamsU16 ?? 0 },
     { label: 'U14 M',  count: teamsU14 ?? 0 },
   ]
+
+  const statusLabel: Record<string, string> = {
+    pending: 'In attesa', approved: 'Approvata', rejected: 'Rifiutata', waitlisted: "Lista d'attesa",
+  }
 
   const categoryLabel: Record<string, string> = {
     open_m: 'Open M',
@@ -171,15 +175,20 @@ export default async function AdminDashboard() {
         <div className="card p-6">
           <p className="font-display uppercase tracking-widest text-xs text-court-gray mb-5">Stato squadre</p>
           <div className="space-y-3">
-            {statusBreakdown.map(({ label, count, color }) => (
-              <div key={label} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full flex-shrink-0 ${color}`} />
-                  <span className="text-sm text-court-light font-display uppercase tracking-wide">{label}</span>
+            {statusBreakdown.map(({ label, count, color }) => {
+              const pct = (totalTeams ?? 0) > 0 ? Math.round((count / (totalTeams ?? 1)) * 100) : 0
+              return (
+                <div key={label}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm text-court-light font-display uppercase tracking-wide">{label}</span>
+                    <span className="font-display font-bold text-court-white text-sm">{count}</span>
+                  </div>
+                  <div className="h-1 bg-court-border rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full transition-all ${color}`} style={{ width: `${pct}%` }} />
+                  </div>
                 </div>
-                <span className="font-display font-bold text-court-white text-sm">{count}</span>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
 
@@ -230,7 +239,7 @@ export default async function AdminDashboard() {
                       {new Date(team.created_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}
                     </p>
                   </div>
-                  <span className={`badge-${team.status} flex-shrink-0 text-xs`}>{team.status}</span>
+                  <span className={`badge-${team.status} flex-shrink-0 text-xs`}>{statusLabel[team.status] ?? team.status}</span>
                 </div>
               ))}
             </div>
