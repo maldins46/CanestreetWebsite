@@ -31,7 +31,7 @@ export default async function AdminEditionsPage({ searchParams }: Props) {
 
   return (
     <div>
-      <div className="flex items-start justify-between mb-10 flex-wrap gap-4">
+      <div className="flex flex-col md:flex-row items-start md:items-end justify-between mb-10 gap-4">
         <div>
           <p className="text-brand-orange font-display uppercase tracking-widest text-xs mb-1">Edizioni</p>
           <h1 className="font-display font-bold uppercase text-3xl text-court-white">Gestione Edizioni</h1>

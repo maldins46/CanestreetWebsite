@@ -73,30 +73,12 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
 
   return (
     <div>
-      <div className="flex items-start justify-between mb-6 flex-wrap gap-4">
+      <div className="flex flex-col md:flex-row items-start md:items-end justify-between mb-4 gap-4">
         <div>
           <p className="text-brand-orange font-display uppercase tracking-widest text-xs mb-1">Squadre</p>
           <h1 className="font-display font-bold uppercase text-3xl text-court-white">Gestione Iscrizioni</h1>
-          {activeEdition && (
-            <div className="flex items-center gap-3 mt-2 flex-wrap">
-              <Suspense>
-                <EditionSwitcher
-                  editions={editions}
-                  currentEditionId={activeEdition.id}
-                />
-              </Suspense>
-              <RegistrationToggle
-                editionId={activeEdition.id}
-                registrationOpen={activeEdition.registration_open}
-              />
-              <div className="card flex items-center gap-2 px-3 py-1.5 text-xs font-display uppercase tracking-wide">
-                <span className="text-court-white font-bold">{total}</span>
-                <span className="text-court-gray">{categoryFilter ? categoryLabel[categoryFilter] : 'iscrizioni'}</span>
-              </div>
-            </div>
-          )}
         </div>
-        <div className="flex items-start gap-4 shrink-0">
+        <div className="flex items-center gap-4 shrink-0">
           {activeEdition && (
             <a
               href={`/api/admin/teams/export?edition=${activeEdition.id}${categoryFilter ? `&category=${categoryFilter}` : ''}`}
@@ -115,6 +97,25 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
           )}
         </div>
       </div>
+
+      {activeEdition && (
+        <div className="flex items-center gap-3 mb-6 flex-wrap">
+          <Suspense>
+            <EditionSwitcher
+              editions={editions}
+              currentEditionId={activeEdition.id}
+            />
+          </Suspense>
+          <RegistrationToggle
+            editionId={activeEdition.id}
+            registrationOpen={activeEdition.registration_open}
+          />
+          <div className="card flex items-center gap-2 px-3 py-1.5 text-xs font-display uppercase tracking-wide">
+            <span className="text-court-white font-bold">{total}</span>
+            <span className="text-court-gray">{categoryFilter ? categoryLabel[categoryFilter] : 'iscrizioni'}</span>
+          </div>
+        </div>
+      )}
 
       {/* Category filter */}
       <div className="mb-6">
