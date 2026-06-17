@@ -153,13 +153,6 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
                     )}>
                       {statusLabel[team.status]}
                     </span>
-                    <span className={clsx('text-xs px-2 py-0.5 font-display uppercase tracking-wide border',
-                      team.consent_new_beetle
-                        ? 'border-green-700 text-green-400'
-                        : 'border-red-700 text-red-400'
-                    )}>
-                      New Beetle {team.consent_new_beetle ? '✓' : '✗'}
-                    </span>
                   </div>
 
                   {/* Players */}
@@ -199,6 +192,10 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
                   <div className="flex items-center justify-between mt-4 pt-3 border-t border-court-border flex-wrap gap-3">
                     <p className="text-court-muted text-xs font-mono">
                       {new Date(team.created_at).toLocaleString('it-IT')}
+                      <span className="mx-1.5">·</span>
+                      <span className={team.consent_new_beetle ? 'text-green-400' : 'text-red-400'}>
+                        Consenso New Beetle {team.consent_new_beetle ? '✓' : '✗'}
+                      </span>
                     </p>
                     <div className="flex gap-2 flex-wrap">
                       {(['approved', 'waitlisted', 'rejected'] as const).filter(s => s !== team.status).map(s => (
