@@ -31,12 +31,12 @@ export default async function AdminNewsPage({ searchParams }: Props) {
 
   return (
     <div>
-      <div className="flex items-start justify-between mb-10">
+      <div className="flex items-start justify-between mb-10 flex-wrap gap-4">
         <div>
           <p className="text-brand-orange font-display uppercase tracking-widest text-xs mb-1">News</p>
           <h1 className="font-display font-bold uppercase text-3xl text-court-white">Gestione Articoli</h1>
         </div>
-        <Link href="/admin/news/new" className="btn-primary text-sm px-5 py-2">
+        <Link href="/admin/news/new" className="btn-primary text-sm px-5 py-2 shrink-0">
           <Plus size={14} /> Nuovo articolo
         </Link>
       </div>
