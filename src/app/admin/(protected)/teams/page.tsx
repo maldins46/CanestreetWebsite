@@ -8,7 +8,8 @@ import Pagination from '@/components/admin/Pagination'
 import { Suspense } from 'react'
 import Link from 'next/link'
 import clsx from 'clsx'
-import { Plus, Pencil, Download } from 'lucide-react'
+import ExportCsvDialog from '@/components/admin/ExportCsvDialog'
+import { Plus, Pencil } from 'lucide-react'
 
 const PAGE_SIZE = 15
 
@@ -80,12 +81,7 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
         </div>
         <div className="flex items-center gap-4 shrink-0">
           {activeEdition && (
-            <a
-              href={`/api/admin/teams/export?edition=${activeEdition.id}${categoryFilter ? `&category=${categoryFilter}` : ''}`}
-              className="btn-ghost text-sm px-4 py-2"
-            >
-              <Download size={14} /> Esporta CSV
-            </a>
+            <ExportCsvDialog editionId={activeEdition.id} categoryFilter={categoryFilter} />
           )}
           {activeEdition && (
             <Link

@@ -23,6 +23,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const editionId = searchParams.get('edition')
   const category = searchParams.get('category') as TeamCategory | null
+  const mode = searchParams.get('mode') ?? 'full'
 
   if (!editionId) {
     return new Response('edition param required', { status: 400 })
@@ -58,14 +59,88 @@ export async function GET(request: Request) {
   if (error) return new Response('Error fetching teams', { status: 500 })
 
   const teams = data ?? []
+  const year = edition?.year ?? 'export'
 
-  // Determine max player count across all teams (for consistent column count)
+  // ── mode: players ────────────────────────────────────────────────────────────
+  if (mode === 'players') {
+    const headers = [
+      'Nome', 'Data di nascita', 'Codice fiscale', 'Email', 'Telefono',
+      'Città', 'Instagram', 'Club', 'Capitano', 'Vice-capitano',
+      'Nome squadra', 'Categoria',
+    ]
+
+    const rows: string[] = []
+    for (const team of teams) {
+      const sorted = team.players?.length
+        ? [...team.players].sort((a, b) => a.sort_order - b.sort_order)
+        : []
+      for (const p of sorted) {
+        rows.push([
+          p.name,
+          new Date(p.birth_date).toLocaleDateString('it-IT'),
+          p.codice_fiscale,
+          p.email,
+          p.phone,
+          p.city,
+          p.instagram,
+          p.club,
+          p.is_captain ? 'Sì' : 'No',
+          p.is_vice_captain ? 'Sì' : 'No',
+          team.name,
+          categoryLabel[team.category] ?? team.category,
+        ].map(escapeCell).join(','))
+      }
+    }
+
+    const csv = [headers.map(escapeCell).join(','), ...rows].join('\r\n')
+    return new Response(csv, {
+      headers: {
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': `attachment; filename="giocatori-${year}.csv"`,
+      },
+    })
+  }
+
+  // ── mode: teams ───────────────────────────────────────────────────────────────
+  if (mode === 'teams') {
+    const headers = [
+      'Nome squadra', 'Categoria', 'Stato',
+      'Nome capitano', 'Email capitano', 'Telefono capitano',
+      'Note orari', 'Consenso New Beetle', 'Note', 'Iscritto il',
+    ]
+
+    const rows = teams.map(team => {
+      const captain = team.players?.find(p => p.is_captain)
+      const captainName = captain?.name ?? team.captain_name ?? null
+      return [
+        team.name,
+        categoryLabel[team.category] ?? team.category,
+        statusLabel[team.status] ?? team.status,
+        captainName,
+        team.captain_email,
+        team.captain_phone,
+        team.schedule_notes,
+        team.consent_new_beetle ? 'Sì' : 'No',
+        team.notes,
+        new Date(team.created_at).toLocaleString('it-IT'),
+      ].map(escapeCell).join(',')
+    })
+
+    const csv = [headers.map(escapeCell).join(','), ...rows].join('\r\n')
+    return new Response(csv, {
+      headers: {
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': `attachment; filename="squadre-${year}.csv"`,
+      },
+    })
+  }
+
+  // ── mode: full (default) ─────────────────────────────────────────────────────
   const maxPlayers = teams.reduce((max, team) => {
     const count = team.players?.length ?? 0
     return count > max ? count : max
   }, 0)
 
-  // Build player column headers: Giocatore 1 Nome, Giocatore 1 Data di nascita, ...
   const playerHeaders: string[] = []
   for (let i = 1; i <= maxPlayers; i++) {
     playerHeaders.push(
@@ -126,13 +201,11 @@ export async function GET(request: Request) {
   })
 
   const csv = [headers.map(escapeCell).join(','), ...rows].join('\r\n')
-  const year = edition?.year ?? 'export'
-  const filename = `squadre-${year}.csv`
 
   return new Response(csv, {
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',
-      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Content-Disposition': `attachment; filename="squadre-${year}.csv"`,
     },
   })
 }
