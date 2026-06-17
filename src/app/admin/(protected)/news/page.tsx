@@ -1,15 +1,33 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import type { NewsArticle } from '@/types'
+import Pagination from '@/components/admin/Pagination'
+import { Suspense } from 'react'
 import { Plus } from 'lucide-react'
 import clsx from 'clsx'
 
-export default async function AdminNewsPage() {
+const PAGE_SIZE = 20
+
+interface Props {
+  searchParams: Promise<{ page?: string }>
+}
+
+export default async function AdminNewsPage({ searchParams }: Props) {
+  const sp = await searchParams
   const supabase = await createServerSupabaseClient()
-  const { data: articles } = await supabase
-    .from('news').select('*')
+
+  const page = Math.max(1, Number(sp.page ?? 1))
+  const offset = (page - 1) * PAGE_SIZE
+
+  const { data: articles, count } = await supabase
+    .from('news')
+    .select('*', { count: 'exact' })
     .order('created_at', { ascending: false })
+    .range(offset, offset + PAGE_SIZE - 1)
     .returns<NewsArticle[]>()
+
+  const total = count ?? 0
+  const totalPages = Math.ceil(total / PAGE_SIZE)
 
   return (
     <div>
@@ -23,7 +41,7 @@ export default async function AdminNewsPage() {
         </Link>
       </div>
 
-      {!articles?.length ? (
+      {!articles?.length && total === 0 ? (
         <div className="card p-10 text-center">
           <p className="text-court-gray mb-4">Nessun articolo ancora.</p>
           <Link href="/admin/news/new" className="btn-primary text-sm px-5 py-2 inline-flex">
@@ -31,34 +49,42 @@ export default async function AdminNewsPage() {
           </Link>
         </div>
       ) : (
-        <div className="space-y-3">
-          {articles.map(a => (
-            <Link
-              key={a.id}
-              href={`/admin/news/${a.id}`}
-              className="card p-5 flex items-center justify-between gap-4 hover:border-court-muted transition-colors group"
-            >
-              <div className="min-w-0">
-                <div className="flex items-center gap-3 mb-1">
-                  <span className={clsx(
-                    'text-xs px-2 py-0.5 font-display uppercase tracking-wide border shrink-0',
-                    a.published ? 'badge-approved' : 'badge-pending'
-                  )}>
-                    {a.published ? 'Pubblicato' : 'Bozza'}
-                  </span>
-                  <h2 className="font-display font-bold text-court-white uppercase group-hover:text-brand-orange transition-colors truncate">
-                    {a.title}
-                  </h2>
+        <>
+          <div className="space-y-3">
+            {articles?.map(a => (
+              <Link
+                key={a.id}
+                href={`/admin/news/${a.id}`}
+                className="card p-5 flex items-center justify-between gap-4 hover:border-court-muted transition-colors group"
+              >
+                <div className="min-w-0">
+                  <div className="flex items-center gap-3 mb-1">
+                    <span className={clsx(
+                      'text-xs px-2 py-0.5 font-display uppercase tracking-wide border shrink-0',
+                      a.published ? 'badge-approved' : 'badge-pending'
+                    )}>
+                      {a.published ? 'Pubblicato' : 'Bozza'}
+                    </span>
+                    <h2 className="font-display font-bold text-court-white uppercase group-hover:text-brand-orange transition-colors truncate">
+                      {a.title}
+                    </h2>
+                  </div>
+                  <p className="text-court-muted text-xs font-mono">
+                    {new Date(a.created_at).toLocaleString('it-IT')}
+                    {a.published_at && ` · Pubblicato: ${new Date(a.published_at).toLocaleDateString('it-IT')}`}
+                  </p>
                 </div>
-                <p className="text-court-muted text-xs font-mono">
-                  {new Date(a.created_at).toLocaleString('it-IT')}
-                  {a.published_at && ` · Pubblicato: ${new Date(a.published_at).toLocaleDateString('it-IT')}`}
-                </p>
-              </div>
-              <span className="text-court-muted group-hover:text-brand-orange transition-colors shrink-0">→</span>
-            </Link>
-          ))}
-        </div>
+                <span className="text-court-muted group-hover:text-brand-orange transition-colors shrink-0">→</span>
+              </Link>
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <Suspense>
+              <Pagination page={page} totalPages={totalPages} total={total} />
+            </Suspense>
+          )}
+        </>
       )}
     </div>
   )

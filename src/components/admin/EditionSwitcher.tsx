@@ -21,6 +21,7 @@ export default function EditionSwitcher({ editions, currentEditionId }: Props) {
     } else {
       params.set('edition', editionId)
     }
+    params.delete('page')
     const qs = params.toString()
     router.push(qs ? `${pathname}?${qs}` : pathname)
   }

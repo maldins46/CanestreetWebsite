@@ -1,13 +1,31 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import type { Admin } from '@/types'
 import AddAdminForm from '@/components/admin/AddAdminForm'
+import Pagination from '@/components/admin/Pagination'
+import { Suspense } from 'react'
 
-export default async function AdminsPage() {
+const PAGE_SIZE = 20
+
+interface Props {
+  searchParams: Promise<{ page?: string }>
+}
+
+export default async function AdminsPage({ searchParams }: Props) {
+  const sp = await searchParams
   const supabase = await createServerSupabaseClient()
-  const { data: admins } = await supabase
-    .from('admins').select('*')
+
+  const page = Math.max(1, Number(sp.page ?? 1))
+  const offset = (page - 1) * PAGE_SIZE
+
+  const { data: admins, count } = await supabase
+    .from('admins')
+    .select('*', { count: 'exact' })
     .order('created_at', { ascending: true })
+    .range(offset, offset + PAGE_SIZE - 1)
     .returns<Admin[]>()
+
+  const total = count ?? 0
+  const totalPages = Math.ceil(total / PAGE_SIZE)
 
   const roleLabel = { superadmin: 'Super Admin', editor: 'Editor' }
 
@@ -42,6 +60,12 @@ export default async function AdminsPage() {
               </div>
             ))}
           </div>
+
+          {totalPages > 1 && (
+            <Suspense>
+              <Pagination page={page} totalPages={totalPages} total={total} />
+            </Suspense>
+          )}
         </div>
 
         <div>

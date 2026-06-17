@@ -21,6 +21,7 @@ export default function CategoryFilter() {
     const params = new URLSearchParams(searchParams.toString())
     if (value === 'all') params.delete('category')
     else params.set('category', value)
+    params.delete('page')
     router.push(`${pathname}?${params.toString()}`)
   }
 

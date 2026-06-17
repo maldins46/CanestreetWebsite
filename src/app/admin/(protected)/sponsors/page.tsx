@@ -2,7 +2,11 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import Image from 'next/image'
 import type { Sponsor, SponsorTier } from '@/types'
+import Pagination from '@/components/admin/Pagination'
+import { Suspense } from 'react'
 import { Plus } from 'lucide-react'
+
+const PAGE_SIZE = 20
 
 const TIER_LABELS: Record<SponsorTier, string> = {
   main:   'Main',
@@ -18,14 +22,28 @@ const TIER_BADGE: Record<SponsorTier, string> = {
   bronze: 'bg-amber-700/20 text-amber-500 border border-amber-700/30',
 }
 
-export default async function AdminSponsorsPage() {
+interface Props {
+  searchParams: Promise<{ page?: string }>
+}
+
+export default async function AdminSponsorsPage({ searchParams }: Props) {
+  const sp = await searchParams
   const supabase = await createServerSupabaseClient()
-  const { data: sponsors } = await supabase
+
+  const page = Math.max(1, Number(sp.page ?? 1))
+  const offset = (page - 1) * PAGE_SIZE
+
+  const result = await supabase
     .from('sponsors')
-    .select('*')
+    .select('*', { count: 'exact' })
     .order('tier', { ascending: true })
     .order('sort_order', { ascending: true })
-    .order('name', { ascending: true }) as { data: Sponsor[] | null }
+    .order('name', { ascending: true })
+    .range(offset, offset + PAGE_SIZE - 1)
+
+  const sponsors = (result.data ?? []) as Sponsor[]
+  const total = result.count ?? 0
+  const totalPages = Math.ceil(total / PAGE_SIZE)
 
   return (
     <div>
@@ -39,7 +57,7 @@ export default async function AdminSponsorsPage() {
         </Link>
       </div>
 
-      {!sponsors?.length ? (
+      {!sponsors.length && total === 0 ? (
         <div className="card p-10 text-center">
           <p className="text-court-gray mb-4">Nessuno sponsor ancora.</p>
           <Link href="/admin/sponsors/new" className="btn-primary text-sm px-5 py-2 inline-flex">
@@ -47,43 +65,51 @@ export default async function AdminSponsorsPage() {
           </Link>
         </div>
       ) : (
-        <div className="space-y-3">
-          {sponsors.map(s => (
-            <Link
-              key={s.id}
-              href={`/admin/sponsors/${s.id}`}
-              className={`card p-4 flex items-center gap-4 hover:border-court-muted transition-colors group ${!s.is_active ? 'opacity-50' : ''}`}
-            >
-              {/* Logo thumbnail */}
-              <div className="relative w-16 h-12 shrink-0 overflow-hidden border border-court-border bg-white flex items-center justify-center">
-                {s.logo_url ? (
-                  <Image src={s.logo_url} alt={s.name} fill className="object-contain p-1" sizes="64px" />
-                ) : (
-                  <span className="font-display font-bold text-lg text-brand-orange/60">{s.name.charAt(0)}</span>
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <h2 className="font-display font-bold text-court-white uppercase group-hover:text-brand-orange transition-colors truncate">
-                  {s.name}
-                </h2>
-                {s.website_url && (
-                  <p className="text-court-gray text-xs truncate">{s.website_url}</p>
-                )}
-              </div>
-              <div className="flex items-center gap-3 shrink-0">
-                <span className={`text-xs font-display uppercase tracking-wider px-2 py-0.5 ${TIER_BADGE[s.tier]}`}>
-                  {TIER_LABELS[s.tier]}
-                </span>
-                {!s.is_active && (
-                  <span className="text-xs font-display uppercase tracking-wider px-2 py-0.5 bg-court-muted/20 text-court-muted border border-court-muted/30">
-                    Inattivo
+        <>
+          <div className="space-y-3">
+            {sponsors.map(s => (
+              <Link
+                key={s.id}
+                href={`/admin/sponsors/${s.id}`}
+                className={`card p-4 flex items-center gap-4 hover:border-court-muted transition-colors group ${!s.is_active ? 'opacity-50' : ''}`}
+              >
+                {/* Logo thumbnail */}
+                <div className="relative w-16 h-12 shrink-0 overflow-hidden border border-court-border bg-white flex items-center justify-center">
+                  {s.logo_url ? (
+                    <Image src={s.logo_url} alt={s.name} fill className="object-contain p-1" sizes="64px" />
+                  ) : (
+                    <span className="font-display font-bold text-lg text-brand-orange/60">{s.name.charAt(0)}</span>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h2 className="font-display font-bold text-court-white uppercase group-hover:text-brand-orange transition-colors truncate">
+                    {s.name}
+                  </h2>
+                  {s.website_url && (
+                    <p className="text-court-gray text-xs truncate">{s.website_url}</p>
+                  )}
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className={`text-xs font-display uppercase tracking-wider px-2 py-0.5 ${TIER_BADGE[s.tier]}`}>
+                    {TIER_LABELS[s.tier]}
                   </span>
-                )}
-                <span className="text-court-muted group-hover:text-brand-orange transition-colors">→</span>
-              </div>
-            </Link>
-          ))}
-        </div>
+                  {!s.is_active && (
+                    <span className="text-xs font-display uppercase tracking-wider px-2 py-0.5 bg-court-muted/20 text-court-muted border border-court-muted/30">
+                      Inattivo
+                    </span>
+                  )}
+                  <span className="text-court-muted group-hover:text-brand-orange transition-colors">→</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <Suspense>
+              <Pagination page={page} totalPages={totalPages} total={total} />
+            </Suspense>
+          )}
+        </>
       )}
     </div>
   )

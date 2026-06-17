@@ -4,10 +4,13 @@ import TeamStatusButton from '@/components/admin/TeamStatusButton'
 import CategoryFilter from '@/components/admin/CategoryFilter'
 import EditionSwitcher from '@/components/admin/EditionSwitcher'
 import RegistrationToggle from '@/components/admin/RegistrationToggle'
+import Pagination from '@/components/admin/Pagination'
 import { Suspense } from 'react'
 import Link from 'next/link'
 import clsx from 'clsx'
 import { Plus, Pencil, Download } from 'lucide-react'
+
+const PAGE_SIZE = 15
 
 const statusLabel: Record<string, string> = {
   pending: 'In attesa', approved: 'Approvata', rejected: 'Rifiutata', waitlisted: 'Lista d\'attesa',
@@ -19,12 +22,15 @@ const categoryLabel: Record<TeamCategory, string> = {
 }
 
 interface Props {
-  searchParams: Promise<{ category?: string; edition?: string }>
+  searchParams: Promise<{ category?: string; edition?: string; page?: string }>
 }
 
 export default async function AdminTeamsPage({ searchParams }: Props) {
   const sp = await searchParams
   const supabase = await createServerSupabaseClient()
+
+  const page = Math.max(1, Number(sp.page ?? 1))
+  const offset = (page - 1) * PAGE_SIZE
 
   // Fetch all editions for the switcher
   const { data: allEditions } = await supabase
@@ -41,20 +47,26 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
   if (!activeEdition && editions.length > 0) activeEdition = editions[0]
 
   let teams: TeamWithPlayers[] = []
+  let total = 0
+  let totalPages = 1
+
   if (activeEdition) {
+    const categoryFilter = sp.category as TeamCategory | undefined
+
     let query = supabase
       .from('teams')
-      .select('*, players(*)')
+      .select('*, players(*)', { count: 'exact' })
       .eq('edition_id', activeEdition.id)
       .order('created_at', { ascending: false })
 
-    const categoryFilter = sp.category as TeamCategory | undefined
     if (categoryFilter && ['open_m', 'open_f', 'u14_m', 'u16_m', 'u18_m'].includes(categoryFilter)) {
       query = query.eq('category', categoryFilter)
     }
 
-    const { data } = await query.returns<TeamWithPlayers[]>()
-    teams = data ?? []
+    const { data, count } = await query.range(offset, offset + PAGE_SIZE - 1)
+    teams = (data ?? []) as TeamWithPlayers[]
+    total = count ?? 0
+    totalPages = Math.ceil(total / PAGE_SIZE)
   }
 
   const categoryFilter = sp.category as TeamCategory | undefined
@@ -78,7 +90,7 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
                 registrationOpen={activeEdition.registration_open}
               />
               <div className="card flex items-center gap-2 px-3 py-1.5 text-xs font-display uppercase tracking-wide">
-                <span className="text-court-white font-bold">{teams.length}</span>
+                <span className="text-court-white font-bold">{total}</span>
                 <span className="text-court-gray">{categoryFilter ? categoryLabel[categoryFilter] : 'iscrizioni'}</span>
               </div>
             </div>
@@ -117,89 +129,97 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {teams.map(team => {
-            const hasPlayers = team.players && team.players.length > 0
-            const sortedPlayers = hasPlayers
-              ? [...team.players].sort((a, b) => a.sort_order - b.sort_order)
-              : null
+        <>
+          <div className="space-y-3">
+            {teams.map(team => {
+              const hasPlayers = team.players && team.players.length > 0
+              const sortedPlayers = hasPlayers
+                ? [...team.players].sort((a, b) => a.sort_order - b.sort_order)
+                : null
 
-            return (
-              <div key={team.id} className="card p-5">
-                {/* Header: name + badges */}
-                <div className="flex items-center gap-3 mb-2 flex-wrap">
-                  <Link href={`/admin/teams/${team.id}`} className="flex items-center gap-2 group">
-                    <h2 className="font-display font-bold uppercase text-lg text-court-white group-hover:text-brand-orange transition-colors">{team.name}</h2>
-                    <Pencil size={13} className="text-court-muted group-hover:text-brand-orange transition-colors" />
-                  </Link>
-                  <span className="text-xs px-2 py-0.5 font-display uppercase tracking-wide border border-court-border text-court-muted">
-                    {categoryLabel[team.category]}
-                  </span>
-                  <span className={clsx('text-xs px-2 py-0.5 font-display uppercase tracking-wide',
-                    team.status === 'approved'   && 'badge-approved',
-                    team.status === 'pending'    && 'badge-pending',
-                    team.status === 'rejected'   && 'badge-rejected',
-                    team.status === 'waitlisted' && 'badge-waitlisted',
-                  )}>
-                    {statusLabel[team.status]}
-                  </span>
-                  <span className={clsx('text-xs px-2 py-0.5 font-display uppercase tracking-wide border',
-                    team.consent_new_beetle
-                      ? 'border-green-700 text-green-400'
-                      : 'border-red-700 text-red-400'
-                  )}>
-                    New Beetle {team.consent_new_beetle ? '✓' : '✗'}
-                  </span>
-                </div>
-
-                {/* Players */}
-                {sortedPlayers ? (
-                  <div className="mt-2 space-y-1">
-                    {sortedPlayers.map(p => (
-                      <div key={p.id} className="text-xs text-court-muted flex flex-wrap gap-x-3 gap-y-0.5">
-                        <span className="text-court-light">
-                          {p.name}
-                          {p.is_captain && <span className="ml-1 text-brand-orange text-[10px]">cap</span>}
-                          {p.is_vice_captain && <span className="ml-1 text-court-gray text-[10px]">vice</span>}
-                        </span>
-                        <span className="font-mono">{new Date(p.birth_date).toLocaleDateString('it-IT')}</span>
-                        <span className="font-mono uppercase">{p.codice_fiscale}</span>
-                        {p.email && <span>{p.email}</span>}
-                        {p.phone && <span>{p.phone}</span>}
-                        {p.city && <span>{p.city}</span>}
-                        {p.instagram && <span className="italic">{p.instagram}</span>}
-                        {p.club && <span className="italic">{p.club}</span>}
-                      </div>
-                    ))}
+              return (
+                <div key={team.id} className="card p-5">
+                  {/* Header: name + badges */}
+                  <div className="flex items-center gap-3 mb-2 flex-wrap">
+                    <Link href={`/admin/teams/${team.id}`} className="flex items-center gap-2 group">
+                      <h2 className="font-display font-bold uppercase text-lg text-court-white group-hover:text-brand-orange transition-colors">{team.name}</h2>
+                      <Pencil size={13} className="text-court-muted group-hover:text-brand-orange transition-colors" />
+                    </Link>
+                    <span className="text-xs px-2 py-0.5 font-display uppercase tracking-wide border border-court-border text-court-muted">
+                      {categoryLabel[team.category]}
+                    </span>
+                    <span className={clsx('text-xs px-2 py-0.5 font-display uppercase tracking-wide',
+                      team.status === 'approved'   && 'badge-approved',
+                      team.status === 'pending'    && 'badge-pending',
+                      team.status === 'rejected'   && 'badge-rejected',
+                      team.status === 'waitlisted' && 'badge-waitlisted',
+                    )}>
+                      {statusLabel[team.status]}
+                    </span>
+                    <span className={clsx('text-xs px-2 py-0.5 font-display uppercase tracking-wide border',
+                      team.consent_new_beetle
+                        ? 'border-green-700 text-green-400'
+                        : 'border-red-700 text-red-400'
+                    )}>
+                      New Beetle {team.consent_new_beetle ? '✓' : '✗'}
+                    </span>
                   </div>
-                ) : (
-                  <p className="text-court-muted text-xs mt-1">
-                    Giocatori: {[team.captain_name, team.player2_name, team.player3_name, team.player4_name].filter(Boolean).join(', ')}
-                  </p>
-                )}
 
-                {team.schedule_notes && (
-                  <p className="text-court-muted text-xs mt-2 italic">Esigenze particolari: &quot;{team.schedule_notes}&quot;</p>
-                )}
-                {team.notes && (
-                  <p className="text-court-muted text-xs mt-1 italic">Note: &quot;{team.notes}&quot;</p>
-                )}
+                  {/* Players */}
+                  {sortedPlayers ? (
+                    <div className="mt-2 space-y-1">
+                      {sortedPlayers.map(p => (
+                        <div key={p.id} className="text-xs text-court-muted flex flex-wrap gap-x-3 gap-y-0.5">
+                          <span className="text-court-light">
+                            {p.name}
+                            {p.is_captain && <span className="ml-1 text-brand-orange text-[10px]">cap</span>}
+                            {p.is_vice_captain && <span className="ml-1 text-court-gray text-[10px]">vice</span>}
+                          </span>
+                          <span className="font-mono">{new Date(p.birth_date).toLocaleDateString('it-IT')}</span>
+                          <span className="font-mono uppercase">{p.codice_fiscale}</span>
+                          {p.email && <span>{p.email}</span>}
+                          {p.phone && <span>{p.phone}</span>}
+                          {p.city && <span>{p.city}</span>}
+                          {p.instagram && <span className="italic">{p.instagram}</span>}
+                          {p.club && <span className="italic">{p.club}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-court-muted text-xs mt-1">
+                      Giocatori: {[team.captain_name, team.player2_name, team.player3_name, team.player4_name].filter(Boolean).join(', ')}
+                    </p>
+                  )}
 
-                {/* Footer: timestamp + action buttons */}
-                <div className="flex items-center justify-between mt-4 pt-3 border-t border-court-border flex-wrap gap-3">
-                  <p className="text-court-muted text-xs font-mono">
-                    {new Date(team.created_at).toLocaleString('it-IT')}
-                  </p>
-                  <div className="flex gap-2 flex-wrap">
-                    {(['approved', 'waitlisted', 'rejected'] as const).filter(s => s !== team.status).map(s => (
-                      <TeamStatusButton key={s} teamId={team.id} status={s} label={statusLabel[s]} />
-                    ))}
+                  {team.schedule_notes && (
+                    <p className="text-court-muted text-xs mt-2 italic">Esigenze particolari: &quot;{team.schedule_notes}&quot;</p>
+                  )}
+                  {team.notes && (
+                    <p className="text-court-muted text-xs mt-1 italic">Note: &quot;{team.notes}&quot;</p>
+                  )}
+
+                  {/* Footer: timestamp + action buttons */}
+                  <div className="flex items-center justify-between mt-4 pt-3 border-t border-court-border flex-wrap gap-3">
+                    <p className="text-court-muted text-xs font-mono">
+                      {new Date(team.created_at).toLocaleString('it-IT')}
+                    </p>
+                    <div className="flex gap-2 flex-wrap">
+                      {(['approved', 'waitlisted', 'rejected'] as const).filter(s => s !== team.status).map(s => (
+                        <TeamStatusButton key={s} teamId={team.id} status={s} label={statusLabel[s]} />
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
+
+          {totalPages > 1 && (
+            <Suspense>
+              <Pagination page={page} totalPages={totalPages} total={total} />
+            </Suspense>
+          )}
+        </>
       )}
     </div>
   )
