@@ -49,6 +49,11 @@
   [data-theme="light"] ::-webkit-scrollbar-thumb:hover,
   [data-theme="system"] ::-webkit-scrollbar-thumb:hover { background: rgb(var(--color-court-muted)); }
 
+  /* Showcase light mode scrollbar */
+  .showcase-light ::-webkit-scrollbar-track { background: #f3f4f6; }
+  .showcase-light ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 2px; }
+  .showcase-light ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
   * {
     box-sizing: border-box;
   }

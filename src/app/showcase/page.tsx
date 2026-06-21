@@ -13,6 +13,7 @@ type ShowcaseMode = 'open' | 'under' | 'tpc_open' | 'tpc_under' | 'sponsors'
 const AUTO_REFRESH_INTERVAL = 15000
 const UNDER_CATEGORY_CYCLE_MS = 20000
 
+const OPEN_CATEGORY_ORDER: TeamCategory[] = ['open_m', 'open_f']
 const CATEGORY_ORDER: TeamCategory[] = ['u14_m', 'u16_m', 'u18_m']
 const CATEGORY_COLORS: Record<TeamCategory, string> = {
   open_m: 'bg-brand-orange',
@@ -34,13 +35,9 @@ function formatTime(iso: string | null): string {
   return new Date(iso).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' })
 }
 
-function formatDay(iso: string): string {
-  return new Date(iso).toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Rome' })
-}
-
-function getDayKey(iso: string | null): string {
-  if (!iso) return 'non-programmata'
-  return new Date(iso).toLocaleDateString('sv-SE', { timeZone: 'Europe/Rome' })
+function formatDate(iso: string | null): string {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', timeZone: 'Europe/Rome' })
 }
 
 // ─── Calendar Component ──────────────────────────────────────────────────────────
@@ -48,16 +45,6 @@ function getDayKey(iso: string | null): string {
 function ShowcaseCalendar({ matches, theme }: { matches: MatchWithTeams[]; theme: Record<string, string> }) {
   const containerRef = React.useRef<HTMLDivElement>(null)
   const lightMode = theme.bg === 'bg-white'
-  const filtered = matches // Show all matches (group + bracket phases)
-  
-  const days = new Map<string, MatchWithTeams[]>()
-  for (const m of filtered) {
-    const key = getDayKey(m.scheduled_at)
-    if (!days.has(key)) days.set(key, [])
-    days.get(key)!.push(m)
-  }
-
-  const sortedDays = Array.from(days.entries()).sort((a, b) => a[0].localeCompare(b[0]))
 
   const roundLabels: Record<string, string> = {
     round_of_16: 'Ottavi',
@@ -67,96 +54,111 @@ function ShowcaseCalendar({ matches, theme }: { matches: MatchWithTeams[]; theme
   }
 
   function getPhaseLabel(match: MatchWithTeams): string {
-    if (match.phase === 'group' && match.group) return `Gir. ${match.group.name}`
+    if (match.phase === 'group' && match.group) return `Girone ${match.group.name}`
     return match.bracket_round ? (roundLabels[match.bracket_round] ?? '') : ''
   }
 
-  // Auto-scroll to live match on mount
   React.useEffect(() => {
     if (!containerRef.current) return
-    const liveMatch = filtered.find(m => m.status === 'in_progress')
+    const liveMatch = matches.find(m => m.status === 'in_progress')
     if (!liveMatch) return
     const liveEl = containerRef.current.querySelector(`[data-match-id="${liveMatch.id}"]`)
     if (liveEl) {
       liveEl.scrollIntoView({ block: 'center', behavior: 'smooth' })
     }
-  }, [filtered])
+  }, [matches])
 
   return (
     <div className="h-full flex flex-col">
-      <div className={clsx('px-4 py-3 border-b', theme.headerBg, lightMode ? 'border-gray-300' : 'border-court-border')}>
-        <h2 className={clsx('font-display font-bold uppercase text-sm tracking-wide', theme.textDarker)}>
+      <div className={clsx('px-4 py-3 border-b', lightMode ? 'bg-gray-100' : 'bg-court-surface', theme.border)}>
+        <h2 className="font-display font-bold uppercase text-sm tracking-wide text-brand-orange">
           Calendario
         </h2>
       </div>
-      <div ref={containerRef} className={clsx('flex-1 overflow-y-auto p-4 space-y-6', theme.cardBg)}>
-        {sortedDays.length === 0 ? (
+      <div ref={containerRef} className={clsx('flex-1 overflow-auto', theme.cardBg)}>
+        {matches.length === 0 ? (
           <p className={clsx('text-sm text-center py-8', theme.textMuted)}>Nessuna partita programmata</p>
         ) : (
-          sortedDays.map(([dayKey, dayMatches]) => (
-            <div key={dayKey}>
-              {dayKey !== 'non-programmata' && (
-                <p className="font-display uppercase text-xs tracking-widest text-brand-orange mb-3">
-                  {formatDay(dayMatches[0].scheduled_at!)}
-                </p>
-              )}
-              <div className="space-y-2">
-                {dayMatches.map(m => {
-                  const isLive = m.status === 'in_progress'
-                  const isDone = m.status === 'completed'
-                  const homeWon = isDone && m.score_home != null && m.score_away != null && m.score_home > m.score_away
-                  const awayWon = isDone && m.score_home != null && m.score_away != null && m.score_away > m.score_home
+          <table className="w-full text-xs">
+            <thead className={clsx('sticky top-0 z-10', lightMode ? 'bg-gray-100 shadow-[0_1px_0_0_#d1d5db]' : 'bg-court-surface shadow-[0_1px_0_0_#333]')}>
+              <tr>
+                <th className={clsx('text-center px-3 py-2 font-display uppercase whitespace-nowrap w-px', theme.textMuted)}>Data</th>
+                <th className={clsx('text-center px-3 py-2 font-display uppercase whitespace-nowrap w-px', theme.textMuted)}>Ora</th>
+                <th className={clsx('text-center px-3 py-2 font-display uppercase whitespace-nowrap w-px', theme.textMuted)}>Cat.</th>
+                <th className={clsx('text-center px-3 py-2 font-display uppercase whitespace-nowrap w-px', theme.textMuted)}>Turno</th>
+                <th className={clsx('text-right px-3 py-2 font-display uppercase whitespace-nowrap', theme.textMuted)}>Casa</th>
+                <th className={clsx('text-center px-3 py-2 font-display uppercase whitespace-nowrap w-px', theme.textMuted)}>Pts</th>
+                <th className={clsx('text-center px-3 py-2 font-display uppercase whitespace-nowrap w-px', theme.textMuted)}>Pts</th>
+                <th className={clsx('text-left px-3 py-2 font-display uppercase whitespace-nowrap', theme.textMuted)}>Ospite</th>
+              </tr>
+            </thead>
+            <tbody>
+              {matches.map(m => {
+                const isLive = m.status === 'in_progress'
+                const isDone = m.status === 'completed'
+                const homeWon = isDone && m.score_home != null && m.score_away != null && m.score_home > m.score_away
+                const awayWon = isDone && m.score_home != null && m.score_away != null && m.score_away > m.score_home
 
-                  return (
-                    <div
-                      data-match-id={m.id}
-                      key={m.id}
-                      className={clsx(
-                        'flex items-center gap-3 px-3 py-2 rounded border-l-2 text-sm',
-                        isLive && clsx(theme.liveBorder, theme.liveBg),
-                        isDone && (lightMode ? 'border-green-400 bg-green-50' : 'border-green-500/50 bg-white/[0.02]'),
-                        !isLive && !isDone && clsx(theme.border, theme.inputBg),
-                      )}
-                    >
-                      <span className={clsx('w-12 text-xs shrink-0', isLive ? theme.liveText : theme.textMuted)}>
-                        {isLive ? (
-                          <span className="flex items-center gap-1">
-                            <span className={clsx('w-1.5 h-1.5 rounded-full animate-pulse', lightMode ? 'bg-red-600' : 'bg-red-500')} />
-                            <span className={clsx('font-bold', theme.liveText)}>LIVE</span>
-                          </span>
-                        ) : (
-                          formatTime(m.scheduled_at)
-                        )}
-                      </span>
-                      <span className={clsx('text-[10px] px-1.5 py-0.5 rounded shrink-0 text-white', CATEGORY_COLORS[m.category])}>
-                        {m.category}
-                      </span>
-                      {getPhaseLabel(m) && (
-                        <span className={clsx('text-xs w-12 shrink-0', theme.textMuted)}>
-                          {getPhaseLabel(m)}
+                return (
+                  <tr
+                    data-match-id={m.id}
+                    key={m.id}
+                    className={clsx(
+                      'border-b last:border-b-0',
+                      theme.tableBorder,
+                      isLive && theme.liveBg,
+                    )}
+                  >
+                    <td className={clsx('px-3 py-2 w-px whitespace-nowrap text-center', theme.textMuted)}>
+                      {formatDate(m.scheduled_at)}
+                    </td>
+                    <td className="px-3 py-2 w-px whitespace-nowrap text-center">
+                      {isLive ? (
+                        <span className="flex items-center gap-1">
+                          <span className={clsx('w-1.5 h-1.5 rounded-full animate-pulse', lightMode ? 'bg-red-600' : 'bg-red-500')} />
+                          <span className={clsx('font-bold', theme.liveText)}>LIVE</span>
                         </span>
+                      ) : (
+                        <span className={theme.textMuted}>{formatTime(m.scheduled_at)}</span>
                       )}
-                      <span className={clsx('flex-1 text-right truncate', homeWon ? theme.tableText + ' font-bold' : theme.textMuted)}>
-                        {m.team_home?.name ?? 'TBD'}
+                    </td>
+                    <td className="px-3 py-2 w-px whitespace-nowrap text-center">
+                      <span className={clsx('text-[10px] px-1.5 py-0.5 rounded text-white', CATEGORY_COLORS[m.category])}>
+                        {CATEGORY_SHORT[m.category]}
                       </span>
-                      <span className={clsx('w-12 text-center shrink-0', theme.textMuted)}>
-                        {isDone && m.score_home != null ? (
-                          <span className="font-display font-bold">
-                            <span className={homeWon ? (lightMode ? 'text-green-600' : 'text-green-400') : ''}>{m.score_home}</span>
-                            <span className="mx-1">-</span>
-                            <span className={awayWon ? (lightMode ? 'text-green-600' : 'text-green-400') : ''}>{m.score_away}</span>
-                          </span>
-                        ) : 'vs'}
-                      </span>
-                      <span className={clsx('flex-1 truncate', awayWon ? theme.tableText + ' font-bold' : theme.textMuted)}>
-                        {m.team_away?.name ?? 'TBD'}
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          ))
+                    </td>
+                    <td className={clsx('px-3 py-2 w-px whitespace-nowrap text-center', theme.textMuted)}>
+                      {getPhaseLabel(m) || '—'}
+                    </td>
+                    <td className={clsx('px-3 py-2 max-w-0 overflow-hidden text-right', homeWon ? theme.tableHighlight : theme.textMuted)}>
+                      <span className="block truncate">{m.team_home?.name ?? 'TBD'}</span>
+                    </td>
+                    <td className="px-3 py-2 w-px whitespace-nowrap text-center">
+                      {isDone && m.score_home != null ? (
+                        <span className={clsx('font-display font-bold', homeWon ? (lightMode ? 'text-green-600' : 'text-green-400') : theme.textMuted)}>
+                          {m.score_home}
+                        </span>
+                      ) : (
+                        <span className={theme.textMuted}>—</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 w-px whitespace-nowrap text-center">
+                      {isDone && m.score_away != null ? (
+                        <span className={clsx('font-display font-bold', awayWon ? (lightMode ? 'text-green-600' : 'text-green-400') : theme.textMuted)}>
+                          {m.score_away}
+                        </span>
+                      ) : (
+                        <span className={theme.textMuted}>—</span>
+                      )}
+                    </td>
+                    <td className={clsx('px-3 py-2 max-w-0 overflow-hidden', awayWon ? theme.tableHighlight : theme.textMuted)}>
+                      <span className="block truncate">{m.team_away?.name ?? 'TBD'}</span>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         )}
       </div>
     </div>
@@ -210,16 +212,24 @@ function computeStandings(matches: MatchWithTeams[], teams: { id: string; name: 
         played: stats.played,
         wins: stats.wins,
         losses: stats.losses,
+        pf: stats.pf,
+        ps: stats.ps,
         point_differential: stats.pf - stats.ps,
       }
     })
-    .filter(r => r.played > 0)
     .sort((a, b) => b.wins - a.wins || b.point_differential - a.point_differential)
 
   return rows
 }
 
-function ShowcaseStandings({ groups, matches, category, theme }: { groups: GroupWithTeams[]; matches: MatchWithTeams[]; category: TeamCategory; theme: Record<string, string> }) {
+
+function ShowcaseStandings({ groups, matches, category, theme, carousel }: {
+  groups: GroupWithTeams[]
+  matches: MatchWithTeams[]
+  category: TeamCategory
+  theme: Record<string, string>
+  carousel?: { categories: TeamCategory[]; activeIndex: number; validCategories?: TeamCategory[] }
+}) {
   const lightMode = theme.bg === 'bg-white'
   const groupsForCat = groups.filter(g => g.category === category)
   const groupMatches = matches.filter(m => m.phase === 'group' && m.category === category)
@@ -232,63 +242,100 @@ function ShowcaseStandings({ groups, matches, category, theme }: { groups: Group
     )
   }
 
+  const allRows = groupsForCat.flatMap((group, groupIdx) => {
+    const teams = group.group_teams.flatMap(gt => gt.teams ? [gt.teams] : [])
+    const groupSpecificMatches = groupMatches.filter(m => m.group_id === group.id)
+    const standings = computeStandings(groupSpecificMatches, teams)
+    return standings.map((row, idx) => ({ ...row, groupName: group.name, groupIdx, idx }))
+  })
+
   return (
     <div className="h-full flex flex-col">
-      <div className={clsx('px-4 py-3 flex items-center justify-between', theme.headerBg)}>
-        <h2 className={clsx('font-display font-bold uppercase text-sm tracking-wide', theme.textDarker)}>
+      <div className={clsx('px-4 py-3 flex items-center justify-between border-b', lightMode ? 'bg-gray-100' : 'bg-court-surface', theme.border)}>
+        <h2 className="font-display font-bold uppercase text-sm tracking-wide text-brand-orange">
           Classifiche
         </h2>
-        <span className={clsx('text-[10px] px-2 py-0.5 rounded text-white', CATEGORY_COLORS[category])}>
-          {category}
-        </span>
+        {carousel ? (
+          <div className="flex gap-1.5">
+            {carousel.categories.map((cat, idx) => {
+              const isActive = idx === carousel.activeIndex
+              const isDisabled = carousel.validCategories && !carousel.validCategories.includes(cat)
+              return (
+                <span
+                  key={cat}
+                  className={clsx(
+                    'text-[10px] px-2 py-0.5 rounded font-display uppercase tracking-wide transition-all',
+                    isDisabled
+                      ? clsx('line-through', lightMode ? 'bg-gray-100 text-gray-400' : 'bg-court-dark text-court-border')
+                      : isActive
+                        ? 'bg-brand-orange text-white'
+                        : lightMode ? 'bg-gray-200 text-gray-500' : 'bg-court-border text-court-muted',
+                  )}
+                >
+                  {CATEGORY_SHORT[cat]}
+                </span>
+              )
+            })}
+          </div>
+        ) : (
+          <span className={clsx('text-[10px] px-2 py-0.5 rounded text-white', CATEGORY_COLORS[category])}>
+            {CATEGORY_SHORT[category]}
+          </span>
+        )}
       </div>
-      <div className={clsx('flex-1 overflow-y-auto p-4 space-y-6', theme.cardBg)}>
-        {groupsForCat.map(group => {
-          const teams = group.group_teams.flatMap(gt => gt.teams ? [gt.teams] : [])
-          const groupSpecificMatches = groupMatches.filter(m => m.group_id === group.id)
-          const standings = computeStandings(groupSpecificMatches, teams)
-
-          return (
-            <div key={group.id}>
-              <p className="font-display uppercase text-xs tracking-widest text-brand-orange mb-2">
-                Girone {group.name}
-              </p>
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className={clsx(theme.textMuted)}>
-                    <th className="text-left py-2 pr-3 font-display uppercase">#</th>
-                    <th className="text-left py-2 pr-3 font-display uppercase">Squadra</th>
-                    <th className="text-center py-2 pr-3 font-display uppercase">G</th>
-                    <th className="text-center py-2 pr-3 font-display uppercase">V</th>
-                    <th className="text-center py-2 font-display uppercase">+/-</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {standings.map((row, idx) => (
-                    <tr key={row.team_id} className={clsx(theme.tableRow)}>
-                      <td className="py-2 pr-3">
-                        <span className={clsx('font-display font-bold', idx < 2 ? 'text-brand-orange' : theme.textMuted)}>
-                          {idx + 1}
-                        </span>
-                      </td>
-                      <td className={clsx('py-2 pr-3 truncate', theme.tableText)}>{row.team_name}</td>
-                      <td className={clsx('py-2 pr-3 text-center', theme.textMuted)}>{row.played}</td>
-                      <td className={clsx('py-2 pr-3 text-center font-semibold', theme.tableText)}>{row.wins}</td>
-                      <td className="py-2 text-center">
-                        <span className={clsx(
-                          'font-display font-bold',
-                          row.point_differential > 0 ? 'text-green-600' : row.point_differential < 0 ? 'text-red-600' : theme.textMuted
-                        )}>
-                          {row.point_differential > 0 ? `+${row.point_differential}` : row.point_differential}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )
-        })}
+      <div className={clsx('flex-1 overflow-y-auto overflow-x-hidden', theme.cardBg)}>
+        <table className="w-full text-xs">
+          <thead className={clsx('sticky top-0 z-10', lightMode ? 'bg-gray-100 shadow-[0_1px_0_0_#d1d5db]' : 'bg-court-surface shadow-[0_1px_0_0_#333]')}>
+            <tr>
+              <th className={clsx('text-center py-2 px-3 font-display uppercase w-px whitespace-nowrap', theme.textMuted)}>Girone</th>
+              <th className={clsx('text-center py-2 px-3 font-display uppercase w-px whitespace-nowrap', theme.textMuted)}>#</th>
+              <th className={clsx('text-left py-2 px-3 font-display uppercase', theme.textMuted)}>Squadra</th>
+              <th className={clsx('text-center py-2 px-3 font-display uppercase w-px whitespace-nowrap', theme.textMuted)}>V</th>
+              <th className={clsx('text-center py-2 px-3 font-display uppercase w-px whitespace-nowrap', theme.textMuted)}>S</th>
+              <th className={clsx('text-center py-2 px-3 font-display uppercase w-px whitespace-nowrap', theme.textMuted)}>PF</th>
+              <th className={clsx('text-center py-2 px-3 font-display uppercase w-px whitespace-nowrap', theme.textMuted)}>PS</th>
+              <th className={clsx('text-center py-2 px-3 font-display uppercase w-px whitespace-nowrap', theme.textMuted)}>+/-</th>
+            </tr>
+          </thead>
+          <tbody>
+            {allRows.map(row => (
+              <tr key={row.team_id} className={clsx('border-b last:border-b-0', theme.tableBorder, theme.tableRow)}>
+                <td className="py-2 px-3 w-px whitespace-nowrap text-center">
+                  <span className={clsx(
+                    'text-[10px] px-2 py-0.5 rounded',
+                    row.groupIdx % 2 === 0
+                      ? 'bg-brand-orange text-white'
+                      : lightMode
+                        ? 'bg-gray-500 text-white'
+                        : 'bg-court-muted text-white',
+                  )}>
+                    {row.groupName}
+                  </span>
+                </td>
+                <td className="py-2 px-3 w-px whitespace-nowrap text-center">
+                  <span className={clsx('font-display font-bold', row.idx < 2 ? 'text-brand-orange' : theme.textMuted)}>
+                    {row.idx + 1}
+                  </span>
+                </td>
+                <td className={clsx('py-2 px-3 max-w-0 overflow-hidden', theme.tableText)}>
+                  <span className="block truncate">{row.team_name}</span>
+                </td>
+                <td className={clsx('py-2 px-3 text-center font-semibold w-px whitespace-nowrap', theme.tableText)}>{row.wins}</td>
+                <td className={clsx('py-2 px-3 text-center w-px whitespace-nowrap', theme.textMuted)}>{row.losses}</td>
+                <td className={clsx('py-2 px-3 text-center w-px whitespace-nowrap', theme.textMuted)}>{row.pf}</td>
+                <td className={clsx('py-2 px-3 text-center w-px whitespace-nowrap', theme.textMuted)}>{row.ps}</td>
+                <td className="py-2 px-3 text-center w-px whitespace-nowrap">
+                  <span className={clsx(
+                    'font-display font-bold',
+                    row.point_differential > 0 ? 'text-green-600' : row.point_differential < 0 ? 'text-red-600' : theme.textMuted
+                  )}>
+                    {row.point_differential > 0 ? `+${row.point_differential}` : row.point_differential}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   )
@@ -330,7 +377,7 @@ function ShowcaseBracket({ matches, category }: { matches: MatchWithTeams[]; cat
           Tabellone
         </h2>
         <span className={clsx('text-[10px] px-2 py-0.5 rounded text-white', CATEGORY_COLORS[category])}>
-          {category}
+          {CATEGORY_SHORT[category]}
         </span>
       </div>
       <div className="flex-1 overflow-x-auto overflow-y-hidden p-4">
@@ -384,21 +431,22 @@ function ShowcaseBracket({ matches, category }: { matches: MatchWithTeams[]; cat
 
 function ShowcaseTPC({ contests, category, theme }: { contests: TpcContestFull[]; category: 'open' | 'under'; theme: Record<string, string> }) {
   const containerRef = React.useRef<HTMLDivElement>(null)
+  const isDragging = React.useRef(false)
   const lightMode = theme.bg === 'bg-white'
 
   const contest = contests.find(c => c.category === category) ?? null
-
-  if (!contest) {
-    return (
-      <div className={clsx('h-full flex items-center justify-center', theme.textMuted)}>
-        <p className="text-sm">Gara non disponibile</p>
-      </div>
-    )
-  }
-
-  const sortedRounds = [...contest.tpc_rounds].sort((a, b) => a.round_number - b.round_number)
+  const sortedRounds = contest ? [...contest.tpc_rounds].sort((a, b) => a.round_number - b.round_number) : []
   const columnCount = sortedRounds.length
-  const flexClass = columnCount === 1 ? 'justify-center' : columnCount === 2 ? 'justify-center gap-8' : 'gap-6'
+
+  const [colWidths, setColWidths] = React.useState<number[]>(() =>
+    sortedRounds.map(() => 100 / Math.max(columnCount, 1))
+  )
+
+  // Reset widths when the contest or round count changes
+  React.useEffect(() => {
+    const n = contest?.tpc_rounds.length ?? 0
+    setColWidths(Array.from({ length: n }, () => 100 / Math.max(n, 1)))
+  }, [contest?.id, contest?.tpc_rounds.length])
 
   // Auto-scroll to live player on mount
   React.useEffect(() => {
@@ -409,85 +457,130 @@ function ShowcaseTPC({ contests, category, theme }: { contests: TpcContestFull[]
     }
   }, [contest])
 
+  function handleDividerMouseDown(e: React.MouseEvent, divIdx: number) {
+    e.preventDefault()
+    isDragging.current = true
+    const startX = e.clientX
+    const startWidths = [...colWidths]
+    const containerWidth = containerRef.current?.offsetWidth ?? window.innerWidth
+
+    const onMove = (ev: MouseEvent) => {
+      if (!isDragging.current) return
+      const delta = ((ev.clientX - startX) / containerWidth) * 100
+      const newLeft = startWidths[divIdx] + delta
+      const newRight = startWidths[divIdx + 1] - delta
+      if (newLeft < 15 || newRight < 15) return
+      const next = [...startWidths]
+      next[divIdx] = newLeft
+      next[divIdx + 1] = newRight
+      setColWidths(next)
+    }
+    const onUp = () => {
+      isDragging.current = false
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
+
+  if (!contest) {
+    return (
+      <div className={clsx('h-full flex items-center justify-center', theme.textMuted)}>
+        <p className="text-sm">Gara non disponibile</p>
+      </div>
+    )
+  }
+
   return (
     <div className="h-full flex flex-col">
-      <div className={clsx('px-6 py-4 border-b', theme.headerBg, lightMode ? 'border-gray-300' : 'border-court-border')}>
-        <h2 className={clsx('font-display font-bold uppercase text-lg tracking-wide', theme.textDarker)}>
+      {/* Header — same style as ShowcaseCalendar/ShowcaseStandings */}
+      <div className={clsx('px-4 py-4 border-b', lightMode ? 'bg-gray-100' : 'bg-court-surface', theme.border)}>
+        <h2 className="font-display font-bold uppercase tracking-wide text-brand-orange text-center">
           3-Point Contest {category === 'open' ? 'Open' : 'Under'}
         </h2>
       </div>
-      <div ref={containerRef} className="flex-1 overflow-x-auto overflow-y-hidden p-6">
-        <div className={`flex h-full min-w-max ${flexClass}`}>
-          {sortedRounds.map(round => {
-            const sortedEntries = [...round.tpc_entries].sort((a, b) => a.sort_order - b.sort_order)
-            const minWidth = columnCount === 1 ? 'min-w-[400px]' : columnCount === 2 ? 'min-w-[350px]' : 'min-w-[280px]'
-            const flexGrow = columnCount <= 2 ? 'flex-1 max-w-xl' : ''
-            return (
-              <div key={round.id} className={`flex flex-col ${minWidth} ${flexGrow}`}>
-                {/* Round header */}
-                <div className={clsx('px-4 py-4 text-center mb-4', theme.headerBg)}>
-                  <p className="font-display font-bold uppercase text-lg tracking-wide text-brand-orange">
-                    {round.name}
-                  </p>
-                </div>
-                {/* Table */}
-                <div className={clsx('card overflow-hidden flex-1', theme.card)}>
-                  <table className="w-full text-sm">
-                    <thead className={clsx('sticky top-0 z-10', lightMode ? 'bg-white shadow-[0_1px_0_0_#d1d5db]' : 'bg-court-surface shadow-[0_1px_0_0_#444]')}>
-                      <tr>
-                        <th className={clsx('text-left py-2 px-3 font-display uppercase text-xs w-10', theme.textMuted)}>#</th>
-                        <th className={clsx('text-left py-2 px-3 font-display uppercase text-xs', theme.textMuted)}>Giocatore</th>
-                        <th className={clsx('text-right py-2 px-3 font-display uppercase text-xs w-20', theme.textMuted)}>Punti</th>
+      {/* Full-height columns with draggable vertical dividers */}
+      <div ref={containerRef} className="flex-1 overflow-x-hidden overflow-y-hidden flex">
+        {sortedRounds.map((round, roundIdx) => {
+          const sortedEntries = [...round.tpc_entries].sort((a, b) => a.sort_order - b.sort_order)
+          return (
+            <React.Fragment key={round.id}>
+              <div className="flex flex-col overflow-y-auto overflow-x-hidden" style={{ width: `${colWidths[roundIdx] ?? 100}%` }}>
+                <table className="w-full text-sm">
+                  <thead className={clsx('sticky top-0 z-10', lightMode ? 'bg-gray-100 shadow-[0_1px_0_0_#d1d5db]' : 'bg-court-surface shadow-[0_1px_0_0_#2a2a2a]')}>
+                    <tr className={clsx('border-b', theme.border)}>
+                      <th colSpan={3} className={clsx('px-4 py-3 font-display font-bold uppercase text-sm tracking-wide text-center', theme.textMuted)}>
+                        {round.name}
+                      </th>
+                    </tr>
+                    <tr>
+                      <th className={clsx('text-left py-2 px-3 font-display uppercase text-xs w-px', theme.textMuted)}>#</th>
+                      <th className={clsx('text-left py-2 px-3 font-display uppercase text-xs', theme.textMuted)}>Giocatore</th>
+                      <th className={clsx('text-center py-2 px-4 font-display uppercase text-xs w-20', theme.textMuted)}>Punti</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedEntries.map((entry, idx) => (
+                      <tr
+                        key={entry.id}
+                        data-is-live={entry.is_live || undefined}
+                        className={clsx(
+                          'border-b last:border-b-0 transition-colors',
+                          theme.tableBorder,
+                          theme.tableRow,
+                          entry.is_live && theme.liveBg,
+                          entry.is_qualified && !entry.is_live && theme.qualifiedBg,
+                        )}
+                      >
+                        <td className="py-3 px-3 w-px">
+                          <span className={clsx(
+                            'font-display font-bold text-base',
+                            entry.is_live ? theme.liveText : entry.is_qualified ? theme.qualifiedText : theme.textMuted
+                          )}>
+                            {idx + 1}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="flex items-center gap-2">
+                            <span className={clsx('text-base truncate', theme.tableText)}>{entry.tpc_players.name}</span>
+                            {entry.is_live && (
+                              <span className="flex items-center gap-1 shrink-0">
+                                <span className={clsx('w-2 h-2 rounded-full animate-pulse', lightMode ? 'bg-red-600' : 'bg-red-500')} />
+                                <span className={clsx('text-xs font-display uppercase', theme.liveText)}>LIVE</span>
+                              </span>
+                            )}
+                            {entry.is_qualified && !entry.is_live && (
+                              <span className={clsx('text-xs font-display uppercase shrink-0', theme.qualifiedText)}>Qualificato</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-center w-20">
+                          <span className={clsx(
+                            'font-display font-bold text-2xl',
+                            entry.is_live ? theme.liveText : entry.is_qualified ? theme.qualifiedText : theme.tableText
+                          )}>
+                            {entry.score ?? '—'}
+                          </span>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {sortedEntries.map((entry, idx) => (
-                        <tr
-                          key={entry.id}
-                          data-is-live={entry.is_live || undefined}
-                          className={clsx(
-                            'transition-colors',
-                            theme.tableRow,
-                            entry.is_live && theme.liveBg,
-                            entry.is_qualified && !entry.is_live && theme.qualifiedBg,
-                          )}
-                        >
-                          <td className="py-3 px-3">
-                            <span className={clsx(
-                              'font-display font-bold text-base',
-                              entry.is_live ? theme.liveText : entry.is_qualified ? theme.qualifiedText : theme.textMuted
-                            )}>
-                              {idx + 1}
-                            </span>
-                          </td>
-                          <td className="py-3 px-3">
-                            <div className="flex items-center gap-2">
-                              <span className={clsx('text-base truncate', theme.tableText)}>{entry.tpc_players.name}</span>
-                              {entry.is_live && (
-                                <span className="flex items-center gap-1 shrink-0">
-                                  <span className={clsx('w-2 h-2 rounded-full animate-pulse', lightMode ? 'bg-red-600' : 'bg-red-500')} />
-                                  <span className={clsx('text-xs font-display uppercase', theme.liveText)}>LIVE</span>
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="py-3 px-3 text-right">
-                            <span className={clsx(
-                              'font-display font-bold text-2xl',
-                              entry.is_live ? theme.liveText : entry.is_qualified ? theme.qualifiedText : theme.tableText
-                            )}>
-                              {entry.score ?? '—'}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            )
-          })}
-        </div>
+              {roundIdx < sortedRounds.length - 1 && (
+                <div
+                  onMouseDown={(e) => handleDividerMouseDown(e, roundIdx)}
+                  className="w-2 shrink-0 cursor-col-resize group flex items-center justify-center"
+                >
+                  <div className={clsx('w-px h-full transition-colors',
+                    lightMode ? 'bg-gray-300 group-hover:bg-brand-orange/60' : 'bg-court-border group-hover:bg-brand-orange/60'
+                  )} />
+                </div>
+              )}
+            </React.Fragment>
+          )
+        })}
       </div>
     </div>
   )
@@ -495,7 +588,7 @@ function ShowcaseTPC({ contests, category, theme }: { contests: TpcContestFull[]
 
 // ─── Sponsor Strip (Bottom - All Modes) ──────────────────────────────────────────
 
-function SponsorStrip({ sponsors, theme }: { sponsors: Sponsor[]; theme: Record<string, string> }) {
+function SponsorStrip({ sponsors, theme, height }: { sponsors: Sponsor[]; theme: Record<string, string>; height: number }) {
   if (!sponsors.length) return null
 
   const copies = Math.max(2, Math.ceil(12 / sponsors.length))
@@ -503,7 +596,7 @@ function SponsorStrip({ sponsors, theme }: { sponsors: Sponsor[]; theme: Record<
   const items = [...set, ...set]
 
   return (
-    <div className={clsx('h-16 border-t shrink-0', theme.border, theme.headerBg)}>
+    <div className={clsx('border-t shrink-0', theme.border, theme.headerBg)} style={{ height }}>
       <div className="h-full overflow-hidden" style={{ maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)' }}>
         <div
           className="h-full flex items-center w-max"
@@ -558,45 +651,54 @@ function SingleSponsorDisplay({ sponsors, theme }: { sponsors: Sponsor[]; theme:
     )
   }
 
-  const sponsor = sponsors[index]
+  const lightMode = theme.bg === 'bg-white'
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center p-12">
-      <div className="w-full max-w-3xl aspect-[3/2] relative mb-8 bg-white overflow-hidden">
-        {sponsor.logo_url ? (
-          sponsor.website_url ? (
-            <a
-              href={sponsor.website_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full h-full block transition-transform hover:scale-[1.02]"
-            >
-              <img
-                src={sponsor.logo_url}
-                alt={sponsor.name}
-                className="w-full h-full object-contain p-8"
-              />
-            </a>
-          ) : (
-            <img
-              src={sponsor.logo_url}
-              alt={sponsor.name}
-              className="w-full h-full object-contain p-8"
-            />
-          )
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <span className="font-display font-bold text-gray-400 text-4xl uppercase">
-              {sponsor.name}
-            </span>
-          </div>
-        )}
+    <div className="flex-1 flex flex-col">
+      <div className={clsx('px-4 py-4 border-b', lightMode ? 'bg-gray-100' : 'bg-court-surface', theme.border)}>
+        <h2 className="font-display font-bold uppercase tracking-wide text-brand-orange text-center">
+          I Nostri Sponsor
+        </h2>
       </div>
-      <p className="font-display uppercase tracking-widest text-brand-orange text-xl">
-        {sponsor.name}
-      </p>
+      <div className="flex-1 flex flex-col items-center justify-center p-12">
+      <div className="w-full max-w-3xl aspect-[3/2] relative mb-8">
+        {sponsors.map((sponsor, i) => (
+          <div
+            key={sponsor.id}
+            className={clsx(
+              'absolute inset-0 bg-white overflow-hidden transition-opacity duration-1000',
+              i === index ? 'opacity-100' : 'opacity-0',
+            )}
+          >
+            {sponsor.logo_url ? (
+              sponsor.website_url ? (
+                <a
+                  href={sponsor.website_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full h-full block"
+                >
+                  <img src={sponsor.logo_url} alt={sponsor.name} className="w-full h-full object-contain p-8" />
+                </a>
+              ) : (
+                <img src={sponsor.logo_url} alt={sponsor.name} className="w-full h-full object-contain p-8" />
+              )
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <span className="font-display font-bold text-gray-400 text-4xl uppercase">{sponsor.name}</span>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+      {{
+        main:   <span className="mt-4 px-3 py-1 rounded font-display font-bold uppercase text-xs tracking-wide bg-brand-orange text-white">Main Sponsor</span>,
+        gold:   <span className="mt-4 px-3 py-1 rounded font-display font-bold uppercase text-xs tracking-wide bg-yellow-400 text-yellow-900">Gold Sponsor</span>,
+        silver: <span className="mt-4 px-3 py-1 rounded font-display font-bold uppercase text-xs tracking-wide bg-gray-300 text-gray-700">Silver Sponsor</span>,
+        bronze: <span className="mt-4 px-3 py-1 rounded font-display font-bold uppercase text-xs tracking-wide bg-amber-700 text-white">Bronze Sponsor</span>,
+      }[sponsors[index].tier]}
       {sponsors.length > 1 && (
-        <div className="flex gap-2 mt-4">
+        <div className="flex gap-2 mt-3">
           {sponsors.map((_, i) => (
             <span
               key={i}
@@ -608,6 +710,7 @@ function SingleSponsorDisplay({ sponsors, theme }: { sponsors: Sponsor[]; theme:
           ))}
         </div>
       )}
+      </div>
     </div>
   )
 }
@@ -616,6 +719,8 @@ function SingleSponsorDisplay({ sponsors, theme }: { sponsors: Sponsor[]; theme:
 
 export default function ShowcasePage() {
   const [mode, setMode] = useState<ShowcaseMode>('open')
+  const [displayMode, setDisplayMode] = useState<ShowcaseMode>('open')
+  const [contentVisible, setContentVisible] = useState(true)
   const [lightMode, setLightMode] = useState(false)
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<{
@@ -631,7 +736,45 @@ export default function ShowcasePage() {
     tpcContests: [],
     sponsors: [],
   })
+  const [openCategoryIndex, setOpenCategoryIndex] = useState(0)
   const [underCategoryIndex, setUnderCategoryIndex] = useState(0)
+  const [splitPercent, setSplitPercent] = useState(60)
+  const [sponsorHeight, setSponsorHeight] = useState(64)
+  const isDragging = React.useRef(false)
+
+  function handleSponsorDividerMouseDown(e: React.MouseEvent) {
+    e.preventDefault()
+    isDragging.current = true
+    const onMove = (ev: MouseEvent) => {
+      if (!isDragging.current) return
+      const h = window.innerHeight - ev.clientY
+      setSponsorHeight(Math.min(Math.max(h, 40), 160))
+    }
+    const onUp = () => {
+      isDragging.current = false
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
+
+  function handleDividerMouseDown(e: React.MouseEvent) {
+    e.preventDefault()
+    isDragging.current = true
+    const onMove = (ev: MouseEvent) => {
+      if (!isDragging.current) return
+      const pct = (ev.clientX / window.innerWidth) * 100
+      setSplitPercent(Math.min(Math.max(pct, 25), 75))
+    }
+    const onUp = () => {
+      isDragging.current = false
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
 
   const supabase = createClient()
 
@@ -668,13 +811,75 @@ export default function ShowcasePage() {
     return () => clearInterval(interval)
   }, [])
 
-  // Under mode carousel
+  // Snap to first valid category when data loads or mode changes
   useEffect(() => {
-    if (mode !== 'under') return
+    const currentOpenCat = OPEN_CATEGORY_ORDER[openCategoryIndex]
+    if (!data.groups.some(g => g.category === currentOpenCat)) {
+      const first = OPEN_CATEGORY_ORDER.findIndex(cat => data.groups.some(g => g.category === cat))
+      if (first >= 0) setOpenCategoryIndex(first)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.groups, mode])
+
+  useEffect(() => {
+    const currentUnderCat = CATEGORY_ORDER[underCategoryIndex]
+    if (!data.groups.some(g => g.category === currentUnderCat)) {
+      const first = CATEGORY_ORDER.findIndex(cat => data.groups.some(g => g.category === cat))
+      if (first >= 0) setUnderCategoryIndex(first)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.groups, mode])
+
+  // Open mode carousel — only cycle through categories that have groups
+  const validOpenCategories = OPEN_CATEGORY_ORDER.filter(cat =>
+    data.groups.some(g => g.category === cat)
+  )
+
+  useEffect(() => {
+    if (mode !== 'open') return
+    if (validOpenCategories.length === 0) return
     const interval = setInterval(() => {
-      setUnderCategoryIndex(i => (i + 1) % CATEGORY_ORDER.length)
+      setOpenCategoryIndex(prev => {
+        const currentCat = OPEN_CATEGORY_ORDER[prev]
+        const currentValidPos = validOpenCategories.indexOf(currentCat)
+        const nextCat = validOpenCategories[(Math.max(currentValidPos, 0) + 1) % validOpenCategories.length]
+        return OPEN_CATEGORY_ORDER.indexOf(nextCat)
+      })
     }, UNDER_CATEGORY_CYCLE_MS)
     return () => clearInterval(interval)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, validOpenCategories.join(',')])
+
+  // Under mode carousel — only cycle through categories that have groups
+  const validUnderCategories = CATEGORY_ORDER.filter(cat =>
+    data.groups.some(g => g.category === cat)
+  )
+
+  useEffect(() => {
+    if (mode !== 'under') return
+    if (validUnderCategories.length === 0) return
+    const interval = setInterval(() => {
+      setUnderCategoryIndex(prev => {
+        const currentCat = CATEGORY_ORDER[prev]
+        const currentValidPos = validUnderCategories.indexOf(currentCat)
+        const nextCat = validUnderCategories[(Math.max(currentValidPos, 0) + 1) % validUnderCategories.length]
+        return CATEGORY_ORDER.indexOf(nextCat)
+      })
+    }, UNDER_CATEGORY_CYCLE_MS)
+    return () => clearInterval(interval)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, validUnderCategories.join(',')])
+
+  // Fade transition when mode changes
+  useEffect(() => {
+    if (mode === displayMode) return
+    setContentVisible(false)
+    const timer = setTimeout(() => {
+      setDisplayMode(mode)
+      setContentVisible(true)
+    }, 300)
+    return () => clearTimeout(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode])
 
   if (loading) {
@@ -713,86 +918,90 @@ export default function ShowcasePage() {
   }
 
   return (
-    <div className={clsx('h-screen flex flex-col overflow-hidden', theme.bg)}>
-      <style jsx>{`
-        @keyframes sponsor-strip-scroll {
-          from { transform: translateX(0); }
-          to { transform: translateX(-50%); }
-        }
-        ${lightMode ? `
-          ::-webkit-scrollbar { width: 8px; height: 8px; }
-          ::-webkit-scrollbar-track { background: #f3f4f6; }
-          ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
-          ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
-        ` : ''}
-      `}</style>
-
-      <main className="flex-1 overflow-hidden">
-        {/* Mode 1: Open - Calendar (60%) + Standings (40%) */}
-        {mode === 'open' && (
+    <div className={clsx('h-screen flex flex-col overflow-hidden', theme.bg, lightMode && 'showcase-light')}>
+      <main className={clsx('flex-1 overflow-hidden transition-opacity duration-300', contentVisible ? 'opacity-100' : 'opacity-0')}>
+        {/* Mode 1: Open - Calendar + Standings (resizable) */}
+        {displayMode === 'open' && (
           <div className="h-full flex">
-            <div className={clsx('w-[60%] border-r', theme.border)}>
+            <div style={{ width: `${splitPercent}%` }} className="overflow-hidden">
               <ShowcaseCalendar matches={data.matches} theme={theme} />
             </div>
-            <div className="w-[40%]">
-              <ShowcaseStandings groups={data.groups} matches={data.matches} category="open_m" theme={theme} />
+            <div
+              onMouseDown={handleDividerMouseDown}
+              className={clsx(
+                'w-2 shrink-0 cursor-col-resize group flex items-center justify-center',
+                isDragging.current && 'select-none'
+              )}
+            >
+              <div className={clsx('w-px h-full transition-colors', lightMode ? 'bg-gray-300 group-hover:bg-brand-orange/60' : 'bg-court-border group-hover:bg-brand-orange/60')} />
+            </div>
+            <div style={{ width: `${100 - splitPercent}%` }} className="overflow-hidden">
+              <ShowcaseStandings
+                groups={data.groups}
+                matches={data.matches}
+                category={OPEN_CATEGORY_ORDER[openCategoryIndex]}
+                theme={theme}
+                carousel={{ categories: OPEN_CATEGORY_ORDER, activeIndex: openCategoryIndex, validCategories: validOpenCategories }}
+              />
             </div>
           </div>
         )}
 
-        {/* Mode 2: Under - Carousel through U14/U16/U18 */}
-        {mode === 'under' && (
+        {/* Mode 2: Under - Carousel through U14/U16/U18 (resizable) */}
+        {displayMode === 'under' && (
           <div className="h-full flex">
-            <div className={clsx('w-[60%] border-r', theme.border)}>
+            <div style={{ width: `${splitPercent}%` }} className="overflow-hidden">
               <ShowcaseCalendar matches={data.matches} theme={theme} />
             </div>
-            <div className="w-[40%]">
-              <ShowcaseStandings 
-                groups={data.groups} 
-                matches={data.matches} 
-                category={currentUnderCategory} 
-                theme={theme}
-              />
+            <div
+              onMouseDown={handleDividerMouseDown}
+              className={clsx(
+                'w-2 shrink-0 cursor-col-resize group flex items-center justify-center',
+                isDragging.current && 'select-none'
+              )}
+            >
+              <div className={clsx('w-px h-full transition-colors', lightMode ? 'bg-gray-300 group-hover:bg-brand-orange/60' : 'bg-court-border group-hover:bg-brand-orange/60')} />
             </div>
-            {/* Category indicator */}
-            <div className="absolute bottom-20 left-1/2 -translate-x-1/2 flex gap-2">
-              {CATEGORY_ORDER.map((cat, idx) => (
-                <span
-                  key={cat}
-                  className={clsx(
-                    'px-3 py-1 rounded text-xs font-display uppercase tracking-wide transition-all',
-                    idx === underCategoryIndex
-                      ? 'bg-brand-orange text-white'
-                      : lightMode
-                        ? 'bg-gray-200 text-gray-700'
-                        : 'bg-court-surface text-court-muted'
-                  )}
-                >
-                  {CATEGORY_SHORT[cat]}
-                </span>
-              ))}
+            <div style={{ width: `${100 - splitPercent}%` }} className="overflow-hidden">
+              <ShowcaseStandings
+                groups={data.groups}
+                matches={data.matches}
+                category={currentUnderCategory}
+                theme={theme}
+                carousel={{ categories: CATEGORY_ORDER, activeIndex: underCategoryIndex, validCategories: validUnderCategories }}
+              />
             </div>
           </div>
         )}
 
         {/* Mode 3: TPC Open */}
-        {mode === 'tpc_open' && (
+        {displayMode === 'tpc_open' && (
           <ShowcaseTPC contests={data.tpcContests} category="open" theme={theme} />
         )}
 
         {/* Mode 4: TPC Under */}
-        {mode === 'tpc_under' && (
+        {displayMode === 'tpc_under' && (
           <ShowcaseTPC contests={data.tpcContests} category="under" theme={theme} />
         )}
 
         {/* Mode 5: Sponsors - Single rotating sponsor */}
-        {mode === 'sponsors' && (
+        {displayMode === 'sponsors' && (
           <SingleSponsorDisplay sponsors={data.sponsors} theme={theme} />
         )}
       </main>
 
       {/* Sponsor strip at bottom - visible on all modes except sponsors */}
-      {mode !== 'sponsors' && <SponsorStrip sponsors={data.sponsors} theme={theme} />}
+      {displayMode !== 'sponsors' && (
+        <>
+          <div
+            onMouseDown={handleSponsorDividerMouseDown}
+            className="h-2 shrink-0 cursor-row-resize group flex flex-col items-center justify-center"
+          >
+            <div className={clsx('h-px w-full transition-colors', lightMode ? 'bg-gray-300 group-hover:bg-brand-orange/60' : 'bg-court-border group-hover:bg-brand-orange/60')} />
+          </div>
+          <SponsorStrip sponsors={data.sponsors} theme={theme} height={sponsorHeight} />
+        </>
+      )}
     </div>
   )
 }
