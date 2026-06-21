@@ -349,29 +349,29 @@ function RoundCard({ round, contest, prevRound, expanded, onToggle, onDelete }: 
 
       {/* Expanded content */}
       {expanded && (
-        <div className="border-t border-court-border overflow-x-auto">
-          <table className="w-full text-sm">
-            {sortedEntries.length > 0 && (
-              <thead>
-                <tr className="border-b border-court-border">
-                  <th className="w-px px-3 py-2" />
-                  <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">#</th>
-                  <th className="font-display uppercase tracking-wide text-xs text-court-muted text-left px-3 py-2 whitespace-nowrap">Giocatore</th>
-                  <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">Punti</th>
-                  <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">Live</th>
-                  <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">Qualif.</th>
-                  <th className="w-px" />
-                </tr>
-              </thead>
-            )}
-            {sortedEntries.length === 0 ? (
-              <tbody>
-                <tr>
-                  <td className="px-4 py-3 text-court-muted text-sm">Nessun partecipante in questo turno.</td>
-                </tr>
-              </tbody>
-            ) : (
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <div className="border-t border-court-border overflow-x-auto">
+            <table className="w-full text-sm">
+              {sortedEntries.length > 0 && (
+                <thead>
+                  <tr className="border-b border-court-border">
+                    <th className="w-px px-3 py-2" />
+                    <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">#</th>
+                    <th className="font-display uppercase tracking-wide text-xs text-court-muted text-left px-3 py-2 whitespace-nowrap">Giocatore</th>
+                    <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">Punti</th>
+                    <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">Live</th>
+                    <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">Qualif.</th>
+                    <th className="w-px" />
+                  </tr>
+                </thead>
+              )}
+              {sortedEntries.length === 0 ? (
+                <tbody>
+                  <tr>
+                    <td className="px-4 py-3 text-court-muted text-sm">Nessun partecipante in questo turno.</td>
+                  </tr>
+                </tbody>
+              ) : (
                 <SortableContext items={sortedEntries.map(e => e.id)} strategy={verticalListSortingStrategy}>
                   <tbody>
                     {sortedEntries.map(entry => (
@@ -386,10 +386,10 @@ function RoundCard({ round, contest, prevRound, expanded, onToggle, onDelete }: 
                     ))}
                   </tbody>
                 </SortableContext>
-              </DndContext>
-            )}
-          </table>
-        </div>
+              )}
+            </table>
+          </div>
+        </DndContext>
       )}
     </div>
   )
