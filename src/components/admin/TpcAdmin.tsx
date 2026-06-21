@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Plus, Trash2, ChevronDown, ChevronUp, Radio, GripVertical, Search } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronUp, GripVertical, Search } from 'lucide-react'
 import clsx from 'clsx'
 import { createClient } from '@/lib/supabase/client'
 import type { TpcCategory, TpcContestFull, TpcEntryWithPlayer, TpcRoundWithEntries } from '@/types'
@@ -162,41 +162,36 @@ function ContestManager({ contest }: { contest: TpcContestFull }) {
   const sortedRounds = [...contest.tpc_rounds].sort((a, b) => a.round_number - b.round_number)
 
   return (
-    <div className="space-y-8">
-      {/* Rounds */}
-      <section>
-        <div className="space-y-3">
-          {sortedRounds.map((round, idx) => (
-            <RoundCard
-              key={round.id}
-              round={round}
-              contest={contest}
-              prevRound={idx > 0 ? sortedRounds[idx - 1] : null}
-              expanded={expandedRounds.has(round.id)}
-              onToggle={() => toggleRound(round.id)}
-              onDelete={() => deleteRound(round.id)}
-            />
-          ))}
-
-          {/* New round form */}
-          <div className="card p-4">
-            <p className="text-court-gray text-xs font-display uppercase tracking-wide mb-2">Nuovo turno</p>
-            <div className="flex gap-2">
-              <input
-                className="input text-sm py-1.5 flex-1"
-                placeholder="Nome turno (es. Qualificazioni, Finale)"
-                value={newRoundName}
-                onChange={e => setNewRoundName(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && addRound()}
-              />
-              <button className="btn-primary text-sm px-4 py-1.5" onClick={addRound} disabled={saving || !newRoundName.trim()}>
-                <Plus size={14} />
-              </button>
-            </div>
-          </div>
+    <div className="space-y-3">
+      {/* New round form */}
+      <div className="card p-4">
+        <p className="text-court-gray text-xs font-display uppercase tracking-wide mb-2">Nuovo turno</p>
+        <div className="flex gap-2">
+          <input
+            className="input text-sm py-1.5 flex-1"
+            placeholder="Nome turno (es. Qualificazioni, Finale)"
+            value={newRoundName}
+            onChange={e => setNewRoundName(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && addRound()}
+          />
+          <button className="btn-primary text-sm px-4 py-1.5" onClick={addRound} disabled={saving || !newRoundName.trim()}>
+            <Plus size={14} />
+          </button>
         </div>
-      </section>
+      </div>
 
+      {/* Rounds */}
+      {sortedRounds.map((round, idx) => (
+        <RoundCard
+          key={round.id}
+          round={round}
+          contest={contest}
+          prevRound={idx > 0 ? sortedRounds[idx - 1] : null}
+          expanded={expandedRounds.has(round.id)}
+          onToggle={() => toggleRound(round.id)}
+          onDelete={() => deleteRound(round.id)}
+        />
+      ))}
     </div>
   )
 }
@@ -369,32 +364,46 @@ function RoundCard({ round, contest, prevRound, expanded, onToggle, onDelete }: 
 
       {/* Expanded content */}
       {expanded && (
-        <div className="border-t border-court-border">
-          {sortedEntries.length === 0 ? (
-            <p className="text-court-muted text-sm px-4 py-3">Nessun partecipante in questo turno.</p>
-          ) : (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={sortedEntries.map(e => e.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                {sortedEntries.map(entry => (
-                  <SortableEntryRow
-                    key={entry.id}
-                    entry={entry}
-                    onUpdateScore={updateScore}
-                    onToggleQualified={toggleQualified}
-                    onSetLive={setLive}
-                    onDelete={deleteEntry}
-                  />
-                ))}
-              </SortableContext>
-            </DndContext>
-          )}
+        <div className="border-t border-court-border overflow-x-auto">
+          <table className="w-full text-sm">
+            {sortedEntries.length > 0 && (
+              <thead>
+                <tr className="border-b border-court-border">
+                  <th className="w-px px-3 py-2" />
+                  <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">#</th>
+                  <th className="font-display uppercase tracking-wide text-xs text-court-muted text-left px-3 py-2 whitespace-nowrap">Giocatore</th>
+                  <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">Punti</th>
+                  <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">Live</th>
+                  <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">Qualif.</th>
+                  <th className="w-px" />
+                </tr>
+              </thead>
+            )}
+            {sortedEntries.length === 0 ? (
+              <tbody>
+                <tr>
+                  <td className="px-4 py-3 text-court-muted text-sm">Nessun partecipante in questo turno.</td>
+                </tr>
+              </tbody>
+            ) : (
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={sortedEntries.map(e => e.id)} strategy={verticalListSortingStrategy}>
+                  <tbody>
+                    {sortedEntries.map(entry => (
+                      <SortableEntryRow
+                        key={entry.id}
+                        entry={entry}
+                        onUpdateScore={updateScore}
+                        onToggleQualified={toggleQualified}
+                        onSetLive={setLive}
+                        onDelete={deleteEntry}
+                      />
+                    ))}
+                  </tbody>
+                </SortableContext>
+              </DndContext>
+            )}
+          </table>
         </div>
       )}
     </div>
@@ -430,27 +439,30 @@ function SortableEntryRow({ entry, onUpdateScore, onToggleQualified, onSetLive, 
   }
 
   return (
-    <div
+    <tr
       ref={setNodeRef}
       style={style}
       className={clsx(
-        'flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 px-4 py-2.5 border-b border-court-border last:border-b-0 transition-colors',
+        'border-b border-court-border last:border-b-0 transition-colors',
         isDragging && 'opacity-50 bg-brand-orange/10',
         entry.is_live && 'bg-red-500/10',
         entry.is_qualified && !entry.is_live && 'bg-brand-orange/5',
       )}
     >
-      {/* First line: drag handle + position + name */}
-      <div className="flex items-center gap-3 flex-1 min-w-0">
+      <td className="px-3 py-2.5 w-px whitespace-nowrap">
         <button
-          className="cursor-grab active:cursor-grabbing text-court-muted hover:text-court-white shrink-0"
+          className="cursor-grab active:cursor-grabbing text-court-muted hover:text-court-white"
           {...attributes}
           {...listeners}
         >
           <GripVertical size={16} />
         </button>
-        <span className="text-xs text-court-muted w-6 text-center shrink-0">{entry.sort_order + 1}</span>
-        <span className="text-court-white font-medium min-w-0 truncate">
+      </td>
+      <td className="px-3 py-2.5 w-px whitespace-nowrap text-center">
+        <span className="text-xs text-court-muted">{entry.sort_order + 1}</span>
+      </td>
+      <td className="px-3 py-2.5 whitespace-nowrap">
+        <span className="text-court-white font-medium">
           {entry.tpc_players.name}
           {entry.is_live && (
             <span className="ml-2 inline-flex items-center gap-1 text-xs text-red-400 font-display uppercase tracking-wide">
@@ -459,51 +471,41 @@ function SortableEntryRow({ entry, onUpdateScore, onToggleQualified, onSetLive, 
             </span>
           )}
         </span>
-      </div>
-
-      {/* Second line (mobile) / right side (desktop): controls */}
-      <div className="flex items-center gap-3 sm:ml-auto shrink-0">
-        {/* Score */}
-        <div className="flex items-center gap-1.5">
-          <input
-            className="w-16 bg-transparent border border-court-border rounded px-2 py-0.5 text-sm text-court-white focus:border-brand-orange focus:outline-none text-center"
-            type="number"
-            min="0"
-            placeholder="—"
-            value={scoreVal}
-            onChange={e => setScoreVal(e.target.value)}
-            onBlur={() => onUpdateScore(entry.id, scoreVal)}
-          />
-          <span className="text-[10px] text-court-muted font-display uppercase tracking-wide">Punti</span>
-        </div>
-
-        {/* Live */}
-        <div className="flex items-center gap-1.5">
-          <button
-            onClick={() => onSetLive(entry.id, entry.is_live)}
-            title={entry.is_live ? 'Rimuovi live' : 'Imposta live'}
-            className={clsx(
-              'transition-colors',
-              entry.is_live ? 'text-red-400' : 'text-court-border hover:text-red-400'
-            )}
-          >
-            <Radio size={16} />
-          </button>
-          <span className="text-[10px] text-court-muted font-display uppercase tracking-wide">Live</span>
-        </div>
-
-        {/* Qualified */}
-        <div className="flex items-center gap-1.5">
-          <input
-            type="checkbox"
-            checked={entry.is_qualified}
-            onChange={() => onToggleQualified(entry)}
-            className="w-4 h-4 accent-brand-orange cursor-pointer"
-          />
-          <span className="text-[10px] text-court-muted font-display uppercase tracking-wide">Qualif.</span>
-        </div>
-
-        {/* Delete */}
+      </td>
+      <td className="px-3 py-2.5 w-px whitespace-nowrap">
+        <input
+          className="w-16 bg-transparent border border-court-border rounded px-2 py-0.5 text-sm text-court-white focus:border-brand-orange focus:outline-none text-center"
+          type="number"
+          min="0"
+          placeholder="—"
+          value={scoreVal}
+          onChange={e => setScoreVal(e.target.value)}
+          onBlur={() => onUpdateScore(entry.id, scoreVal)}
+        />
+      </td>
+      <td className="px-3 py-2.5 w-px whitespace-nowrap">
+        <button
+          onClick={() => onSetLive(entry.id, entry.is_live)}
+          className={clsx(
+            'btn-ghost py-1 px-2 text-xs',
+            entry.is_live && 'border-red-500/40 text-red-400 hover:border-red-500/60',
+          )}
+        >
+          Live
+        </button>
+      </td>
+      <td className="px-3 py-2.5 w-px whitespace-nowrap">
+        <button
+          onClick={() => onToggleQualified(entry)}
+          className={clsx(
+            'btn-ghost py-1 px-2 text-xs',
+            entry.is_qualified && 'border-brand-orange/40 text-brand-orange hover:border-brand-orange/60',
+          )}
+        >
+          Qualif.
+        </button>
+      </td>
+      <td className="px-3 py-2.5 w-px whitespace-nowrap">
         <button
           onClick={() => onDelete(entry.id)}
           className="text-court-muted hover:text-red-400 transition-colors"
@@ -511,7 +513,7 @@ function SortableEntryRow({ entry, onUpdateScore, onToggleQualified, onSetLive, 
         >
           <Trash2 size={13} />
         </button>
-      </div>
-    </div>
+      </td>
+    </tr>
   )
 }

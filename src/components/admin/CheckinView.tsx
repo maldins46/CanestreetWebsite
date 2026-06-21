@@ -77,13 +77,11 @@ export default function CheckinView({ teams, search, unpaidOnly = false }: Props
       }
       return next
     })
-    // Fire individual updates (players table has no bulk endpoint)
     const results = await Promise.all(
       Object.entries(updates).map(([id, fields]) =>
         supabase.from('players').update(fields).eq('id', id).then(r => ({ id, fields, error: r.error }))
       )
     )
-    // Revert failed ones
     const failed = results.filter(r => r.error)
     if (failed.length > 0) {
       setCheckinState(prev => {
@@ -100,20 +98,17 @@ export default function CheckinView({ teams, search, unpaidOnly = false }: Props
     }
   }, [supabase])
 
-  // Toggle a single field on a single player
   const toggleField = useCallback((playerId: string, field: CheckinField) => {
     const next = !checkinState[playerId][field]
     patch({ [playerId]: { [field]: next } })
   }, [checkinState, patch])
 
-  // Toggle all fields on a single player
   const togglePlayer = useCallback((playerId: string) => {
     const all = isFullyChecked(checkinState[playerId])
     const fields = Object.fromEntries(FIELDS.map(f => [f, !all])) as PlayerCheckin
     patch({ [playerId]: fields })
   }, [checkinState, patch])
 
-  // Toggle all fields on all players in a team
   const toggleTeam = useCallback((playerIds: string[]) => {
     const allDone = playerIds.every(id => isFullyChecked(checkinState[id]))
     const updates: Record<string, PlayerCheckin> = {}
@@ -166,7 +161,7 @@ export default function CheckinView({ teams, search, unpaidOnly = false }: Props
         return (
           <div key={team.id} className="card overflow-hidden">
             {/* Team header */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 px-4 py-3 border-b border-court-border">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 px-4 py-3 border-b border-court-border bg-court-dark">
               <div className="flex items-center gap-3 min-w-0 flex-1">
                 <IndeterminateCheckbox
                   checked={teamAllDone}
@@ -174,7 +169,7 @@ export default function CheckinView({ teams, search, unpaidOnly = false }: Props
                   onChange={() => toggleTeam(playerIds)}
                   className="w-4 h-4 shrink-0"
                 />
-                <h2 className="font-display font-bold uppercase text-base text-court-white min-w-0 truncate">
+                <h2 className="font-display font-bold uppercase text-sm text-court-white min-w-0 truncate">
                   {team.name}
                 </h2>
               </div>
@@ -188,50 +183,61 @@ export default function CheckinView({ teams, search, unpaidOnly = false }: Props
               </div>
             </div>
 
-            {/* Player rows */}
-            <div>
-              {sorted.map(p => {
-                const state = checkinState[p.id] ?? { checkin_payment: false, checkin_kit: false, checkin_buono_pasto: false }
-                const allDone = isFullyChecked(state)
-                const someChecked = !allDone && (state.checkin_payment || state.checkin_kit || state.checkin_buono_pasto)
-                return (
-                  <div
-                    key={p.id}
-                    className={clsx(
-                      'flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 px-4 py-2.5 border-b border-court-border last:border-b-0',
-                      allDone && 'opacity-60',
-                    )}
-                  >
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      {/* Per-player shortcut */}
-                      <IndeterminateCheckbox
-                        checked={allDone}
-                        indeterminate={someChecked}
-                        onChange={() => togglePlayer(p.id)}
-                        className="w-3.5 h-3.5 shrink-0"
-                      />
-                      <span className="min-w-0 text-sm text-court-light truncate">
-                        {p.name}
-                        {p.is_captain && <span className="ml-1.5 text-brand-orange text-[10px] font-display uppercase">cap</span>}
-                        {p.is_vice_captain && <span className="ml-1.5 text-court-gray text-[10px] font-display uppercase">vice</span>}
-                      </span>
-                    </div>
-                    <div className="flex gap-4 shrink-0 sm:ml-auto">
-                      {checkboxes.map(({ field, label }) => (
-                        <label key={field} className="flex items-center gap-1.5 cursor-pointer select-none">
-                          <input
-                            type="checkbox"
-                            checked={state[field]}
-                            onChange={() => toggleField(p.id, field)}
-                            className="accent-brand-orange w-3.5 h-3.5 cursor-pointer"
+            {/* Player table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-court-border">
+                    <th className="w-px px-3 py-2" />
+                    <th className="font-display uppercase tracking-wide text-xs text-court-muted text-left px-3 py-2 whitespace-nowrap">Giocatore</th>
+                    {checkboxes.map(({ label }) => (
+                      <th key={label} className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">{label}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {sorted.map(p => {
+                    const state = checkinState[p.id] ?? { checkin_payment: false, checkin_kit: false, checkin_buono_pasto: false }
+                    const allDone = isFullyChecked(state)
+                    const someChecked = !allDone && (state.checkin_payment || state.checkin_kit || state.checkin_buono_pasto)
+                    return (
+                      <tr
+                        key={p.id}
+                        className={clsx(
+                          'border-b border-court-border last:border-b-0',
+                          allDone && 'opacity-60',
+                        )}
+                      >
+                        <td className="px-3 py-2.5 w-px whitespace-nowrap">
+                          <IndeterminateCheckbox
+                            checked={allDone}
+                            indeterminate={someChecked}
+                            onChange={() => togglePlayer(p.id)}
+                            className="w-3.5 h-3.5"
                           />
-                          <span className="text-xs text-court-muted font-display uppercase tracking-wide">{label}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )
-              })}
+                        </td>
+                        <td className="px-3 py-2.5 whitespace-nowrap">
+                          <span className="text-sm text-court-light">
+                            {p.name}
+                            {p.is_captain && <span className="ml-1.5 text-brand-orange text-[10px] font-display uppercase">cap</span>}
+                            {p.is_vice_captain && <span className="ml-1.5 text-court-gray text-[10px] font-display uppercase">vice</span>}
+                          </span>
+                        </td>
+                        {checkboxes.map(({ field }) => (
+                          <td key={field} className="px-3 py-2.5 w-px text-center whitespace-nowrap">
+                            <input
+                              type="checkbox"
+                              checked={state[field]}
+                              onChange={() => toggleField(p.id, field)}
+                              className="accent-brand-orange w-3.5 h-3.5 cursor-pointer"
+                            />
+                          </td>
+                        ))}
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
         )

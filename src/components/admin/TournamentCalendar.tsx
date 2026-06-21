@@ -121,103 +121,125 @@ export default function TournamentCalendar({ editionId, matches, category, searc
 
   return (
     <div className="card overflow-hidden">
-      {filtered.map(match => {
-        const isSaving = saving === match.id
-        const homeVal = getScore(match.id, 'home', match.score_home)
-        const awayVal = getScore(match.id, 'away', match.score_away)
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-court-border">
+              <th className="font-display uppercase tracking-wide text-xs text-court-muted text-left px-3 py-2 whitespace-nowrap w-px">Data/Ora</th>
+              <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">Categoria</th>
+              <th className="font-display uppercase tracking-wide text-xs text-court-muted text-left px-3 py-2 whitespace-nowrap w-px">Turno</th>
+              <th className="font-display uppercase tracking-wide text-xs text-court-muted text-right px-3 py-2 whitespace-nowrap">Squadra casa</th>
+              <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">Pts</th>
+              <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">Pts</th>
+              <th className="font-display uppercase tracking-wide text-xs text-court-muted text-left px-3 py-2 whitespace-nowrap">Squadra ospite</th>
+              <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">Stato</th>
+              <th className="w-px" />
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map(match => {
+              const isSaving = saving === match.id
+              const homeVal = getScore(match.id, 'home', match.score_home)
+              const awayVal = getScore(match.id, 'away', match.score_away)
+              const actionLabel = match.status === 'scheduled' ? 'Avvia'
+                : match.status === 'in_progress' ? 'Termina'
+                : 'Resetta'
 
-        const actionLabel = match.status === 'scheduled' ? 'Avvia'
-          : match.status === 'in_progress' ? 'Termina'
-          : 'Resetta'
-
-        return (
-          <div
-            key={match.id}
-            className={clsx(
-              'flex flex-col lg:flex-row lg:items-center gap-2 px-4 py-3 border-b border-court-border last:border-b-0',
-              match.status === 'in_progress' && 'bg-red-500/10',
-              match.status === 'completed' && 'opacity-70',
-            )}
-          >
-            {/* Row 1 (mobile) / left section (desktop): meta info */}
-            <div className="flex items-center gap-2 flex-wrap shrink-0">
-              <input
-                type="datetime-local"
-                defaultValue={toDatetimeLocal(match.scheduled_at)}
-                onBlur={e => saveSchedule(match.id, e.target.value)}
-                disabled={isSaving}
-                className="input py-1 px-2 text-xs w-40"
-              />
-              <span className={clsx('text-xs px-2 py-0.5 font-display uppercase tracking-wide rounded', CATEGORY_COLORS[match.category])}>
-                {CATEGORY_LABELS[match.category]}
-              </span>
-              <span className="text-court-muted text-xs w-20 shrink-0">{getPhaseLabel(match)}</span>
-            </div>
-
-            {/* Row 2 (mobile) / center section (desktop): teams + scores */}
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <span className="text-court-light text-sm font-medium flex-1 text-right truncate min-w-0">
-                {match.team_home?.name ?? <span className="opacity-40 italic">TBD</span>}
-              </span>
-              <div className="flex items-center gap-1 shrink-0">
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  value={homeVal}
-                  onChange={e => setScore(match.id, 'home', e.target.value.replace(/\D/g, ''))}
-                  onBlur={() => saveScore(match)}
-                  disabled={isSaving}
-                  className="input py-1 px-1 w-12 text-center text-sm"
-                  placeholder="–"
-                />
-                <span className="text-court-muted">-</span>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  value={awayVal}
-                  onChange={e => setScore(match.id, 'away', e.target.value.replace(/\D/g, ''))}
-                  onBlur={() => saveScore(match)}
-                  disabled={isSaving}
-                  className="input py-1 px-1 w-12 text-center text-sm"
-                  placeholder="–"
-                />
-              </div>
-              <span className="text-court-light text-sm font-medium flex-1 truncate min-w-0">
-                {match.team_away?.name ?? <span className="opacity-40 italic">TBD</span>}
-              </span>
-            </div>
-
-            {/* Row 3 (mobile) / right section (desktop): action button + status badge */}
-            <div className="flex items-center gap-2 shrink-0 lg:ml-auto">
-              <button
-                onClick={() => cycleStatus(match)}
-                disabled={isSaving}
-                className="btn-ghost py-1 px-3 text-xs w-20 justify-center"
-              >
-                {isSaving ? '…' : actionLabel}
-              </button>
-              {match.status === 'scheduled' && (
-                <span className="w-24 text-center text-xs px-2 py-0.5 font-display uppercase tracking-wide border border-court-border text-court-muted">
-                  Da giocare
-                </span>
-              )}
-              {match.status === 'in_progress' && (
-                <span className="w-24 text-center text-xs px-2 py-0.5 font-display uppercase tracking-wide border border-red-500/40 bg-red-500/10 text-red-400 flex items-center justify-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse inline-block shrink-0" />
-                  Live
-                </span>
-              )}
-              {match.status === 'completed' && (
-                <span className="w-24 text-center text-xs px-2 py-0.5 font-display uppercase tracking-wide border border-green-500/40 bg-green-500/10 text-green-400">
-                  Terminata
-                </span>
-              )}
-            </div>
-          </div>
-        )
-      })}
+              return (
+                <tr
+                  key={match.id}
+                  className={clsx(
+                    'border-b border-court-border last:border-b-0',
+                    match.status === 'in_progress' && 'bg-red-500/10',
+                    match.status === 'completed' && 'opacity-70',
+                  )}
+                >
+                  <td className="px-3 py-2 w-px whitespace-nowrap">
+                    <input
+                      type="datetime-local"
+                      defaultValue={toDatetimeLocal(match.scheduled_at)}
+                      onBlur={e => saveSchedule(match.id, e.target.value)}
+                      disabled={isSaving}
+                      className="input py-1 px-2 text-xs w-40"
+                    />
+                  </td>
+                  <td className="px-3 py-2 w-px whitespace-nowrap text-center">
+                    <span className={clsx('text-xs px-2 py-0.5 font-display uppercase tracking-wide rounded', CATEGORY_COLORS[match.category])}>
+                      {CATEGORY_LABELS[match.category]}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2 w-px whitespace-nowrap">
+                    <span className="text-court-muted text-xs">{getPhaseLabel(match) || '—'}</span>
+                  </td>
+                  <td className="px-3 py-2 text-right whitespace-nowrap">
+                    <span className="text-court-light text-sm font-medium">
+                      {match.team_home?.name ?? <span className="opacity-40 italic">TBD</span>}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2 w-px whitespace-nowrap">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={homeVal}
+                      onChange={e => setScore(match.id, 'home', e.target.value.replace(/\D/g, ''))}
+                      onBlur={() => saveScore(match)}
+                      disabled={isSaving}
+                      className="input py-1 px-1 w-12 text-center text-sm"
+                      placeholder="–"
+                    />
+                  </td>
+                  <td className="px-3 py-2 w-px whitespace-nowrap">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={awayVal}
+                      onChange={e => setScore(match.id, 'away', e.target.value.replace(/\D/g, ''))}
+                      onBlur={() => saveScore(match)}
+                      disabled={isSaving}
+                      className="input py-1 px-1 w-12 text-center text-sm"
+                      placeholder="–"
+                    />
+                  </td>
+                  <td className="px-3 py-2 whitespace-nowrap">
+                    <span className="text-court-light text-sm font-medium">
+                      {match.team_away?.name ?? <span className="opacity-40 italic">TBD</span>}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2 w-px whitespace-nowrap text-center">
+                    {match.status === 'scheduled' && (
+                      <span className="text-xs px-2 py-0.5 font-display uppercase tracking-wide border border-court-border text-court-muted whitespace-nowrap">
+                        Da giocare
+                      </span>
+                    )}
+                    {match.status === 'in_progress' && (
+                      <span className="text-xs px-2 py-0.5 font-display uppercase tracking-wide border border-red-500/40 bg-red-500/10 text-red-400 inline-flex items-center gap-1.5 whitespace-nowrap">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse shrink-0" />
+                        Live
+                      </span>
+                    )}
+                    {match.status === 'completed' && (
+                      <span className="text-xs px-2 py-0.5 font-display uppercase tracking-wide border border-green-500/40 bg-green-500/10 text-green-400 whitespace-nowrap">
+                        Terminata
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2 w-px whitespace-nowrap">
+                    <button
+                      onClick={() => cycleStatus(match)}
+                      disabled={isSaving}
+                      className="btn-ghost py-1 px-3 text-xs justify-center"
+                    >
+                      {isSaving ? '…' : actionLabel}
+                    </button>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }

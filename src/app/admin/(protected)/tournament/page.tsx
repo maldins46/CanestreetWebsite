@@ -40,7 +40,7 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
     : editions.find(e => e.is_current)
   if (!activeEdition && editions.length > 0) activeEdition = editions[0]
 
-  const tab = sp.mode ?? 'gironi'
+  const tab = sp.mode ?? 'calendario'
   const category = (sp.category as TeamCategory) ?? 'open_m'
 
   let groups: GroupWithTeams[] = []
@@ -99,7 +99,7 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
                 <EditionSwitcher editions={editions} currentEditionId={activeEdition.id} />
               </Suspense>
               <Suspense>
-                <ModeToggle modes={TOURNAMENT_MODES} defaultMode="gironi" />
+                <ModeToggle modes={TOURNAMENT_MODES} defaultMode="calendario" />
               </Suspense>
             </div>
           )}

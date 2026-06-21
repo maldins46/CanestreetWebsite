@@ -94,35 +94,52 @@ export default function TpcCheckinView({ contest, editionId, category, search = 
           </button>
         </div>
 
-        {filtered.length === 0 && (
-          <p className="text-court-muted text-sm px-4 py-3">
-            {search ? 'Nessun giocatore trovato.' : 'Nessun giocatore aggiunto.'}
-          </p>
-        )}
-        {filtered.map(p => (
-          <div key={p.id} className={clsx('flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 px-4 py-2.5 border-b border-court-border last:border-b-0', paymentState[p.id] && 'opacity-60')}>
-            <span className="flex-1 text-court-white text-sm min-w-0 truncate">{p.name}</span>
-            <div className="flex items-center gap-3 sm:ml-auto shrink-0">
-              <label className="flex items-center gap-1.5 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={paymentState[p.id] ?? false}
-                  onChange={() => togglePayment(p.id)}
-                  className="accent-brand-orange w-3.5 h-3.5 cursor-pointer"
-                />
-                <span className="text-xs text-court-muted font-display uppercase tracking-wide">Pagamento</span>
-              </label>
-              <button
-                onClick={() => deletePlayer(p.id)}
-                disabled={saving}
-                className="text-court-muted hover:text-red-400 transition-colors disabled:opacity-40"
-                title="Elimina"
-              >
-                <Trash2 size={13} />
-              </button>
-            </div>
-          </div>
-        ))}
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            {filtered.length > 0 && (
+              <thead>
+                <tr className="border-b border-court-border">
+                  <th className="font-display uppercase tracking-wide text-xs text-court-muted text-left px-3 py-2 whitespace-nowrap">Giocatore</th>
+                  <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">Pagamento</th>
+                  <th className="w-px" />
+                </tr>
+              </thead>
+            )}
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr>
+                  <td className="px-4 py-3 text-court-muted text-sm">
+                    {search ? 'Nessun giocatore trovato.' : 'Nessun giocatore aggiunto.'}
+                  </td>
+                </tr>
+              ) : filtered.map(p => (
+                <tr key={p.id} className={clsx('border-b border-court-border last:border-b-0', paymentState[p.id] && 'opacity-60')}>
+                  <td className="px-3 py-2.5 whitespace-nowrap">
+                    <span className="text-court-white text-sm">{p.name}</span>
+                  </td>
+                  <td className="px-3 py-2.5 w-px text-center whitespace-nowrap">
+                    <input
+                      type="checkbox"
+                      checked={paymentState[p.id] ?? false}
+                      onChange={() => togglePayment(p.id)}
+                      className="accent-brand-orange w-3.5 h-3.5 cursor-pointer"
+                    />
+                  </td>
+                  <td className="px-3 py-2.5 w-px whitespace-nowrap">
+                    <button
+                      onClick={() => deletePlayer(p.id)}
+                      disabled={saving}
+                      className="text-court-muted hover:text-red-400 transition-colors disabled:opacity-40"
+                      title="Elimina"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   )
