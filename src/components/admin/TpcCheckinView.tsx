@@ -2,6 +2,7 @@
 import { useState, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Trash2 } from 'lucide-react'
+import clsx from 'clsx'
 import { createClient } from '@/lib/supabase/client'
 import type { TpcCategory, TpcContestFull } from '@/types'
 
@@ -99,25 +100,27 @@ export default function TpcCheckinView({ contest, editionId, category, search = 
           </p>
         )}
         {filtered.map(p => (
-          <div key={p.id} className="flex items-center gap-3 px-4 py-2.5 border-b border-court-border last:border-b-0">
-            <span className="flex-1 text-court-white text-sm">{p.name}</span>
-            <label className="flex items-center gap-1.5 cursor-pointer select-none shrink-0">
-              <input
-                type="checkbox"
-                checked={paymentState[p.id] ?? false}
-                onChange={() => togglePayment(p.id)}
-                className="accent-brand-orange w-3.5 h-3.5 cursor-pointer"
-              />
-              <span className="text-xs text-court-muted font-display uppercase tracking-wide">Pagamento</span>
-            </label>
-            <button
-              onClick={() => deletePlayer(p.id)}
-              disabled={saving}
-              className="text-court-muted hover:text-red-400 transition-colors disabled:opacity-40 shrink-0"
-              title="Elimina"
-            >
-              <Trash2 size={13} />
-            </button>
+          <div key={p.id} className={clsx('flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 px-4 py-2.5 border-b border-court-border last:border-b-0', paymentState[p.id] && 'opacity-60')}>
+            <span className="flex-1 text-court-white text-sm min-w-0 truncate">{p.name}</span>
+            <div className="flex items-center gap-3 sm:ml-auto shrink-0">
+              <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={paymentState[p.id] ?? false}
+                  onChange={() => togglePayment(p.id)}
+                  className="accent-brand-orange w-3.5 h-3.5 cursor-pointer"
+                />
+                <span className="text-xs text-court-muted font-display uppercase tracking-wide">Pagamento</span>
+              </label>
+              <button
+                onClick={() => deletePlayer(p.id)}
+                disabled={saving}
+                className="text-court-muted hover:text-red-400 transition-colors disabled:opacity-40"
+                title="Elimina"
+              >
+                <Trash2 size={13} />
+              </button>
+            </div>
           </div>
         ))}
       </div>

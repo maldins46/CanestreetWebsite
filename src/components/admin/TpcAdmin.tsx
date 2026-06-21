@@ -218,7 +218,6 @@ function RoundCard({ round, contest, prevRound, expanded, onToggle, onDelete }: 
   const supabase = createClient()
   const router = useRouter()
   const [saving, setSaving] = useState(false)
-  const [selectedPlayerId, setSelectedPlayerId] = useState('')
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -230,16 +229,17 @@ function RoundCard({ round, contest, prevRound, expanded, onToggle, onDelete }: 
   const sortedEntries = [...round.tpc_entries].sort((a, b) => a.sort_order - b.sort_order)
   const entryPlayerIds = new Set(round.tpc_entries.map(e => e.player_id))
 
-  async function addEntry() {
-    if (!selectedPlayerId) return
+  async function addAllPlayers() {
+    const missing = contest.tpc_players.filter(p => !entryPlayerIds.has(p.id))
+    if (missing.length === 0) return
     setSaving(true)
-    const nextOrder = round.tpc_entries.length
-    await supabase.from('tpc_entries').insert({
-      round_id: round.id,
-      player_id: selectedPlayerId,
-      sort_order: nextOrder,
-    })
-    setSelectedPlayerId('')
+    await supabase.from('tpc_entries').insert(
+      missing.map((p, i) => ({
+        round_id: round.id,
+        player_id: p.id,
+        sort_order: round.tpc_entries.length + i,
+      }))
+    )
     router.refresh()
     setSaving(false)
   }
@@ -330,13 +330,31 @@ function RoundCard({ round, contest, prevRound, expanded, onToggle, onDelete }: 
   return (
     <div className="card overflow-hidden">
       {/* Round header */}
-      <div className="flex items-center justify-between px-4 py-3 cursor-pointer select-none" onClick={onToggle}>
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-display uppercase tracking-widest text-court-muted">#{round.round_number}</span>
-          <span className="font-display font-bold uppercase text-court-white text-sm">{round.name}</span>
-          <span className="text-xs text-court-gray">{round.tpc_entries.length} iscritti</span>
-        </div>
-        <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+      <div className="flex items-center px-4 py-3 gap-3 flex-wrap" onClick={onToggle}>
+        <span className="text-xs font-display uppercase tracking-widest text-court-muted cursor-pointer select-none">#{round.round_number}</span>
+        <span className="font-display font-bold uppercase text-court-white text-sm cursor-pointer select-none">{round.name}</span>
+        <span className="text-xs text-court-gray cursor-pointer select-none">{round.tpc_entries.length} iscritti</span>
+        <div className="flex items-center gap-2 ml-auto" onClick={e => e.stopPropagation()}>
+          {!prevRound && (
+            <button
+              className="btn-ghost text-sm px-3 py-1"
+              onClick={addAllPlayers}
+              disabled={saving || entryPlayerIds.size === contest.tpc_players.length}
+              title="Aggiunge tutti i giocatori mancanti"
+            >
+              Aggiungi nuovi iscritti
+            </button>
+          )}
+          {prevRound && (
+            <button
+              className="btn-ghost text-sm px-3 py-1"
+              onClick={advanceQualified}
+              disabled={saving}
+              title="Copia qualificati dal turno precedente"
+            >
+              Avanza qualificati
+            </button>
+          )}
           <button
             onClick={onDelete}
             className="text-court-muted hover:text-red-400 transition-colors p-1"
@@ -344,7 +362,7 @@ function RoundCard({ round, contest, prevRound, expanded, onToggle, onDelete }: 
           >
             <Trash2 size={13} />
           </button>
-          <button className="text-court-gray p-1">
+          <button className="text-court-gray p-1" onClick={onToggle}>
             {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </button>
         </div>
@@ -352,44 +370,9 @@ function RoundCard({ round, contest, prevRound, expanded, onToggle, onDelete }: 
 
       {/* Expanded content */}
       {expanded && (
-        <div className="border-t border-court-border px-4 pb-4 pt-3 space-y-4">
-          {/* Actions */}
-          <div className="flex flex-wrap gap-2 items-center">
-            <select
-              className="input text-sm py-1.5 w-48"
-              value={selectedPlayerId}
-              onChange={e => setSelectedPlayerId(e.target.value)}
-            >
-              <option value="">— Aggiungi giocatore —</option>
-              {contest.tpc_players.map(p => (
-                <option key={p.id} value={p.id} disabled={entryPlayerIds.has(p.id)}>
-                  {p.name}{entryPlayerIds.has(p.id) ? ' ✓' : ''}
-                </option>
-              ))}
-            </select>
-            <button
-              className="btn-primary text-sm px-3 py-1.5"
-              onClick={addEntry}
-              disabled={saving || !selectedPlayerId}
-            >
-              <Plus size={13} className="inline mr-1" />
-              Aggiungi
-            </button>
-            {prevRound && (
-              <button
-                className="btn-ghost text-sm px-3 py-1.5"
-                onClick={advanceQualified}
-                disabled={saving}
-                title="Copia qualificati dal turno precedente"
-              >
-                Avanza qualificati
-              </button>
-            )}
-          </div>
-
-          {/* Entries table */}
+        <div className="border-t border-court-border">
           {sortedEntries.length === 0 ? (
-            <p className="text-court-muted text-sm">Nessun partecipante in questo turno.</p>
+            <p className="text-court-muted text-sm px-4 py-3">Nessun partecipante in questo turno.</p>
           ) : (
             <DndContext
               sensors={sensors}
@@ -400,18 +383,16 @@ function RoundCard({ round, contest, prevRound, expanded, onToggle, onDelete }: 
                 items={sortedEntries.map(e => e.id)}
                 strategy={verticalListSortingStrategy}
               >
-                <div className="space-y-1">
-                  {sortedEntries.map(entry => (
-                    <SortableEntryRow
-                      key={entry.id}
-                      entry={entry}
-                      onUpdateScore={updateScore}
-                      onToggleQualified={toggleQualified}
-                      onSetLive={setLive}
-                      onDelete={deleteEntry}
-                    />
-                  ))}
-                </div>
+                {sortedEntries.map(entry => (
+                  <SortableEntryRow
+                    key={entry.id}
+                    entry={entry}
+                    onUpdateScore={updateScore}
+                    onToggleQualified={toggleQualified}
+                    onSetLive={setLive}
+                    onDelete={deleteEntry}
+                  />
+                ))}
               </SortableContext>
             </DndContext>
           )}
@@ -454,75 +435,84 @@ function SortableEntryRow({ entry, onUpdateScore, onToggleQualified, onSetLive, 
       ref={setNodeRef}
       style={style}
       className={clsx(
-        'flex items-center gap-3 px-3 py-2 rounded bg-court-dark border border-court-border',
-        'transition-colors',
-        isDragging && 'opacity-50 border-brand-orange',
+        'flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 px-4 py-2.5 border-b border-court-border last:border-b-0 transition-colors',
+        isDragging && 'opacity-50 bg-brand-orange/10',
         entry.is_live && 'bg-red-500/10',
         entry.is_qualified && !entry.is_live && 'bg-brand-orange/5',
       )}
     >
-      {/* Drag handle */}
-      <button
-        className="cursor-grab active:cursor-grabbing text-court-muted hover:text-court-white"
-        {...attributes}
-        {...listeners}
-      >
-        <GripVertical size={16} />
-      </button>
+      {/* First line: drag handle + position + name */}
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        <button
+          className="cursor-grab active:cursor-grabbing text-court-muted hover:text-court-white shrink-0"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical size={16} />
+        </button>
+        <span className="text-xs text-court-muted w-6 text-center shrink-0">{entry.sort_order + 1}</span>
+        <span className="text-court-white font-medium min-w-0 truncate">
+          {entry.tpc_players.name}
+          {entry.is_live && (
+            <span className="ml-2 inline-flex items-center gap-1 text-xs text-red-400 font-display uppercase tracking-wide">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse inline-block" />
+              LIVE
+            </span>
+          )}
+        </span>
+      </div>
 
-      {/* Position number */}
-      <span className="text-xs text-court-muted w-6 text-center">{entry.sort_order + 1}</span>
+      {/* Second line (mobile) / right side (desktop): controls */}
+      <div className="flex items-center gap-3 sm:ml-auto shrink-0">
+        {/* Score */}
+        <div className="flex items-center gap-1.5">
+          <input
+            className="w-16 bg-transparent border border-court-border rounded px-2 py-0.5 text-sm text-court-white focus:border-brand-orange focus:outline-none text-center"
+            type="number"
+            min="0"
+            placeholder="—"
+            value={scoreVal}
+            onChange={e => setScoreVal(e.target.value)}
+            onBlur={() => onUpdateScore(entry.id, scoreVal)}
+          />
+          <span className="text-[10px] text-court-muted font-display uppercase tracking-wide">Punti</span>
+        </div>
 
-      {/* Name */}
-      <span className="flex-1 text-court-white font-medium">
-        {entry.tpc_players.name}
-        {entry.is_live && (
-          <span className="ml-2 inline-flex items-center gap-1 text-xs text-red-400 font-display uppercase tracking-wide">
-            <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse inline-block" />
-            LIVE
-          </span>
-        )}
-      </span>
+        {/* Live */}
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => onSetLive(entry.id, entry.is_live)}
+            title={entry.is_live ? 'Rimuovi live' : 'Imposta live'}
+            className={clsx(
+              'transition-colors',
+              entry.is_live ? 'text-red-400' : 'text-court-border hover:text-red-400'
+            )}
+          >
+            <Radio size={16} />
+          </button>
+          <span className="text-[10px] text-court-muted font-display uppercase tracking-wide">Live</span>
+        </div>
 
-      {/* Score */}
-      <input
-        className="w-16 bg-transparent border border-court-border rounded px-2 py-0.5 text-sm text-court-white focus:border-brand-orange focus:outline-none text-center"
-        type="number"
-        min="0"
-        placeholder="—"
-        value={scoreVal}
-        onChange={e => setScoreVal(e.target.value)}
-        onBlur={() => onUpdateScore(entry.id, scoreVal)}
-      />
+        {/* Qualified */}
+        <div className="flex items-center gap-1.5">
+          <input
+            type="checkbox"
+            checked={entry.is_qualified}
+            onChange={() => onToggleQualified(entry)}
+            className="w-4 h-4 accent-brand-orange cursor-pointer"
+          />
+          <span className="text-[10px] text-court-muted font-display uppercase tracking-wide">Qualif.</span>
+        </div>
 
-      {/* Qualified */}
-      <input
-        type="checkbox"
-        checked={entry.is_qualified}
-        onChange={() => onToggleQualified(entry)}
-        className="w-4 h-4 accent-brand-orange cursor-pointer"
-      />
-
-      {/* Live */}
-      <button
-        onClick={() => onSetLive(entry.id, entry.is_live)}
-        title={entry.is_live ? 'Rimuovi live' : 'Imposta live'}
-        className={clsx(
-          'transition-colors',
-          entry.is_live ? 'text-red-400' : 'text-court-border hover:text-red-400'
-        )}
-      >
-        <Radio size={16} />
-      </button>
-
-      {/* Delete */}
-      <button
-        onClick={() => onDelete(entry.id)}
-        className="text-court-muted hover:text-red-400 transition-colors"
-        title="Rimuovi dal turno"
-      >
-        <Trash2 size={13} />
-      </button>
+        {/* Delete */}
+        <button
+          onClick={() => onDelete(entry.id)}
+          className="text-court-muted hover:text-red-400 transition-colors"
+          title="Rimuovi dal turno"
+        >
+          <Trash2 size={13} />
+        </button>
+      </div>
     </div>
   )
 }
