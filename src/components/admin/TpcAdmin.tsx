@@ -165,7 +165,6 @@ function ContestManager({ contest }: { contest: TpcContestFull }) {
     <div className="space-y-8">
       {/* Rounds */}
       <section>
-        <h3 className="font-display uppercase tracking-wide text-sm text-court-gray mb-3">Turni</h3>
         <div className="space-y-3">
           {sortedRounds.map((round, idx) => (
             <RoundCard

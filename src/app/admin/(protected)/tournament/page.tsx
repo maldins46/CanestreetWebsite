@@ -1,21 +1,26 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import type { Edition, GroupWithTeams, MatchWithTeams, TeamCategory } from '@/types'
 import EditionSwitcher from '@/components/admin/EditionSwitcher'
+import ModeToggle from '@/components/admin/ModeToggle'
 import CategoryFilter from '@/components/admin/CategoryFilter'
 import TournamentGroups from '@/components/admin/TournamentGroups'
 import TournamentCalendar from '@/components/admin/TournamentCalendar'
 import TournamentBracket from '@/components/admin/TournamentBracket'
 import { Suspense } from 'react'
-import Link from 'next/link'
-import clsx from 'clsx'
 
 const categoryLabel: Record<TeamCategory, string> = {
   open_m: 'Open Maschile', open_f: 'Open Femminile',
   u14_m: 'U14 Maschile', u16_m: 'U16 Maschile', u18_m: 'U18 Maschile',
 }
 
+const TOURNAMENT_MODES = [
+  { value: 'gironi',     label: 'Gironi' },
+  { value: 'calendario', label: 'Calendario' },
+  { value: 'tabellone',  label: 'Tabellone Finals' },
+]
+
 interface Props {
-  searchParams: Promise<{ category?: string; edition?: string; tab?: string }>
+  searchParams: Promise<{ category?: string; edition?: string; mode?: string; search?: string }>
 }
 
 export default async function AdminTorneoPage({ searchParams }: Props) {
@@ -35,12 +40,12 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
     : editions.find(e => e.is_current)
   if (!activeEdition && editions.length > 0) activeEdition = editions[0]
 
-  const tab = sp.tab ?? 'gironi'
+  const tab = sp.mode ?? 'gironi'
   const category = (sp.category as TeamCategory) ?? 'open_m'
 
   let groups: GroupWithTeams[] = []
   let approvedTeams: { id: string; name: string; category: string }[] = []
-  let hasGroupMatches = false
+  let groupsWithMatches: string[] = []
   let matches: MatchWithTeams[] = []
 
   if (activeEdition) {
@@ -61,13 +66,13 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
       .order('name')
     approvedTeams = teams ?? []
 
-    const { count } = await supabase
+    const { data: groupMatchRows } = await supabase
       .from('matches')
-      .select('id', { count: 'exact', head: true })
+      .select('group_id')
       .eq('edition_id', activeEdition.id)
       .eq('category', category)
       .eq('phase', 'group')
-    hasGroupMatches = (count ?? 0) > 0
+    groupsWithMatches = [...new Set((groupMatchRows ?? []).map(r => r.group_id).filter(Boolean))]
 
     const { data: matchData } = await supabase
       .from('matches')
@@ -78,12 +83,6 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
       .returns<MatchWithTeams[]>()
     matches = matchData ?? []
   }
-
-  const tabs = [
-    { key: 'gironi', label: 'Gironi' },
-    { key: 'calendario', label: 'Calendario' },
-    { key: 'tabellone', label: 'Tabellone' },
-  ]
 
   // Suppress unused variable warning — categoryLabel is available for future use
   void categoryLabel
@@ -99,6 +98,9 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
               <Suspense>
                 <EditionSwitcher editions={editions} currentEditionId={activeEdition.id} />
               </Suspense>
+              <Suspense>
+                <ModeToggle modes={TOURNAMENT_MODES} defaultMode="gironi" />
+              </Suspense>
             </div>
           )}
         </div>
@@ -107,30 +109,11 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
       {/* Category filter */}
       <div className="mb-4">
         <Suspense>
-          <CategoryFilter />
+          <CategoryFilter
+            showSearch={tab === 'calendario'}
+            searchPlaceholder="Cerca squadra, girone o turno…"
+          />
         </Suspense>
-      </div>
-
-      {/* Tab switcher */}
-      <div className="flex gap-0 border-b border-court-border mb-6">
-        {tabs.map(t => (
-          <Link
-            key={t.key}
-            href={`/admin/tournament?${new URLSearchParams({
-              ...(sp.edition ? { edition: sp.edition } : {}),
-              ...(sp.category ? { category: sp.category } : {}),
-              tab: t.key,
-            }).toString()}`}
-            className={clsx(
-              'px-5 py-2.5 font-display uppercase tracking-wide text-sm border-b-2 -mb-px transition-colors',
-              tab === t.key
-                ? 'border-brand-orange text-brand-orange'
-                : 'border-transparent text-court-gray hover:text-court-white'
-            )}
-          >
-            {t.label}
-          </Link>
-        ))}
       </div>
 
       {/* Tab content */}
@@ -144,13 +127,14 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
           category={category}
           groups={groups}
           approvedTeams={approvedTeams}
-          hasGroupMatches={hasGroupMatches}
+          groupsWithMatches={groupsWithMatches}
         />
       ) : tab === 'calendario' ? (
         <TournamentCalendar
           editionId={activeEdition.id}
           matches={matches}
           category={sp.category as TeamCategory | undefined}
+          search={sp.search}
         />
       ) : (
         <TournamentBracket

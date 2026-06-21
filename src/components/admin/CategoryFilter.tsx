@@ -13,7 +13,7 @@ const options: { value: TeamCategory | 'all'; label: string }[] = [
   { value: 'u18_m',  label: 'U18 M' },
 ]
 
-export default function CategoryFilter({ showSearch = false }: { showSearch?: boolean }) {
+export default function CategoryFilter({ showSearch = false, searchPlaceholder = 'Cerca squadra o giocatore…' }: { showSearch?: boolean; searchPlaceholder?: string }) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -92,7 +92,7 @@ export default function CategoryFilter({ showSearch = false }: { showSearch?: bo
               type="text"
               value={searchValue}
               onChange={e => setSearchValue(e.target.value)}
-              placeholder="Cerca squadra o giocatore…"
+              placeholder={searchPlaceholder}
               className="input pl-7 pr-3 py-1.5 text-xs w-52"
             />
           </div>
