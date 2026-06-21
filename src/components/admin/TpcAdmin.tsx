@@ -36,10 +36,8 @@ const CATEGORIES: { key: TpcCategory; label: string }[] = [
 ]
 
 export default function TpcAdmin({ editionId, contests, initialCategory = 'open' }: Props) {
-  const supabase = createClient()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [saving, setSaving] = useState(false)
 
   const activeCategory = (searchParams.get('category') as TpcCategory) ?? initialCategory
   const isCheckin = searchParams.get('mode') === 'checkin'
@@ -55,14 +53,6 @@ export default function TpcAdmin({ editionId, contests, initialCategory = 'open'
     }
     router.push(`?${params.toString()}`, { scroll: false })
   }, [router, searchParams])
-
-
-  async function createContest() {
-    setSaving(true)
-    await supabase.from('tpc_contests').insert({ edition_id: editionId, category: activeCategory })
-    router.refresh()
-    setSaving(false)
-  }
 
   return (
     <div>
@@ -97,16 +87,8 @@ export default function TpcAdmin({ editionId, contests, initialCategory = 'open'
 
       {isCheckin ? (
         <TpcCheckinView contest={contest} editionId={editionId} category={activeCategory} search={search} />
-      ) : !contest ? (
-        <div className="card p-10 text-center">
-          <p className="text-court-gray mb-4">Nessuna gara creata per questa categoria.</p>
-          <button className="btn-primary text-sm px-6 py-2" onClick={createContest} disabled={saving}>
-            <Plus size={14} className="inline mr-1" />
-            Crea Gara
-          </button>
-        </div>
       ) : (
-        <ContestManager contest={contest} />
+        <ContestManager contest={contest} editionId={editionId} category={activeCategory} />
       )}
     </div>
   )
@@ -115,7 +97,7 @@ export default function TpcAdmin({ editionId, contests, initialCategory = 'open'
 // ─────────────────────────────────────────────────────────────────
 // Contest manager: players + rounds
 // ─────────────────────────────────────────────────────────────────
-function ContestManager({ contest }: { contest: TpcContestFull }) {
+function ContestManager({ contest, editionId, category }: { contest: TpcContestFull | null; editionId: string; category: TpcCategory }) {
   const supabase = createClient()
   const router = useRouter()
   const [saving, setSaving] = useState(false)
@@ -124,7 +106,7 @@ function ContestManager({ contest }: { contest: TpcContestFull }) {
   const prevContestIdRef = useRef<string | null>(null)
 
   useEffect(() => {
-    if (prevContestIdRef.current !== contest.id) {
+    if (contest && prevContestIdRef.current !== contest.id) {
       prevContestIdRef.current = contest.id
       setExpandedRounds(new Set(contest.tpc_rounds.map(r => r.id)))
     }
@@ -134,10 +116,20 @@ function ContestManager({ contest }: { contest: TpcContestFull }) {
     const name = newRoundName.trim()
     if (!name) return
     setSaving(true)
-    const nextNumber = (contest.tpc_rounds.length > 0
-      ? Math.max(...contest.tpc_rounds.map(r => r.round_number)) + 1
-      : 1)
-    await supabase.from('tpc_rounds').insert({ contest_id: contest.id, round_number: nextNumber, name })
+
+    let contestId = contest?.id ?? null
+    if (!contestId) {
+      const { data } = await supabase
+        .from('tpc_contests')
+        .insert({ edition_id: editionId, category })
+        .select('id')
+        .single()
+      contestId = data?.id ?? null
+    }
+    if (!contestId) { setSaving(false); return }
+
+    const nextNumber = contest ? Math.max(...contest.tpc_rounds.map(r => r.round_number), 0) + 1 : 1
+    await supabase.from('tpc_rounds').insert({ contest_id: contestId, round_number: nextNumber, name })
     setNewRoundName('')
     router.refresh()
     setSaving(false)
@@ -159,7 +151,7 @@ function ContestManager({ contest }: { contest: TpcContestFull }) {
     })
   }
 
-  const sortedRounds = [...contest.tpc_rounds].sort((a, b) => a.round_number - b.round_number)
+  const sortedRounds = [...(contest?.tpc_rounds ?? [])].sort((a, b) => a.round_number - b.round_number)
 
   return (
     <div className="space-y-3">
@@ -185,7 +177,7 @@ function ContestManager({ contest }: { contest: TpcContestFull }) {
         <RoundCard
           key={round.id}
           round={round}
-          contest={contest}
+          contest={contest!}
           prevRound={idx > 0 ? sortedRounds[idx - 1] : null}
           expanded={expandedRounds.has(round.id)}
           onToggle={() => toggleRound(round.id)}
@@ -290,13 +282,6 @@ function RoundCard({ round, contest, prevRound, expanded, onToggle, onDelete }: 
     )
     router.refresh()
     setSaving(false)
-  }
-
-  async function updateSortOrder(entryId: string, value: string) {
-    const order = parseInt(value, 10)
-    if (isNaN(order)) return
-    await supabase.from('tpc_entries').update({ sort_order: order }).eq('id', entryId)
-    router.refresh()
   }
 
   async function advanceQualified() {
