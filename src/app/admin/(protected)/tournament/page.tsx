@@ -14,8 +14,8 @@ const categoryLabel: Record<TeamCategory, string> = {
 }
 
 const TOURNAMENT_MODES = [
-  { value: 'gironi',     label: 'Gironi' },
   { value: 'calendario', label: 'Calendario' },
+  { value: 'gironi',     label: 'Gironi' },
   { value: 'tabellone',  label: 'Tabellone Finals' },
 ]
 
@@ -112,6 +112,7 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
           <CategoryFilter
             showSearch={tab === 'calendario'}
             searchPlaceholder="Cerca squadra, girone o turno…"
+            hideAll={tab !== 'calendario'}
           />
         </Suspense>
       </div>

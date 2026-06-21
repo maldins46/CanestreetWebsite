@@ -13,7 +13,7 @@ const options: { value: TeamCategory | 'all'; label: string }[] = [
   { value: 'u18_m',  label: 'U18 M' },
 ]
 
-export default function CategoryFilter({ showSearch = false, searchPlaceholder = 'Cerca squadra o giocatore…' }: { showSearch?: boolean; searchPlaceholder?: string }) {
+export default function CategoryFilter({ showSearch = false, searchPlaceholder = 'Cerca squadra o giocatore…', hideAll = false }: { showSearch?: boolean; searchPlaceholder?: string; hideAll?: boolean }) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -53,7 +53,7 @@ export default function CategoryFilter({ showSearch = false, searchPlaceholder =
 
   return (
     <div className="flex gap-2 flex-wrap items-center">
-      {options.map(opt => (
+      {options.filter(opt => !(hideAll && opt.value === 'all')).map(opt => (
         <button
           key={opt.value}
           onClick={() => selectCategory(opt.value)}
