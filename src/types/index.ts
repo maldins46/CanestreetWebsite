@@ -76,6 +76,9 @@ export interface Player {
   is_captain: boolean
   is_vice_captain: boolean
   sort_order: number
+  checkin_payment: boolean
+  checkin_kit: boolean
+  checkin_buono_pasto: boolean
   created_at: string
 }
 
