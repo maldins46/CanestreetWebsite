@@ -32,25 +32,25 @@ export function StandingsTable({ groupName, standings, qualifyCount = 2 }: Stand
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-court-border">
-                <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center w-8 px-3 py-2">
+                <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center w-px px-3 py-2 whitespace-nowrap">
                   #
                 </th>
-                <th className="font-display uppercase tracking-wide text-xs text-court-muted text-left px-3 py-2">
+                <th className="font-display uppercase tracking-wide text-xs text-court-muted text-left px-3 py-2 whitespace-nowrap">
                   Squadra
                 </th>
-                <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2">
+                <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">
                   V
                 </th>
-                <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2">
+                <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">
                   S
                 </th>
-                <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 hidden sm:table-cell">
+                <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">
                   PF
                 </th>
-                <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 hidden sm:table-cell">
+                <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">
                   PS
                 </th>
-                <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2">
+                <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">
                   +/-
                 </th>
               </tr>
@@ -66,7 +66,7 @@ export function StandingsTable({ groupName, standings, qualifyCount = 2 }: Stand
                       isQualifier ? 'bg-brand-orange/10' : 'hover:bg-white/[0.02]',
                     )}
                   >
-                    <td className="text-center px-3 py-2.5 w-8">
+                    <td className="text-center px-3 py-2.5 w-px whitespace-nowrap">
                       <span
                         className={clsx(
                           'font-display font-bold text-xs',
@@ -76,22 +76,22 @@ export function StandingsTable({ groupName, standings, qualifyCount = 2 }: Stand
                         {index + 1}
                       </span>
                     </td>
-                    <td className="text-left px-3 py-2.5">
+                    <td className="text-left px-3 py-2.5 whitespace-nowrap">
                       <span className="font-body text-court-white text-sm">{row.team_name}</span>
                     </td>
-                    <td className="text-center px-3 py-2.5">
+                    <td className="text-center px-3 py-2.5 w-px whitespace-nowrap">
                       <span className="font-body font-semibold text-court-white">{row.wins}</span>
                     </td>
-                    <td className="text-center px-3 py-2.5">
+                    <td className="text-center px-3 py-2.5 w-px whitespace-nowrap">
                       <span className="font-body text-court-gray">{row.losses}</span>
                     </td>
-                    <td className="text-center px-3 py-2.5 hidden sm:table-cell">
+                    <td className="text-center px-3 py-2.5 w-px whitespace-nowrap">
                       <span className="font-body text-court-gray">{row.points_for}</span>
                     </td>
-                    <td className="text-center px-3 py-2.5 hidden sm:table-cell">
+                    <td className="text-center px-3 py-2.5 w-px whitespace-nowrap">
                       <span className="font-body text-court-gray">{row.points_against}</span>
                     </td>
-                    <td className="text-center px-3 py-2.5">
+                    <td className="text-center px-3 py-2.5 w-px whitespace-nowrap">
                       <span
                         className={clsx(
                           'font-body font-semibold text-sm',
@@ -164,7 +164,7 @@ export default function StandingsSection({ groups, matches }: StandingsSectionPr
             key={cat}
             onClick={() => setSelectedCat(cat)}
             className={clsx(
-              'px-4 py-1.5 rounded-full font-display uppercase tracking-wide text-xs border transition-colors',
+              'px-4 py-1.5 font-display uppercase tracking-wide text-xs border transition-colors',
               selectedCat === cat
                 ? 'bg-brand-orange border-brand-orange text-white'
                 : 'border-court-border text-court-muted hover:border-court-muted hover:text-court-white',

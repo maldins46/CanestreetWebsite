@@ -101,7 +101,7 @@ export default function TournamentCalendar({ editionId, matches, category, searc
   }
 
   function getPhaseLabel(match: MatchWithTeams) {
-    if (match.phase === 'group' && match.group) return `Gir. ${match.group.name}`
+    if (match.phase === 'group' && match.group) return `Girone ${match.group.name}`
     if (match.phase === 'bracket' && match.bracket_round) return roundLabels[match.bracket_round] ?? match.bracket_round
     return ''
   }

@@ -330,7 +330,7 @@ export default function BracketSection({ matches }: BracketSectionProps) {
             key={cat}
             onClick={() => setSelectedCat(cat)}
             className={clsx(
-              'px-4 py-1.5 rounded-full font-display uppercase tracking-wide text-xs border transition-colors',
+              'px-4 py-1.5 font-display uppercase tracking-wide text-xs border transition-colors',
               selectedCat === cat
                 ? 'bg-brand-orange border-brand-orange text-white'
                 : 'border-court-border text-court-muted hover:border-court-muted hover:text-court-white',

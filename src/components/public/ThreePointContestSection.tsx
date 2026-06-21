@@ -40,7 +40,7 @@ export default function ThreePointContestSection({ contests }: Props) {
             key={cat.key}
             onClick={() => setActiveCategory(cat.key)}
             className={clsx(
-              'px-4 py-1.5 rounded-full font-display uppercase tracking-wide text-xs border transition-colors',
+              'px-4 py-1.5 font-display uppercase tracking-wide text-xs border transition-colors',
               activeCategory === cat.key
                 ? 'bg-brand-orange border-brand-orange text-white'
                 : 'border-court-border text-court-muted hover:border-court-muted hover:text-court-white'
@@ -77,26 +77,23 @@ function RoundCard({ round }: { round: TpcRoundWithEntries }) {
 
   return (
     <div className="card overflow-hidden">
-      <div className="px-4 py-4">
-        <span className="font-display font-bold uppercase tracking-wide text-lg text-court-white">
+      <div className="px-4 py-3 border-b border-court-border bg-court-dark">
+        <span className="font-display font-bold uppercase tracking-wide text-sm text-court-white">
           {round.name}
         </span>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="sticky top-0 z-10 bg-court-dark shadow-[0_1px_0_0_#444]">
-            <tr>
-              <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center w-8 px-3 py-2">
+          <thead>
+            <tr className="border-b border-court-border">
+              <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center w-px px-3 py-2 whitespace-nowrap">
                 #
               </th>
-              <th className="font-display uppercase tracking-wide text-xs text-court-muted text-left px-3 py-2">
+              <th className="font-display uppercase tracking-wide text-xs text-court-muted text-left px-3 py-2 whitespace-nowrap">
                 Giocatore
               </th>
-              <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2">
+              <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center w-px px-3 py-2 whitespace-nowrap">
                 Punti
-              </th>
-              <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2">
-                Stato
               </th>
             </tr>
           </thead>
@@ -105,12 +102,12 @@ function RoundCard({ round }: { round: TpcRoundWithEntries }) {
               <tr
                 key={entry.id}
                 className={clsx(
-                  'transition-colors hover:bg-white/[0.02]',
+                  'border-b border-court-border last:border-b-0 transition-colors hover:bg-white/[0.02]',
                   entry.is_live && 'bg-red-500/5',
                   entry.is_qualified && !entry.is_live && 'bg-brand-orange/10',
                 )}
               >
-                <td className="text-center px-3 py-2.5 w-8">
+                <td className="text-center px-3 py-2.5 w-px whitespace-nowrap">
                   <span
                     className={clsx(
                       'font-display font-bold text-xs',
@@ -120,9 +117,14 @@ function RoundCard({ round }: { round: TpcRoundWithEntries }) {
                     {idx + 1}
                   </span>
                 </td>
-                <td className="text-left px-3 py-2.5">
+                <td className="text-left px-3 py-2.5 whitespace-nowrap">
                   <span className="font-body text-court-white text-sm flex items-center gap-2">
                     {entry.tpc_players.name}
+                    {entry.is_qualified && (
+                      <span className="text-xs text-brand-orange font-display uppercase tracking-wide shrink-0">
+                        Qualificato
+                      </span>
+                    )}
                     {entry.is_live && (
                       <span className="inline-flex items-center gap-1 text-xs text-red-400 font-display uppercase tracking-wide">
                         <span className="w-1.5 h-1.5 bg-red-400 rounded-full animate-pulse shrink-0" />
@@ -131,21 +133,12 @@ function RoundCard({ round }: { round: TpcRoundWithEntries }) {
                     )}
                   </span>
                 </td>
-                <td className="text-center px-3 py-2.5">
+                <td className="text-center px-3 py-2.5 w-px whitespace-nowrap">
                   {entry.score !== null ? (
                     <span className="font-body font-semibold text-court-white">{entry.score}</span>
                   ) : (
                     <span className="text-court-muted">—</span>
                   )}
-                </td>
-                <td className="text-center px-3 py-2.5">
-                  {entry.is_qualified ? (
-                    <span className="inline-block px-2 py-0.5 rounded text-xs font-display uppercase tracking-wide bg-brand-orange/20 text-brand-orange border border-brand-orange/30">
-                      Qualificato
-                    </span>
-                  ) : entry.score !== null ? (
-                    <span className="text-court-muted text-xs">—</span>
-                  ) : null}
                 </td>
               </tr>
             ))}
