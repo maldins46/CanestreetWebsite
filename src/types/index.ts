@@ -234,6 +234,7 @@ export interface TpcPlayer {
   id: string
   contest_id: string
   name: string
+  checkin_payment: boolean
   created_at: string
 }
 

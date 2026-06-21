@@ -1,11 +1,12 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import type { Edition, TpcContestFull } from '@/types'
 import EditionSwitcher from '@/components/admin/EditionSwitcher'
+import ModeToggle from '@/components/admin/ModeToggle'
 import TpcAdmin from '@/components/admin/TpcAdmin'
 import { Suspense } from 'react'
 
 interface Props {
-  searchParams: Promise<{ category?: string; edition?: string }>
+  searchParams: Promise<{ category?: string; edition?: string; mode?: string }>
 }
 
 export default async function ThreePointContestPage({ searchParams }: Props) {
@@ -46,6 +47,12 @@ export default async function ThreePointContestPage({ searchParams }: Props) {
             <div className="flex items-center gap-3 mt-2 flex-wrap">
               <Suspense>
                 <EditionSwitcher editions={editions} currentEditionId={activeEdition.id} />
+              </Suspense>
+              <Suspense>
+                <ModeToggle
+                  modes={[{ value: 'turni', label: 'Turni' }, { value: 'checkin', label: 'Check-in' }]}
+                  defaultMode="turni"
+                />
               </Suspense>
             </div>
           )}

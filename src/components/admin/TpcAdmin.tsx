@@ -1,10 +1,11 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Plus, Trash2, ChevronDown, ChevronUp, Radio, GripVertical } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronUp, Radio, GripVertical, Search } from 'lucide-react'
 import clsx from 'clsx'
 import { createClient } from '@/lib/supabase/client'
 import type { TpcCategory, TpcContestFull, TpcEntryWithPlayer, TpcRoundWithEntries } from '@/types'
+import TpcCheckinView from '@/components/admin/TpcCheckinView'
 import {
   DndContext,
   closestCenter,
@@ -41,7 +42,9 @@ export default function TpcAdmin({ editionId, contests, initialCategory = 'open'
   const [saving, setSaving] = useState(false)
 
   const activeCategory = (searchParams.get('category') as TpcCategory) ?? initialCategory
+  const isCheckin = searchParams.get('mode') === 'checkin'
   const contest = contests.find(c => c.category === activeCategory) ?? null
+  const [search, setSearch] = useState('')
 
   const setActiveCategory = useCallback((cat: TpcCategory) => {
     const params = new URLSearchParams(searchParams.toString())
@@ -53,6 +56,7 @@ export default function TpcAdmin({ editionId, contests, initialCategory = 'open'
     router.push(`?${params.toString()}`, { scroll: false })
   }, [router, searchParams])
 
+
   async function createContest() {
     setSaving(true)
     await supabase.from('tpc_contests').insert({ edition_id: editionId, category: activeCategory })
@@ -62,7 +66,7 @@ export default function TpcAdmin({ editionId, contests, initialCategory = 'open'
 
   return (
     <div>
-      <div className="flex gap-2 mb-6">
+      <div className="flex gap-2 mb-6 flex-wrap items-center">
         {CATEGORIES.map(cat => (
           <button
             key={cat.key}
@@ -77,9 +81,23 @@ export default function TpcAdmin({ editionId, contests, initialCategory = 'open'
             {cat.label}
           </button>
         ))}
+        {isCheckin && (
+          <div className="relative ml-auto">
+            <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-court-muted pointer-events-none" />
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Cerca giocatore…"
+              className="input pl-7 pr-3 py-1.5 text-xs w-52"
+            />
+          </div>
+        )}
       </div>
 
-      {!contest ? (
+      {isCheckin ? (
+        <TpcCheckinView contest={contest} editionId={editionId} category={activeCategory} search={search} />
+      ) : !contest ? (
         <div className="card p-10 text-center">
           <p className="text-court-gray mb-4">Nessuna gara creata per questa categoria.</p>
           <button className="btn-primary text-sm px-6 py-2" onClick={createContest} disabled={saving}>
@@ -101,7 +119,6 @@ function ContestManager({ contest }: { contest: TpcContestFull }) {
   const supabase = createClient()
   const router = useRouter()
   const [saving, setSaving] = useState(false)
-  const [newPlayerName, setNewPlayerName] = useState('')
   const [newRoundName, setNewRoundName] = useState('')
   const [expandedRounds, setExpandedRounds] = useState<Set<string>>(new Set())
   const prevContestIdRef = useRef<string | null>(null)
@@ -112,24 +129,6 @@ function ContestManager({ contest }: { contest: TpcContestFull }) {
       setExpandedRounds(new Set(contest.tpc_rounds.map(r => r.id)))
     }
   }, [contest])
-
-  async function addPlayer() {
-    const name = newPlayerName.trim()
-    if (!name) return
-    setSaving(true)
-    await supabase.from('tpc_players').insert({ contest_id: contest.id, name })
-    setNewPlayerName('')
-    router.refresh()
-    setSaving(false)
-  }
-
-  async function deletePlayer(playerId: string) {
-    if (!window.confirm('Eliminare questo giocatore? Verrà rimosso da tutti i turni.')) return
-    setSaving(true)
-    await supabase.from('tpc_players').delete().eq('id', playerId)
-    router.refresh()
-    setSaving(false)
-  }
 
   async function addRound() {
     const name = newRoundName.trim()
@@ -164,40 +163,6 @@ function ContestManager({ contest }: { contest: TpcContestFull }) {
 
   return (
     <div className="space-y-8">
-      {/* Players */}
-      <section>
-        <h3 className="font-display uppercase tracking-wide text-sm text-court-gray mb-3">Giocatori</h3>
-        <div className="card p-4 space-y-3">
-          {contest.tpc_players.length === 0 && (
-            <p className="text-court-muted text-sm">Nessun giocatore aggiunto.</p>
-          )}
-          {contest.tpc_players.map(p => (
-            <div key={p.id} className="flex items-center justify-between gap-3">
-              <span className="text-court-white text-sm">{p.name}</span>
-              <button
-                onClick={() => deletePlayer(p.id)}
-                className="text-court-muted hover:text-red-400 transition-colors"
-                title="Elimina"
-              >
-                <Trash2 size={13} />
-              </button>
-            </div>
-          ))}
-          <div className="flex gap-2 pt-1 border-t border-court-border">
-            <input
-              className="input text-sm py-1.5 flex-1"
-              placeholder="Nome giocatore"
-              value={newPlayerName}
-              onChange={e => setNewPlayerName(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && addPlayer()}
-            />
-            <button className="btn-primary text-sm px-4 py-1.5" onClick={addPlayer} disabled={saving || !newPlayerName.trim()}>
-              <Plus size={14} />
-            </button>
-          </div>
-        </div>
-      </section>
-
       {/* Rounds */}
       <section>
         <h3 className="font-display uppercase tracking-wide text-sm text-court-gray mb-3">Turni</h3>
