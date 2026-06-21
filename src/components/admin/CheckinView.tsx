@@ -49,9 +49,10 @@ function IndeterminateCheckbox({ checked, indeterminate, onChange, className }: 
 interface Props {
   teams: TeamWithPlayers[]
   search?: string
+  unpaidOnly?: boolean
 }
 
-export default function CheckinView({ teams, search }: Props) {
+export default function CheckinView({ teams, search, unpaidOnly = false }: Props) {
   const supabase = createClient()
 
   const [checkinState, setCheckinState] = useState<CheckinState>(() => {
@@ -126,14 +127,24 @@ export default function CheckinView({ teams, search }: Props) {
 
   const filtered = useMemo(() => teams
     .map(team => {
-      if (!q) return team
-      const teamMatch = team.name.toLowerCase().includes(q)
-      const filteredPlayers = team.players.filter(p => p.name.toLowerCase().includes(q))
-      if (!teamMatch && filteredPlayers.length === 0) return null
-      return { ...team, players: teamMatch ? team.players : filteredPlayers }
+      let players = team.players
+
+      if (unpaidOnly) {
+        players = players.filter(p => !checkinState[p.id]?.checkin_payment)
+      }
+
+      if (q) {
+        const teamMatch = team.name.toLowerCase().includes(q)
+        const matchedPlayers = players.filter(p => p.name.toLowerCase().includes(q))
+        if (!teamMatch && matchedPlayers.length === 0) return null
+        players = teamMatch ? players : matchedPlayers
+      }
+
+      if (players.length === 0) return null
+      return { ...team, players }
     })
     .filter((t): t is TeamWithPlayers => t !== null),
-  [teams, q])
+  [teams, q, unpaidOnly, checkinState])
 
   if (filtered.length === 0) {
     return (

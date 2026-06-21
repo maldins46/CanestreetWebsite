@@ -25,7 +25,7 @@ const categoryLabel: Record<TeamCategory, string> = {
 }
 
 interface Props {
-  searchParams: Promise<{ category?: string; edition?: string; page?: string; mode?: string; search?: string }>
+  searchParams: Promise<{ category?: string; edition?: string; page?: string; mode?: string; search?: string; unpaid?: string }>
 }
 
 export default async function AdminTeamsPage({ searchParams }: Props) {
@@ -157,7 +157,7 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
       </div>
 
       {isCheckin ? (
-        <CheckinView teams={teams} search={sp.search} />
+        <CheckinView teams={teams} search={sp.search} unpaidOnly={sp.unpaid === '1'} />
       ) : (
         <>
           {!teams.length ? (
