@@ -13,7 +13,7 @@ const options: { value: TeamCategory | 'all'; label: string }[] = [
   { value: 'u18_m',  label: 'U18 M' },
 ]
 
-export default function CategoryFilter() {
+export default function CategoryFilter({ showSearch = false }: { showSearch?: boolean }) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -67,35 +67,37 @@ export default function CategoryFilter() {
         </button>
       ))}
 
-      <div className="ml-auto flex items-center gap-3">
-        {searchParams.get('mode') === 'checkin' && (
-          <label className="flex items-center gap-1.5 cursor-pointer select-none shrink-0">
+      {showSearch && (
+        <div className="ml-auto flex items-center gap-3">
+          {searchParams.get('mode') === 'checkin' && (
+            <label className="flex items-center gap-1.5 cursor-pointer select-none shrink-0">
+              <input
+                type="checkbox"
+                checked={searchParams.get('unpaid') === '1'}
+                onChange={e => {
+                  const params = new URLSearchParams(searchParams.toString())
+                  if (e.target.checked) params.set('unpaid', '1')
+                  else params.delete('unpaid')
+                  params.delete('page')
+                  router.push(`${pathname}?${params.toString()}`)
+                }}
+                className="accent-brand-orange w-3.5 h-3.5 cursor-pointer"
+              />
+              <span className="text-xs text-court-muted font-display uppercase tracking-wide">Non pagati</span>
+            </label>
+          )}
+          <div className="relative">
+            <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-court-muted pointer-events-none" />
             <input
-              type="checkbox"
-              checked={searchParams.get('unpaid') === '1'}
-              onChange={e => {
-                const params = new URLSearchParams(searchParams.toString())
-                if (e.target.checked) params.set('unpaid', '1')
-                else params.delete('unpaid')
-                params.delete('page')
-                router.push(`${pathname}?${params.toString()}`)
-              }}
-              className="accent-brand-orange w-3.5 h-3.5 cursor-pointer"
+              type="text"
+              value={searchValue}
+              onChange={e => setSearchValue(e.target.value)}
+              placeholder="Cerca squadra o giocatore…"
+              className="input pl-7 pr-3 py-1.5 text-xs w-52"
             />
-            <span className="text-xs text-court-muted font-display uppercase tracking-wide">Non pagati</span>
-          </label>
-        )}
-        <div className="relative">
-          <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-court-muted pointer-events-none" />
-          <input
-            type="text"
-            value={searchValue}
-            onChange={e => setSearchValue(e.target.value)}
-            placeholder="Cerca squadra o giocatore…"
-            className="input pl-7 pr-3 py-1.5 text-xs w-52"
-          />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
