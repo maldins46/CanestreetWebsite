@@ -33,9 +33,10 @@ export default function TeamStatusButton({ teamId, status, label }: Props) {
       disabled={loading}
       className={clsx(
         'text-xs px-3 py-1.5 font-display uppercase tracking-wide border transition-colors disabled:opacity-50',
-        status === 'approved'   && 'border-green-800 text-green-400 hover:bg-green-900/30',
-        status === 'rejected'   && 'border-red-800 text-red-400 hover:bg-red-900/30',
-        status === 'waitlisted' && 'border-blue-800 text-blue-400 hover:bg-blue-900/30',
+        status === 'approved'   && 'btn-status-approved',
+        status === 'rejected'   && 'btn-status-rejected',
+        status === 'waitlisted' && 'btn-status-waitlisted',
+        status === 'pending'    && 'btn-status-pending',
       )}
     >
       {loading ? '...' : label}

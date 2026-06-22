@@ -27,7 +27,7 @@ export default function RegistrationToggle({ editionId, registrationOpen }: Prop
       disabled={loading}
       className={`flex items-center gap-2 px-3 py-1.5 font-display uppercase tracking-wide text-xs border transition-colors disabled:opacity-50 ${
         registrationOpen
-          ? 'border-green-600 text-green-400 hover:bg-green-900/20'
+          ? 'btn-registration-open'
           : 'border-court-border text-court-muted hover:border-court-muted hover:text-court-white'
       }`}
     >

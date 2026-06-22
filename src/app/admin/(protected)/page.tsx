@@ -121,8 +121,8 @@ export default async function AdminDashboard() {
           {edition && (
             <span className={`text-xs font-display uppercase tracking-wide px-2 py-0.5 rounded border ${
               edition.registration_open
-                ? 'text-green-400 border-green-400/30 bg-green-400/10'
-                : 'text-court-gray border-court-border bg-court-surface'
+                ? 'badge-registration-open'
+                : 'badge-registration-closed'
             }`}>
               Iscrizioni {edition.registration_open ? 'aperte' : 'chiuse'}
             </span>

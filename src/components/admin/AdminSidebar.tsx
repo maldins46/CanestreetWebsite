@@ -113,7 +113,7 @@ export default function AdminSidebar({
                 className={clsx(
                   'flex items-center gap-3 px-6 py-3 text-sm font-display uppercase tracking-wide transition-colors',
                   active
-                    ? 'text-brand-orange bg-brand-orange/5 border-r-2 border-brand-orange'
+                    ? 'nav-active'
                     : 'text-court-gray hover:text-court-white hover:bg-court-surface'
                 )}
               >

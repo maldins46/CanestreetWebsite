@@ -209,18 +209,18 @@ export default function TournamentCalendar({ editionId, matches, category, searc
                   </td>
                   <td className="px-3 py-2 w-px whitespace-nowrap text-center">
                     {match.status === 'scheduled' && (
-                      <span className="text-xs px-2 py-0.5 font-display uppercase tracking-wide border border-court-border text-court-muted whitespace-nowrap">
+                      <span className="badge-programma text-xs px-2 py-0.5 font-display uppercase tracking-wide border whitespace-nowrap">
                         Da giocare
                       </span>
                     )}
                     {match.status === 'in_progress' && (
-                      <span className="text-xs px-2 py-0.5 font-display uppercase tracking-wide border border-red-500/40 bg-red-500/10 text-red-400 inline-flex items-center gap-1.5 whitespace-nowrap">
-                        <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse shrink-0" />
+                      <span className="badge-live text-xs px-2 py-0.5 font-display uppercase tracking-wide border inline-flex items-center gap-1.5 whitespace-nowrap">
+                        <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse shrink-0" />
                         Live
                       </span>
                     )}
                     {match.status === 'completed' && (
-                      <span className="text-xs px-2 py-0.5 font-display uppercase tracking-wide border border-green-500/40 bg-green-500/10 text-green-400 whitespace-nowrap">
+                      <span className="badge-terminata text-xs px-2 py-0.5 font-display uppercase tracking-wide border whitespace-nowrap">
                         Terminata
                       </span>
                     )}

@@ -59,7 +59,7 @@ export default async function AdminEditionsPage({ searchParams }: Props) {
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-3 mb-1">
-                    <span className="font-display font-extrabold text-2xl text-white/30 shrink-0">
+                    <span className="font-display font-extrabold text-2xl text-court-gray shrink-0">
                       {ed.year}
                     </span>
                     {ed.is_current && (

@@ -175,7 +175,7 @@ export default function MediaManager() {
                 </div>
 
                 {confirmDelete === f.name ? (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-court-black/85 gap-2 p-2">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-950/85 gap-2 p-2">
                     <p className="text-xs text-court-white font-display uppercase text-center">Sicuro?</p>
                     <div className="flex gap-2">
                       <button
@@ -193,11 +193,11 @@ export default function MediaManager() {
                     </div>
                   </div>
                 ) : deleting === f.name ? (
-                  <div className="absolute inset-0 flex items-center justify-center bg-court-black/70">
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-950/70">
                     <p className="text-xs text-court-muted font-display uppercase">Eliminazione...</p>
                   </div>
                 ) : (
-                  <div className="absolute inset-0 flex items-center justify-center bg-court-black/70 opacity-0 group-hover:opacity-100 transition-opacity gap-3">
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-950/70 opacity-0 group-hover:opacity-100 transition-opacity gap-3">
                     <button onClick={() => copyUrl(f.url)} className="flex items-center gap-1">
                       {copied === f.url
                         ? <><Check size={14} className="text-green-400" /><span className="text-xs text-green-400 font-display uppercase">Copiato!</span></>
