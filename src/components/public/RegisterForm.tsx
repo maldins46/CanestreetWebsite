@@ -2,10 +2,12 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Trash2 } from 'lucide-react'
-import type { TeamCategory } from '@/types'
+import type { TeamCategory, EditionCategorySettings } from '@/types'
 
 interface Props {
   editionId: string
+  categorySettings: EditionCategorySettings[]
+  teamCounts: Record<TeamCategory, number>
 }
 
 interface PlayerRow {
@@ -52,10 +54,19 @@ function emptyPlayer(isCaptain = false): PlayerRow {
   }
 }
 
-export default function RegisterForm({ editionId }: Props) {
+export default function RegisterForm({ editionId, categorySettings, teamCounts }: Props) {
   const supabase = createClient()
 
-  const [category, setCategory] = useState<TeamCategory>('open_m')
+  function isCatDisabled(cat: TeamCategory): boolean {
+    const s = categorySettings.find(x => x.category === cat)
+    if (!s) return false
+    if (!s.registration_open) return true
+    if (s.max_teams != null && (teamCounts[cat] ?? 0) >= s.max_teams) return true
+    return false
+  }
+
+  const firstAvailable = (['open_m', 'open_f', 'u14_m', 'u16_m', 'u18_m'] as TeamCategory[]).find(c => !isCatDisabled(c)) ?? 'open_m'
+  const [category, setCategory] = useState<TeamCategory>(firstAvailable)
   const [teamName, setTeamName] = useState('')
   const [players, setPlayers] = useState<PlayerRow[]>([
     emptyPlayer(true),
@@ -171,7 +182,9 @@ export default function RegisterForm({ editionId }: Props) {
 
     if (error) {
       const msg = error.message.includes('closed')
-        ? 'Le iscrizioni sono attualmente chiuse.'
+        ? 'Le iscrizioni sono attualmente chiuse per questa categoria.'
+        : error.message.includes('Maximum')
+        ? 'Il numero massimo di squadre per questa categoria è stato raggiunto.'
         : error.message
       setErrorMsg(msg)
       setStatus('error')
@@ -234,21 +247,44 @@ export default function RegisterForm({ editionId }: Props) {
             ['u14_m', 'U14 Maschile', 'nati 2012/13'],
             ['u16_m', 'U16 Maschile', 'nati 2010/11/12'],
             ['u18_m', 'U18 Maschile', 'nati 2008/09/10/11'],
-          ] as [TeamCategory, string, string?][]).map(([cat, label, years]) => (
-            <button
-              key={cat}
-              type="button"
-              onClick={() => setCategory(cat)}
-              className={`px-4 py-1.5 font-display uppercase tracking-wide text-xs border transition-colors ${
-                category === cat
-                  ? 'bg-brand-orange border-brand-orange text-court-dark'
-                  : 'border-court-border text-court-muted hover:border-court-muted hover:text-court-gray'
-              }`}
-            >
-              {label}
-              {years && <span className={`ml-2 normal-case font-body ${category === cat ? 'text-court-dark/70' : 'text-court-muted'}`}>{years}</span>}
-            </button>
-          ))}
+          ] as [TeamCategory, string, string?][]).map(([cat, label, years]) => {
+            const settings = categorySettings.find(s => s.category === cat)
+            const isClosed = settings ? !settings.registration_open : false
+            const isFull = settings?.max_teams != null ? (teamCounts[cat] ?? 0) >= settings.max_teams : false
+            const isDisabled = isClosed || isFull
+            const isSelected = category === cat
+            return (
+              <button
+                key={cat}
+                type="button"
+                disabled={isDisabled}
+                onClick={() => !isDisabled && setCategory(cat)}
+                className={`px-4 py-1.5 font-display uppercase tracking-wide text-xs border transition-colors ${
+                  isDisabled
+                    ? 'border-court-border/40 text-court-muted/40 cursor-not-allowed'
+                    : isSelected
+                    ? 'bg-brand-orange border-brand-orange text-court-dark'
+                    : 'border-court-border text-court-muted hover:border-court-muted hover:text-court-gray'
+                }`}
+              >
+                {label}
+                {isDisabled ? (
+                  <span className="ml-2 normal-case font-body">
+                    {isFull ? '· posti esauriti' : '· chiuse'}
+                  </span>
+                ) : (
+                  <>
+                    {years && <span className={`ml-2 normal-case font-body ${isSelected ? 'text-court-dark/70' : 'text-court-muted'}`}>{years}</span>}
+                    {settings?.max_teams != null && (
+                      <span className={`ml-2 normal-case font-body ${isSelected ? 'text-court-dark/70' : 'text-court-muted'}`}>
+                        {teamCounts[cat] ?? 0}/{settings.max_teams}
+                      </span>
+                    )}
+                  </>
+                )}
+              </button>
+            )
+          })}
         </div>
       </section>
 

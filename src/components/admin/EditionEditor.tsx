@@ -2,19 +2,30 @@
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import type { Edition, EditionWinner } from '@/types'
+import type { Edition, EditionWinner, EditionCategorySettings, TeamCategory } from '@/types'
+import { CATEGORY_LABELS, CATEGORY_COLORS } from '@/types'
 import { Save, Trash2, Plus, Star, StarOff, LockOpen, Lock, Image as ImageIcon } from 'lucide-react'
 import MediaPickerInput from './MediaPickerInput'
 import MarkdownContent from '@/components/MarkdownContent'
 
+const CATEGORIES: TeamCategory[] = ['open_m', 'open_f', 'u14_m', 'u16_m', 'u18_m']
+
 interface Props {
   edition: Edition | null
   winners: EditionWinner[]
+  categorySettings: EditionCategorySettings[]
+  teamCounts: Record<TeamCategory, number>
 }
 
 type WinnerRow = Omit<EditionWinner, 'created_at'>
 
-export default function EditionEditor({ edition, winners }: Props) {
+type CatSettingsState = {
+  id?: string
+  registration_open: boolean
+  max_teams: number | null
+}
+
+export default function EditionEditor({ edition, winners, categorySettings, teamCounts }: Props) {
   const supabase = createClient()
   const router = useRouter()
 
@@ -30,6 +41,21 @@ export default function EditionEditor({ edition, winners }: Props) {
   const [rows, setRows] = useState<WinnerRow[]>(
     winners.map(w => ({ ...w }))
   )
+
+  const initCatSettings = (): Record<TeamCategory, CatSettingsState> => {
+    const defaults: Record<TeamCategory, CatSettingsState> = {
+      open_m: { registration_open: true, max_teams: null },
+      open_f: { registration_open: true, max_teams: null },
+      u14_m:  { registration_open: true, max_teams: null },
+      u16_m:  { registration_open: true, max_teams: null },
+      u18_m:  { registration_open: true, max_teams: null },
+    }
+    for (const s of categorySettings) {
+      defaults[s.category] = { id: s.id, registration_open: s.registration_open, max_teams: s.max_teams }
+    }
+    return defaults
+  }
+  const [catSettings, setCatSettings] = useState<Record<TeamCategory, CatSettingsState>>(initCatSettings)
   const descRef = useRef<HTMLTextAreaElement>(null)
   const [descMode, setDescMode] = useState<'edit' | 'preview'>('edit')
   const [imgOpen,  setImgOpen]  = useState(false)
@@ -152,6 +178,29 @@ export default function EditionEditor({ edition, winners }: Props) {
     if (removedIds.length) {
       const { error: dErr } = await supabase.from('edition_winners').delete().in('id', removedIds)
       if (dErr) { setSaving(false); setMsg('Errore rimozione vincitori: ' + dErr.message); return }
+    }
+
+    // Upsert category settings — same existing/new split as winners to avoid PostgREST RLS quirk
+    if (editionId) {
+      const originalCatIds = new Set(categorySettings.map(s => s.id))
+      const catPayload = CATEGORIES.map(cat => ({
+        ...(catSettings[cat].id ? { id: catSettings[cat].id } : { id: crypto.randomUUID() }),
+        edition_id: editionId,
+        category: cat,
+        registration_open: catSettings[cat].registration_open,
+        max_teams: catSettings[cat].max_teams,
+      }))
+      const existingCat = catPayload.filter(r => originalCatIds.has(r.id))
+      const newCat      = catPayload.filter(r => !originalCatIds.has(r.id))
+
+      if (existingCat.length > 0) {
+        const { error: catErr } = await supabase.from('edition_category_settings').upsert(existingCat)
+        if (catErr) { setSaving(false); setMsg('Errore impostazioni categorie: ' + catErr.message); return }
+      }
+      if (newCat.length > 0) {
+        const { error: catErr } = await supabase.from('edition_category_settings').insert(newCat)
+        if (catErr) { setSaving(false); setMsg('Errore impostazioni categorie: ' + catErr.message); return }
+      }
     }
 
     setSaving(false)
@@ -361,15 +410,15 @@ export default function EditionEditor({ edition, winners }: Props) {
         )}
       </div>
 
-      {/* Registration open toggle */}
+      {/* Registration open toggle (master switch) */}
       <div className="border-t border-court-border pt-6">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="font-display font-bold uppercase text-court-white tracking-wide">Iscrizioni</h2>
             <p className="text-court-muted text-xs mt-1">
               {form.registration_open
-                ? 'Le iscrizioni sono aperte. Il modulo di registrazione è visibile sul sito.'
-                : 'Le iscrizioni sono chiuse. Il modulo non è accessibile al pubblico.'}
+                ? 'Interruttore globale attivo — le iscrizioni per categoria seguono le impostazioni sotto.'
+                : 'Interruttore globale disattivo — tutte le iscrizioni sono chiuse indipendentemente dalle categorie.'}
             </p>
           </div>
           <button
@@ -384,6 +433,58 @@ export default function EditionEditor({ edition, winners }: Props) {
             {form.registration_open ? <LockOpen size={14} /> : <Lock size={14} />}
             {form.registration_open ? 'Aperte' : 'Chiuse'}
           </button>
+        </div>
+      </div>
+
+      {/* Per-category settings */}
+      <div className="border-t border-court-border pt-6">
+        <h2 className="font-display font-bold uppercase text-court-white tracking-wide mb-1">Impostazioni per categoria</h2>
+        <p className="text-court-muted text-xs mb-4">Max squadre vuoto = illimitato. Conteggio include squadre pending, approvate e in lista d&apos;attesa.</p>
+        <div className="space-y-2">
+          {CATEGORIES.map(cat => {
+            const s = catSettings[cat]
+            const count = teamCounts[cat] ?? 0
+            const isFull = s.max_teams != null && count >= s.max_teams
+            return (
+              <div key={cat} className="card p-3 flex items-center gap-4">
+                <span className={`px-2 py-0.5 text-xs font-display uppercase font-semibold rounded ${CATEGORY_COLORS[cat]}`}>
+                  {CATEGORY_LABELS[cat]}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setCatSettings(prev => ({
+                    ...prev,
+                    [cat]: { ...prev[cat], registration_open: !prev[cat].registration_open },
+                  }))}
+                  className={`flex items-center gap-1.5 px-3 py-1 text-xs font-display uppercase tracking-wide border transition-colors ${
+                    s.registration_open
+                      ? 'border-green-600 text-green-400 hover:bg-green-900/20'
+                      : 'border-court-border text-court-muted hover:border-court-muted hover:text-court-white'
+                  }`}
+                >
+                  {s.registration_open ? <LockOpen size={11} /> : <Lock size={11} />}
+                  {s.registration_open ? 'Aperte' : 'Chiuse'}
+                </button>
+                <div className="flex items-center gap-2 ml-auto">
+                  <label className="text-court-muted text-xs whitespace-nowrap">Max squadre</label>
+                  <input
+                    type="number"
+                    min={1}
+                    className="input py-1 text-sm w-20 text-center"
+                    placeholder="∞"
+                    value={s.max_teams ?? ''}
+                    onChange={e => {
+                      const val = e.target.value === '' ? null : parseInt(e.target.value) || null
+                      setCatSettings(prev => ({ ...prev, [cat]: { ...prev[cat], max_teams: val } }))
+                    }}
+                  />
+                  <span className={`text-xs font-mono w-16 text-right ${isFull ? 'text-red-400' : 'text-court-muted'}`}>
+                    {count}{s.max_teams != null ? `/${s.max_teams}` : ''} iscr.
+                  </span>
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
 

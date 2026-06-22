@@ -106,6 +106,15 @@ export interface EditionWinner {
   created_at: string
 }
 
+export interface EditionCategorySettings {
+  id: string
+  edition_id: string
+  category: TeamCategory
+  registration_open: boolean
+  max_teams: number | null
+  created_at: string
+}
+
 // ============================================================
 // Joined / enriched types used in UI
 // ============================================================
