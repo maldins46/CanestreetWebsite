@@ -258,3 +258,16 @@
   100% { transform: translateX(-50%); }
 }
 
+/* Ledwall sting transition: lion sweeps left → right across the full viewport */
+@keyframes ledwall-sting {
+  0%   { transform: translateX(-120vw) rotate(-5deg); opacity: 1; }
+  35%  { transform: translateX(0)       rotate(0deg);  opacity: 1; }
+  65%  { transform: translateX(0)       rotate(0deg);  opacity: 1; }
+  100% { transform: translateX(120vw)   rotate(5deg);  opacity: 0; }
+}
+
+@keyframes ledwall-sting-wipe {
+  0%   { left: -60%; }
+  100% { left: 110%; }
+}
+

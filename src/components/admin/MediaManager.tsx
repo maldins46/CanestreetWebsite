@@ -40,6 +40,7 @@ export default function MediaManager() {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
   const [usageDialog, setUsageDialog] = useState<{ name: string; refs: string[] } | null>(null)
+  const [compress, setCompress] = useState(true)
 
   const loadFiles = useCallback(async (targetPage: number) => {
     setLoading(true)
@@ -80,11 +81,16 @@ export default function MediaManager() {
     for (let i = 0; i < selected.length; i++) {
       setUploadProgress(`${i + 1}/${selected.length}`)
       const file = selected[i]
-      const webp = await convertToWebP(file)
-      const compressed = await imageCompression(webp, { maxSizeMB: 0.8, maxWidthOrHeight: 1920, useWebWorker: true })
-      const ext = compressed.name.split('.').pop()
+      let toUpload: File
+      if (compress) {
+        const webp = await convertToWebP(file)
+        toUpload = await imageCompression(webp, { maxSizeMB: 0.8, maxWidthOrHeight: 1920, useWebWorker: true })
+      } else {
+        toUpload = file
+      }
+      const ext = toUpload.name.split('.').pop()
       const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-      await supabase.storage.from('media').upload(path, compressed)
+      await supabase.storage.from('media').upload(path, toUpload)
     }
 
     setUploading(false)
@@ -139,6 +145,20 @@ export default function MediaManager() {
 
   return (
     <div>
+      {/* Upload options */}
+      <label className="flex items-center gap-2 mb-4 cursor-pointer select-none w-fit">
+        <input
+          type="checkbox"
+          checked={compress}
+          onChange={e => setCompress(e.target.checked)}
+          className="w-4 h-4 accent-brand-orange"
+        />
+        <span className="text-sm text-court-gray font-display uppercase tracking-wide">
+          Comprimi e converti in WebP
+        </span>
+        <span className="text-xs text-court-muted">(consigliato — riduce dimensioni, max 1920px)</span>
+      </label>
+
       {/* Upload */}
       <div
         className="card p-8 border-dashed text-center cursor-pointer hover:border-court-muted transition-colors mb-8"
@@ -150,7 +170,11 @@ export default function MediaManager() {
             ? uploadProgress ? `Caricamento ${uploadProgress}...` : 'Caricamento...'
             : 'Clicca per caricare uno o più file'}
         </p>
-        <p className="text-court-muted text-xs mt-1">JPG, PNG, WebP, GIF — max 5MB per file</p>
+        <p className="text-court-muted text-xs mt-1">
+          {compress
+            ? 'JPG, PNG, WebP, GIF — max 5MB per file · verrà convertito in WebP e compresso'
+            : 'JPG, PNG, WebP, GIF — max 5MB per file · originale caricato senza modifiche'}
+        </p>
         <input ref={inputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleUpload} />
       </div>
 

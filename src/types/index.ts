@@ -200,6 +200,7 @@ export interface Match {
   scheduled_at: string | null
   status: MatchStatus
   sort_order: number
+  live_started_at: string | null
   created_at: string
 }
 
@@ -263,6 +264,7 @@ export interface TpcEntry {
   is_qualified: boolean
   is_live: boolean
   sort_order: number
+  live_started_at: string | null
   created_at: string
 }
 
@@ -277,6 +279,38 @@ export interface TpcRoundWithEntries extends TpcRound {
 export interface TpcContestFull extends TpcContest {
   tpc_players: TpcPlayer[]
   tpc_rounds: TpcRoundWithEntries[]
+}
+
+// ============================================================
+// Ledwall types — keep in sync with supabase/migrations/023_ledwall_state.sql
+// ============================================================
+
+export type LedwallMode = 'fixed' | 'contextual'
+export type LedwallScene = 'standings' | 'finals' | 'matches' | 'sponsors' | 'tpc'
+export type LedwallTransition = 'fade' | 'sting'
+
+export interface LedwallSceneConfig {
+  // standings & finals
+  category?: TeamCategory
+  // standings only
+  group_id?: string
+  // tpc
+  contest_category?: TpcCategory
+  round_id?: string
+  // sponsors
+  variant?: 'rotation' | 'all' | 'gold'
+  rotation_index?: number
+}
+
+export interface LedwallState {
+  id: string
+  mode: LedwallMode
+  fixed_scene: LedwallScene
+  scene_config: LedwallSceneConfig
+  frame_url: string | null
+  transition: LedwallTransition
+  updated_at: string
+  updated_by: string | null
 }
 
 // ============================================================
