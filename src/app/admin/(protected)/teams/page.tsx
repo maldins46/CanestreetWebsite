@@ -52,6 +52,16 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
   let teams: TeamWithPlayers[] = []
   let total = 0
   let totalPages = 1
+  let categoryNonRejectedCount: number | null = null
+  let activeCategoryMax: number | null = null
+
+  // Fetch per-category limits for the active edition
+  const { data: catSettings } = activeEdition
+    ? await supabase
+        .from('edition_category_settings')
+        .select('category, max_teams')
+        .eq('edition_id', activeEdition.id)
+    : { data: null }
 
   if (activeEdition) {
     const categoryFilter = sp.category as TeamCategory | undefined
@@ -97,6 +107,21 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
 
   const categoryFilter = sp.category as TeamCategory | undefined
 
+  // Compute non-rejected count for limit display when a category filter is active
+  if (activeEdition && categoryFilter) {
+    const setting = (catSettings ?? []).find(s => s.category === categoryFilter)
+    activeCategoryMax = setting?.max_teams ?? null
+    if (activeCategoryMax != null) {
+      const { count: nonRejCount } = await supabase
+        .from('teams')
+        .select('*', { count: 'exact', head: true })
+        .eq('edition_id', activeEdition.id)
+        .eq('category', categoryFilter)
+        .neq('status', 'rejected')
+      categoryNonRejectedCount = nonRejCount ?? 0
+    }
+  }
+
   return (
     <div>
       <div className="flex flex-col md:flex-row items-start md:items-end justify-between mb-4 gap-4">
@@ -136,7 +161,13 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
           </Suspense>
           {!isCheckin && (
             <div className="card flex items-center gap-2 px-3 py-1.5 text-xs font-display uppercase tracking-wide">
-              <span className="text-court-white font-bold">{total}</span>
+              {categoryNonRejectedCount != null && activeCategoryMax != null ? (
+                <span className={`font-bold ${categoryNonRejectedCount >= activeCategoryMax ? 'text-red-400' : 'text-court-white'}`}>
+                  {categoryNonRejectedCount}/{activeCategoryMax}
+                </span>
+              ) : (
+                <span className="text-court-white font-bold">{total}</span>
+              )}
               <span className="text-court-gray">{categoryFilter ? categoryLabel[categoryFilter] : 'iscrizioni'}</span>
             </div>
           )}

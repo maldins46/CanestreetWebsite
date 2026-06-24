@@ -29,25 +29,32 @@ export default async function AdminDashboard() {
     { count: publishedNews },
     { data: recentTeams },
     { data: recentNews },
+    { data: categorySettingsData },
   ] = await Promise.all([
     supabase.from('teams').select('*', { count: 'exact', head: true }).eq('edition_id', editionId),
     supabase.from('teams').select('*', { count: 'exact', head: true }).eq('edition_id', editionId).eq('status', 'pending'),
     supabase.from('teams').select('*', { count: 'exact', head: true }).eq('edition_id', editionId).eq('status', 'approved'),
     supabase.from('teams').select('*', { count: 'exact', head: true }).eq('edition_id', editionId).eq('status', 'waitlisted'),
     supabase.from('teams').select('*', { count: 'exact', head: true }).eq('edition_id', editionId).eq('status', 'rejected'),
-    supabase.from('teams').select('*', { count: 'exact', head: true }).eq('edition_id', editionId).eq('category', 'open_m'),
-    supabase.from('teams').select('*', { count: 'exact', head: true }).eq('edition_id', editionId).eq('category', 'open_f'),
-    supabase.from('teams').select('*', { count: 'exact', head: true }).eq('edition_id', editionId).eq('category', 'u14_m'),
-    supabase.from('teams').select('*', { count: 'exact', head: true }).eq('edition_id', editionId).eq('category', 'u16_m'),
-    supabase.from('teams').select('*', { count: 'exact', head: true }).eq('edition_id', editionId).eq('category', 'u18_m'),
+    supabase.from('teams').select('*', { count: 'exact', head: true }).eq('edition_id', editionId).eq('category', 'open_m').neq('status', 'rejected'),
+    supabase.from('teams').select('*', { count: 'exact', head: true }).eq('edition_id', editionId).eq('category', 'open_f').neq('status', 'rejected'),
+    supabase.from('teams').select('*', { count: 'exact', head: true }).eq('edition_id', editionId).eq('category', 'u14_m').neq('status', 'rejected'),
+    supabase.from('teams').select('*', { count: 'exact', head: true }).eq('edition_id', editionId).eq('category', 'u16_m').neq('status', 'rejected'),
+    supabase.from('teams').select('*', { count: 'exact', head: true }).eq('edition_id', editionId).eq('category', 'u18_m').neq('status', 'rejected'),
     supabase.from('players').select('id, teams!inner(edition_id)', { count: 'exact', head: true }).eq('teams.edition_id', editionId),
     supabase.from('news').select('*', { count: 'exact', head: true }),
     supabase.from('news').select('*', { count: 'exact', head: true }).eq('published', true),
     supabase.from('teams').select('id, name, category, status, created_at').eq('edition_id', editionId).order('created_at', { ascending: false }).limit(5),
     supabase.from('news').select('id, title, published, published_at, created_at').order('created_at', { ascending: false }).limit(5),
+    supabase.from('edition_category_settings').select('category, max_teams').eq('edition_id', editionId),
   ])
 
   const draftNews = (totalNews ?? 0) - (publishedNews ?? 0)
+
+  const categoryCaps: Record<string, number | null> = {}
+  for (const s of categorySettingsData ?? []) {
+    categoryCaps[s.category] = s.max_teams
+  }
 
   const topStats = [
     {
@@ -92,11 +99,11 @@ export default async function AdminDashboard() {
   ]
 
   const categoryBreakdown = [
-    { label: 'Open M', count: teamsOpenM ?? 0 },
-    { label: 'Open F', count: teamsOpenF ?? 0 },
-    { label: 'U18 M',  count: teamsU18 ?? 0 },
-    { label: 'U16 M',  count: teamsU16 ?? 0 },
-    { label: 'U14 M',  count: teamsU14 ?? 0 },
+    { label: 'Open M', count: teamsOpenM ?? 0, max: categoryCaps['open_m'] ?? null },
+    { label: 'Open F', count: teamsOpenF ?? 0, max: categoryCaps['open_f'] ?? null },
+    { label: 'U18 M',  count: teamsU18 ?? 0,  max: categoryCaps['u18_m'] ?? null },
+    { label: 'U16 M',  count: teamsU16 ?? 0,  max: categoryCaps['u16_m'] ?? null },
+    { label: 'U14 M',  count: teamsU14 ?? 0,  max: categoryCaps['u14_m'] ?? null },
   ]
 
   const statusLabel: Record<string, string> = {
@@ -196,17 +203,22 @@ export default async function AdminDashboard() {
         <div className="card p-6 min-w-0">
           <p className="font-display uppercase tracking-widest text-xs text-court-gray mb-5">Categorie</p>
           <div className="space-y-3">
-            {categoryBreakdown.map(({ label, count }) => {
-              const pct = (totalTeams ?? 0) > 0 ? Math.round((count / (totalTeams ?? 1)) * 100) : 0
+            {categoryBreakdown.map(({ label, count, max }) => {
+              const isFull = max != null && count >= max
+              const pct = max != null
+                ? Math.min(100, max > 0 ? Math.round((count / max) * 100) : 0)
+                : (totalTeams ?? 0) > 0 ? Math.round((count / (totalTeams ?? 1)) * 100) : 0
               return (
                 <div key={label}>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm text-court-light font-display uppercase tracking-wide">{label}</span>
-                    <span className="font-display font-bold text-court-white text-sm">{count}</span>
+                    <span className={`font-display font-bold text-sm ${isFull ? 'text-red-400' : 'text-court-white'}`}>
+                      {max != null ? `${count}/${max}` : count}
+                    </span>
                   </div>
                   <div className="h-1 bg-court-border rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-brand-orange rounded-full transition-all"
+                      className={`h-full rounded-full transition-all ${isFull ? 'bg-red-500' : 'bg-brand-orange'}`}
                       style={{ width: `${pct}%` }}
                     />
                   </div>

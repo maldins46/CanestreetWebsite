@@ -275,11 +275,6 @@ export default function RegisterForm({ editionId, categorySettings, teamCounts }
                 ) : (
                   <>
                     {years && <span className={`ml-2 normal-case font-body ${isSelected ? 'text-court-dark/70' : 'text-court-muted'}`}>{years}</span>}
-                    {settings?.max_teams != null && (
-                      <span className={`ml-2 normal-case font-body ${isSelected ? 'text-court-dark/70' : 'text-court-muted'}`}>
-                        {teamCounts[cat] ?? 0}/{settings.max_teams}
-                      </span>
-                    )}
                   </>
                 )}
               </button>
