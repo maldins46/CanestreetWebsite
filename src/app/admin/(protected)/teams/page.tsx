@@ -124,24 +124,9 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
 
   return (
     <div>
-      <div className="flex flex-col md:flex-row items-start md:items-end justify-between mb-4 gap-4">
-        <div>
-          <p className="text-brand-orange font-display uppercase tracking-widest text-xs mb-1">Squadre</p>
-          <h1 className="font-display font-bold uppercase text-3xl text-court-white">Gestione Iscrizioni</h1>
-        </div>
-        <div className="flex items-center gap-3 shrink-0 flex-wrap">
-          {activeEdition && (
-            <ExportCsvDialog editionId={activeEdition.id} categoryFilter={categoryFilter} />
-          )}
-          {activeEdition && (
-            <Link
-              href={`/admin/teams/new?edition=${activeEdition.id}`}
-              className="btn-primary text-sm px-4 py-2"
-            >
-              <Plus size={14} /> Nuova squadra
-            </Link>
-          )}
-        </div>
+      <div className="mb-4">
+        <p className="text-brand-orange font-display uppercase tracking-widest text-xs mb-1">Squadre</p>
+        <h1 className="font-display font-bold uppercase text-3xl text-court-white">Gestione Iscrizioni</h1>
       </div>
 
       {activeEdition && (
@@ -181,11 +166,26 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
       )}
 
       {/* Filters: category pills + search */}
-      <div className="mb-6">
+      <div className="mb-4">
         <Suspense>
           <CategoryFilter showSearch />
         </Suspense>
       </div>
+
+      {/* Action bar */}
+      {activeEdition && !isCheckin && (
+        <div className="card flex items-center gap-3 mb-6 flex-wrap px-4 py-3">
+          <div className="flex items-center gap-3 ml-auto">
+            <ExportCsvDialog editionId={activeEdition.id} categoryFilter={categoryFilter} />
+            <Link
+              href={`/admin/teams/new?edition=${activeEdition.id}`}
+              className="btn-primary text-sm px-4 py-2 whitespace-nowrap"
+            >
+              <Plus size={14} /> Nuova squadra
+            </Link>
+          </div>
+        </div>
+      )}
 
       {isCheckin ? (
         <CheckinView teams={teams} search={sp.search} unpaidOnly={sp.unpaid === '1'} />

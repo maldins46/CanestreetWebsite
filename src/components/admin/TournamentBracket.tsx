@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { computeStandings } from '@/lib/standings'
 import type { GroupWithTeams, MatchWithTeams, Match, BracketRound, TeamCategory } from '@/types'
 import clsx from 'clsx'
+import { Trophy, ListOrdered } from 'lucide-react'
 
 // ─── Layout constants (must match BracketView.tsx) ────────────────────────────
 
@@ -68,6 +69,7 @@ function AdminBracketCard({ match, categoryTeams, editingSlot, setEditingSlot, o
             defaultValue=""
           >
             <option value="">— Seleziona —</option>
+            <option value="__clear__">— Rimuovi squadra —</option>
             {categoryTeams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
           </select>
         ) : (
@@ -96,6 +98,7 @@ function AdminBracketCard({ match, categoryTeams, editingSlot, setEditingSlot, o
             defaultValue=""
           >
             <option value="">— Seleziona —</option>
+            <option value="__clear__">— Rimuovi squadra —</option>
             {categoryTeams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
           </select>
         ) : (
@@ -234,9 +237,10 @@ export default function TournamentBracket({
 }: Props) {
   const supabase = createClient()
   const router   = useRouter()
-  const [saving, setSaving]           = useState(false)
-  const [editingSlot, setEditingSlot] = useState<{ matchId: string; slot: 'home' | 'away' } | null>(null)
-  const [bracketSize, setBracketSize] = useState<4 | 8 | 16>(4)
+  const [saving, setSaving]               = useState(false)
+  const [editingSlot, setEditingSlot]     = useState<{ matchId: string; slot: 'home' | 'away' } | null>(null)
+  const [bracketSize, setBracketSize]     = useState<4 | 8 | 16>(4)
+  const [formatModalOpen, setFormatModalOpen] = useState(false)
 
   const categoryTeams = approvedTeams.filter(t => t.category === category)
 
@@ -256,20 +260,24 @@ export default function TournamentBracket({
     if (!teamId) { setEditingSlot(null); return }
     setSaving(true)
     const field = slot === 'home' ? 'team_home_id' : 'team_away_id'
-    await supabase.from('matches').update({ [field]: teamId }).eq('id', matchId)
+    const value = teamId === '__clear__' ? null : teamId
+    await supabase.from('matches').update({ [field]: value }).eq('id', matchId)
     setEditingSlot(null)
     router.refresh()
     setSaving(false)
   }
 
-  async function generateBracket() {
-    if (bracketMatches.length > 0) {
-      if (!window.confirm('Tabellone già esistente per questa categoria. Rigenerare?')) return
-      await supabase.from('matches').delete()
-        .eq('edition_id', editionId)
-        .eq('category', category)
-        .eq('phase', 'bracket')
+  async function populateBracket() {
+    if (bracketMatches.length === 0) {
+      alert('Genera prima un tabellone vuoto.')
+      return
     }
+    if (!window.confirm('Popolare il tabellone con le squadre dalle classifiche? Le squadre attuali del primo turno verranno sovrascritte.')) return
+
+    // Derive bracket size from the existing bracket structure
+    const firstRound        = rounds[0]
+    const firstRoundMatches = byRound.get(firstRound) ?? []
+    const derivedSize       = firstRoundMatches.length * 2
 
     const groupStandings = groups.map(g => {
       const gMatches = groupMatches.filter(m => m.group_id === g.id)
@@ -277,7 +285,7 @@ export default function TournamentBracket({
       return { group: g, standings: computeStandings(gMatches, gTeams) }
     })
 
-    const teamsPerGroup = Math.ceil(bracketSize / Math.max(groups.length, 1))
+    const teamsPerGroup = Math.ceil(derivedSize / Math.max(groups.length, 1))
     const qualifiers: { id: string; name: string }[] = []
 
     for (let pos = 0; pos < teamsPerGroup; pos++) {
@@ -290,66 +298,22 @@ export default function TournamentBracket({
           b.points_for - a.points_for
         )
       for (const row of atPosition) {
-        if (qualifiers.length < bracketSize) qualifiers.push({ id: row.team_id, name: row.team_name })
+        if (qualifiers.length < derivedSize) qualifiers.push({ id: row.team_id, name: row.team_name })
       }
     }
-    while (qualifiers.length < bracketSize) qualifiers.push({ id: '', name: '' })
+    while (qualifiers.length < derivedSize) qualifiers.push({ id: '', name: '' })
 
-    const bracketRounds: BracketRound[] = []
-    if (bracketSize >= 16) bracketRounds.push('round_of_16')
-    if (bracketSize >= 8)  bracketRounds.push('quarterfinal')
-    bracketRounds.push('semifinal')
-    bracketRounds.push('final')
-
-    type MatchInsert = {
-      id: string; edition_id: string; category: string; phase: 'bracket'
-      bracket_round: BracketRound; bracket_position: number
-      next_match_id: string | null; next_match_slot: 'home' | 'away' | null
-      team_home_id: string | null; team_away_id: string | null
-      status: 'scheduled'; sort_order: number
-    }
-
-    const allMatches: MatchInsert[] = []
-    let sortOrder = 0
-    const roundsReversed = [...bracketRounds].reverse()
-    let previousRoundMatches: MatchInsert[] = []
-
-    for (let ri = 0; ri < roundsReversed.length; ri++) {
-      const round      = roundsReversed[ri]
-      const matchCount = Math.pow(2, ri)
-      const current: MatchInsert[] = []
-
-      for (let pos = 0; pos < matchCount; pos++) {
-        const matchId  = crypto.randomUUID()
-        const nextMatch = previousRoundMatches[Math.floor(pos / 2)] ?? null
-        const nextSlot: 'home' | 'away' = pos % 2 === 0 ? 'home' : 'away'
-        let homeTeamId: string | null = null
-        let awayTeamId: string | null = null
-
-        if (ri === roundsReversed.length - 1) {
-          const seedA = pos
-          const seedB = matchCount * 2 - 1 - pos
-          homeTeamId = qualifiers[seedA]?.id || null
-          awayTeamId = qualifiers[seedB]?.id || null
-        }
-
-        const m: MatchInsert = {
-          id: matchId, edition_id: editionId, category, phase: 'bracket',
-          bracket_round: round, bracket_position: pos,
-          next_match_id: nextMatch?.id ?? null,
-          next_match_slot: nextMatch ? nextSlot : null,
-          team_home_id: homeTeamId || null,
-          team_away_id: awayTeamId || null,
-          status: 'scheduled', sort_order: sortOrder++,
-        }
-        current.push(m)
-        allMatches.push(m)
-      }
-      previousRoundMatches = current
-    }
-
+    // Update only team slots on first-round matches, leaving everything else intact
     setSaving(true)
-    for (const m of allMatches) await supabase.from('matches').insert(m)
+    for (let pos = 0; pos < firstRoundMatches.length; pos++) {
+      const match  = firstRoundMatches[pos]
+      const seedA  = pos
+      const seedB  = firstRoundMatches.length * 2 - 1 - pos
+      await supabase.from('matches').update({
+        team_home_id: qualifiers[seedA]?.id || null,
+        team_away_id: qualifiers[seedB]?.id || null,
+      }).eq('id', match.id)
+    }
     setSaving(false)
     router.refresh()
   }
@@ -414,39 +378,76 @@ export default function TournamentBracket({
     <div>
       {/* Generation controls */}
       <div className="card flex items-center gap-3 mb-6 flex-wrap px-4 py-3">
-        <div className="flex items-center gap-2">
-          <span className="text-court-muted text-sm font-display uppercase">Formato:</span>
-          {([4, 8, 16] as const).map(size => (
-            <button
-              key={size}
-              onClick={() => setBracketSize(size)}
-              className={`px-3 py-1.5 font-display uppercase tracking-wide text-xs border transition-colors ${
-                bracketSize === size
-                  ? 'bg-brand-orange border-brand-orange text-court-dark'
-                  : 'border-court-border text-court-muted hover:border-court-muted hover:text-court-white'
-              }`}
-            >
-              {size} squadre
-            </button>
-          ))}
-        </div>
-        <div className="flex items-center gap-2 ml-auto">
+        <div className="flex items-center gap-3 ml-auto">
           <button
-            onClick={generateEmptyBracket}
-            disabled={saving}
-            className="btn-ghost text-sm px-4 py-2"
+            onClick={populateBracket}
+            disabled={saving || groups.length === 0 || bracketMatches.length === 0}
+            className="btn-ghost text-sm px-4 py-2 whitespace-nowrap"
           >
-            Genera tabellone vuoto
+            <ListOrdered size={14} /> Popola con le classifiche
           </button>
           <button
-            onClick={generateBracket}
-            disabled={saving || groups.length === 0}
-            className="btn-primary text-sm px-4 py-2"
+            onClick={() => setFormatModalOpen(true)}
+            disabled={saving}
+            className="btn-primary text-sm px-4 py-2 whitespace-nowrap"
           >
-            Genera tabellone da classifiche
+            <Trophy size={14} /> Genera tabellone vuoto
           </button>
         </div>
       </div>
+
+      {/* Format picker modal */}
+      {formatModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={() => setFormatModalOpen(false)}
+        >
+          <div
+            className="card w-full max-w-md mx-4 p-6"
+            onClick={e => e.stopPropagation()}
+          >
+            <h2 className="font-display font-bold uppercase text-xl text-court-white mb-1">
+              Formato tabellone
+            </h2>
+            <p className="text-court-gray text-sm mb-5">Scegli il numero di squadre nel tabellone finale.</p>
+
+            <div className="space-y-2 mb-6">
+              {([
+                { size: 4  as const, label: '4 squadre',  description: 'Semifinali + Finale. Adatto a gironi con 2 gruppi da 2.' },
+                { size: 8  as const, label: '8 squadre',  description: 'Quarti + Semifinali + Finale. Il formato più comune.' },
+                { size: 16 as const, label: '16 squadre', description: 'Ottavi + Quarti + Semifinali + Finale. Per tornei grandi.' },
+              ]).map(({ size, label, description }) => (
+                <button
+                  key={size}
+                  onClick={() => setBracketSize(size)}
+                  className={[
+                    'w-full text-left px-4 py-3 border transition-colors',
+                    bracketSize === size
+                      ? 'border-brand-orange bg-brand-orange/10 text-court-white'
+                      : 'border-court-border text-court-muted hover:border-court-gray hover:text-court-light',
+                  ].join(' ')}
+                >
+                  <span className="font-display font-bold uppercase tracking-wide text-sm block">{label}</span>
+                  <span className="text-xs mt-0.5 block">{description}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setFormatModalOpen(false)} className="btn-ghost text-sm px-4 py-2">
+                Annulla
+              </button>
+              <button
+                onClick={() => { setFormatModalOpen(false); generateEmptyBracket() }}
+                disabled={saving}
+                className="btn-primary text-sm px-4 py-2"
+              >
+                Genera
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {rounds.length === 0 ? (
         <div className="card p-10 text-center">
