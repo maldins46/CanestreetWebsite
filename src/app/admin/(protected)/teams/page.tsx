@@ -1,9 +1,9 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import type { TeamWithPlayers, Edition, TeamCategory } from '@/types'
+import type { TeamWithPlayers, Edition, TeamCategory, EditionCategorySettings } from '@/types'
 import TeamStatusButton from '@/components/admin/TeamStatusButton'
 import CategoryFilter from '@/components/admin/CategoryFilter'
 import EditionSwitcher from '@/components/admin/EditionSwitcher'
-import RegistrationToggle from '@/components/admin/RegistrationToggle'
+import RegistrationModal from '@/components/admin/RegistrationModal'
 import Pagination from '@/components/admin/Pagination'
 import ModeToggle from '@/components/admin/ModeToggle'
 import CheckinView from '@/components/admin/CheckinView'
@@ -55,13 +55,27 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
   let categoryNonRejectedCount: number | null = null
   let activeCategoryMax: number | null = null
 
-  // Fetch per-category limits for the active edition
+  // Fetch per-category settings (limits + open/closed) for the active edition
   const { data: catSettings } = activeEdition
     ? await supabase
         .from('edition_category_settings')
-        .select('category, max_teams')
+        .select('id, category, registration_open, max_teams')
         .eq('edition_id', activeEdition.id)
+        .returns<Pick<EditionCategorySettings, 'id' | 'category' | 'registration_open' | 'max_teams'>[]>()
     : { data: null }
+
+  // Per-category non-rejected team counts (for the registration modal)
+  let teamCounts: Record<TeamCategory, number> = { open_m: 0, open_f: 0, u14_m: 0, u16_m: 0, u18_m: 0 }
+  if (activeEdition) {
+    const { data: countData } = await supabase
+      .from('teams')
+      .select('category')
+      .eq('edition_id', activeEdition.id)
+      .neq('status', 'rejected')
+    countData?.forEach(t => {
+      if (t.category in teamCounts) teamCounts[t.category as TeamCategory]++
+    })
+  }
 
   if (activeEdition) {
     const categoryFilter = sp.category as TeamCategory | undefined
@@ -137,9 +151,11 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
               currentEditionId={activeEdition.id}
             />
           </Suspense>
-          <RegistrationToggle
+          <RegistrationModal
             editionId={activeEdition.id}
             registrationOpen={activeEdition.registration_open}
+            categorySettings={catSettings ?? []}
+            teamCounts={teamCounts}
           />
           <Suspense>
             <ModeToggle />
@@ -228,23 +244,39 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
 
                       {/* Players */}
                       {sortedPlayers ? (
-                        <div className="mt-2 space-y-1">
-                          {sortedPlayers.map(p => (
-                            <div key={p.id} className="text-xs text-court-muted flex flex-wrap gap-x-3 gap-y-0.5">
-                              <span className="text-court-light">
-                                {p.name}
-                                {p.is_captain && <span className="ml-1 text-brand-orange text-[10px]">cap</span>}
-                                {p.is_vice_captain && <span className="ml-1 text-court-gray text-[10px]">vice</span>}
-                              </span>
-                              <span className="font-mono">{new Date(p.birth_date).toLocaleDateString('it-IT')}</span>
-                              <span className="font-mono uppercase">{p.codice_fiscale}</span>
-                              {p.email && <span>{p.email}</span>}
-                              {p.phone && <span>{p.phone}</span>}
-                              {p.city && <span>{p.city}</span>}
-                              {p.instagram && <span className="italic">{p.instagram}</span>}
-                              {p.club && <span className="italic">{p.club}</span>}
-                            </div>
-                          ))}
+                        <div className="mt-3 overflow-x-auto">
+                          <table className="w-full text-xs border-collapse">
+                            <thead>
+                              <tr className="border-b border-court-border">
+                                <th className="text-left text-court-muted font-display uppercase tracking-wide py-1 pr-3">Nome</th>
+                                <th className="text-left text-court-muted font-display uppercase tracking-wide py-1 pr-3">Club</th>
+                                <th className="text-left text-court-muted font-display uppercase tracking-wide py-1 pr-3">Nato/a il</th>
+                                <th className="text-left text-court-muted font-display uppercase tracking-wide py-1 pr-3">C.F.</th>
+                                <th className="text-left text-court-muted font-display uppercase tracking-wide py-1 pr-3">Email</th>
+                                <th className="text-left text-court-muted font-display uppercase tracking-wide py-1 pr-3">Tel</th>
+                                <th className="text-left text-court-muted font-display uppercase tracking-wide py-1 pr-3">Città</th>
+                                <th className="text-left text-court-muted font-display uppercase tracking-wide py-1">Instagram</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {sortedPlayers.map(p => (
+                                <tr key={p.id} className="border-b border-court-border/40 last:border-0">
+                                  <td className="py-1.5 pr-3 text-court-light whitespace-nowrap">
+                                    {p.name}
+                                    {p.is_captain && <span className="ml-1 text-brand-orange text-[10px]">cap</span>}
+                                    {p.is_vice_captain && <span className="ml-1 text-court-gray text-[10px]">vice</span>}
+                                  </td>
+                                  <td className="py-1.5 pr-3 italic text-court-muted">{p.club ?? <span className="not-italic text-court-border">—</span>}</td>
+                                  <td className="py-1.5 pr-3 font-mono text-court-muted whitespace-nowrap">{new Date(p.birth_date).toLocaleDateString('it-IT')}</td>
+                                  <td className="py-1.5 pr-3 font-mono uppercase text-court-muted whitespace-nowrap">{p.codice_fiscale}</td>
+                                  <td className="py-1.5 pr-3 text-court-muted">{p.email ?? <span className="text-court-border">—</span>}</td>
+                                  <td className="py-1.5 pr-3 font-mono text-court-muted whitespace-nowrap">{p.phone ?? <span className="text-court-border">—</span>}</td>
+                                  <td className="py-1.5 pr-3 text-court-muted">{p.city ?? <span className="text-court-border">—</span>}</td>
+                                  <td className="py-1.5 italic text-court-muted">{p.instagram ?? <span className="not-italic text-court-border">—</span>}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
                         </div>
                       ) : (
                         <p className="text-court-muted text-xs mt-1">
