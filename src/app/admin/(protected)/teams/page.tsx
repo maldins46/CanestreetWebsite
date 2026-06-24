@@ -249,12 +249,12 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
                             <thead>
                               <tr className="border-b border-court-border">
                                 <th className="text-left text-court-muted font-display uppercase tracking-wide py-1 pr-3">Nome</th>
-                                <th className="text-left text-court-muted font-display uppercase tracking-wide py-1 pr-3">Club</th>
                                 <th className="text-left text-court-muted font-display uppercase tracking-wide py-1 pr-3">Nato/a il</th>
                                 <th className="text-left text-court-muted font-display uppercase tracking-wide py-1 pr-3">C.F.</th>
                                 <th className="text-left text-court-muted font-display uppercase tracking-wide py-1 pr-3">Email</th>
                                 <th className="text-left text-court-muted font-display uppercase tracking-wide py-1 pr-3">Tel</th>
                                 <th className="text-left text-court-muted font-display uppercase tracking-wide py-1 pr-3">Città</th>
+                                <th className="text-left text-court-muted font-display uppercase tracking-wide py-1 pr-3">Club</th>
                                 <th className="text-left text-court-muted font-display uppercase tracking-wide py-1">Instagram</th>
                               </tr>
                             </thead>
@@ -266,12 +266,12 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
                                     {p.is_captain && <span className="ml-1 text-brand-orange text-[10px]">cap</span>}
                                     {p.is_vice_captain && <span className="ml-1 text-court-gray text-[10px]">vice</span>}
                                   </td>
-                                  <td className="py-1.5 pr-3 italic text-court-muted">{p.club ?? <span className="not-italic text-court-border">—</span>}</td>
                                   <td className="py-1.5 pr-3 font-mono text-court-muted whitespace-nowrap">{new Date(p.birth_date).toLocaleDateString('it-IT')}</td>
                                   <td className="py-1.5 pr-3 font-mono uppercase text-court-muted whitespace-nowrap">{p.codice_fiscale}</td>
                                   <td className="py-1.5 pr-3 text-court-muted">{p.email ?? <span className="text-court-border">—</span>}</td>
                                   <td className="py-1.5 pr-3 font-mono text-court-muted whitespace-nowrap">{p.phone ?? <span className="text-court-border">—</span>}</td>
                                   <td className="py-1.5 pr-3 text-court-muted">{p.city ?? <span className="text-court-border">—</span>}</td>
+                                  <td className="py-1.5 pr-3 italic text-court-muted">{p.club ?? <span className="not-italic text-court-border">—</span>}</td>
                                   <td className="py-1.5 italic text-court-muted">{p.instagram ?? <span className="not-italic text-court-border">—</span>}</td>
                                 </tr>
                               ))}
