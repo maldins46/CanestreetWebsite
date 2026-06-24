@@ -268,11 +268,11 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
                                   </td>
                                   <td className="py-1.5 pr-3 font-mono text-court-muted whitespace-nowrap">{new Date(p.birth_date).toLocaleDateString('it-IT')}</td>
                                   <td className="py-1.5 pr-3 font-mono uppercase text-court-muted whitespace-nowrap">{p.codice_fiscale}</td>
-                                  <td className="py-1.5 pr-3 text-court-muted">{p.email ?? <span className="text-court-border">—</span>}</td>
+                                  <td className="py-1.5 pr-3 text-court-muted whitespace-nowrap">{p.email ?? <span className="text-court-border">—</span>}</td>
                                   <td className="py-1.5 pr-3 font-mono text-court-muted whitespace-nowrap">{p.phone ?? <span className="text-court-border">—</span>}</td>
-                                  <td className="py-1.5 pr-3 text-court-muted">{p.city ?? <span className="text-court-border">—</span>}</td>
+                                  <td className="py-1.5 pr-3 text-court-muted whitespace-nowrap">{p.city ?? <span className="text-court-border">—</span>}</td>
                                   <td className="py-1.5 pr-3 italic text-court-muted whitespace-nowrap">{p.club ?? <span className="not-italic text-court-border">—</span>}</td>
-                                  <td className="py-1.5 italic text-court-muted">{p.instagram ?? <span className="not-italic text-court-border">—</span>}</td>
+                                  <td className="py-1.5 italic text-court-muted whitespace-nowrap">{p.instagram ?? <span className="not-italic text-court-border">—</span>}</td>
                                 </tr>
                               ))}
                             </tbody>
