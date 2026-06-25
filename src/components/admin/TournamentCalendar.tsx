@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { MatchWithTeams, TeamCategory } from '@/types'
 import { CATEGORY_LABELS, CATEGORY_COLORS } from '@/types'
 import clsx from 'clsx'
+import { Trash2, CalendarClock } from 'lucide-react'
 
 interface Props {
   editionId: string
@@ -25,11 +26,18 @@ export default function TournamentCalendar({ editionId, matches, category, searc
   const router = useRouter()
   const [saving, setSaving] = useState<string | null>(null)
   const [scores, setScores] = useState<Record<string, { home: string; away: string }>>({})
+  const [deletingAll, setDeletingAll] = useState(false)
+  const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [bulkDate, setBulkDate] = useState('')
+  const [settingDate, setSettingDate] = useState(false)
+  const [dateModalOpen, setDateModalOpen] = useState(false)
 
   const q = search?.trim().toLowerCase() ?? ''
 
-  const filtered = matches.filter(m => {
-    if (category && m.category !== category) return false
+  const categoryMatches = matches.filter(m => !category || m.category === category)
+
+  const filtered = categoryMatches.filter(m => {
     if (!q) return true
     const phase = getPhaseLabel(m).toLowerCase()
     return (
@@ -100,6 +108,34 @@ export default function TournamentCalendar({ editionId, matches, category, searc
     setSaving(null)
   }
 
+  async function setAllDates() {
+    if (!bulkDate) return
+    setSettingDate(true)
+    setDateModalOpen(false)
+    let q = supabase.from('matches').update({ scheduled_at: bulkDate }).eq('edition_id', editionId)
+    if (category) q = q.eq('category', category)
+    await q
+    router.refresh()
+    setSettingDate(false)
+  }
+
+  async function deleteMatch(matchId: string) {
+    setDeletingId(matchId)
+    await supabase.from('matches').delete().eq('id', matchId)
+    router.refresh()
+    setDeletingId(null)
+  }
+
+  async function deleteAllMatches() {
+    setDeletingAll(true)
+    setConfirmDeleteModalOpen(false)
+    let q = supabase.from('matches').delete().eq('edition_id', editionId)
+    if (category) q = q.eq('category', category)
+    await q
+    router.refresh()
+    setDeletingAll(false)
+  }
+
   function getPhaseLabel(match: MatchWithTeams) {
     if (match.phase === 'group' && match.group) return `Girone ${match.group.name}`
     if (match.phase === 'bracket' && match.bracket_round) return roundLabels[match.bracket_round] ?? match.bracket_round
@@ -111,16 +147,105 @@ export default function TournamentCalendar({ editionId, matches, category, searc
     return new Date(iso).toISOString().slice(0, 16)
   }
 
-  if (filtered.length === 0) {
-    return (
-      <div className="card p-10 text-center">
-        <p className="text-court-gray">Nessuna partita ancora. Genera le partite dai gironi prima.</p>
-      </div>
-    )
-  }
-
   return (
-    <div className="card overflow-hidden">
+    <div>
+      {/* Action box */}
+      <div className="card flex items-center gap-3 mb-6 flex-wrap px-4 py-3">
+        <p className="text-court-muted text-sm">
+          {categoryMatches.length} {categoryMatches.length === 1 ? 'partita' : 'partite'}
+          {category ? ` — ${CATEGORY_LABELS[category]}` : ''}
+        </p>
+        <div className="flex items-center gap-3 ml-auto">
+          <button
+            onClick={() => setDateModalOpen(true)}
+            disabled={settingDate || categoryMatches.length === 0}
+            className="btn-ghost text-sm px-4 py-2 whitespace-nowrap"
+          >
+            {settingDate ? '…' : <><CalendarClock size={14} /> Imposta data a tutte</>}
+          </button>
+          <button
+            onClick={() => setConfirmDeleteModalOpen(true)}
+            disabled={deletingAll || categoryMatches.length === 0}
+            className="btn-ghost text-sm px-4 py-2 whitespace-nowrap"
+          >
+            {deletingAll ? '…' : <><Trash2 size={14} /> Elimina tutte le partite</>}
+          </button>
+        </div>
+      </div>
+
+      {dateModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={() => setDateModalOpen(false)}
+        >
+          <div
+            className="card w-full max-w-sm mx-4 p-6"
+            onClick={e => e.stopPropagation()}
+          >
+            <h2 className="font-display font-bold uppercase text-xl text-court-white mb-1">
+              Imposta data e ora
+            </h2>
+            <p className="text-court-gray text-sm mb-5">
+              Verrà applicata a tutte le partite{category ? ` di ${CATEGORY_LABELS[category]}` : ''}.
+            </p>
+            <input
+              type="datetime-local"
+              value={bulkDate}
+              onChange={e => setBulkDate(e.target.value)}
+              className="input py-2 px-3 text-sm w-full mb-6"
+            />
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setDateModalOpen(false)} className="btn-ghost text-sm px-4 py-2">
+                Annulla
+              </button>
+              <button
+                onClick={setAllDates}
+                disabled={!bulkDate}
+                className="btn-primary text-sm px-4 py-2"
+              >
+                Imposta
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmDeleteModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={() => setConfirmDeleteModalOpen(false)}
+        >
+          <div
+            className="card w-full max-w-sm mx-4 p-6"
+            onClick={e => e.stopPropagation()}
+          >
+            <h2 className="font-display font-bold uppercase text-xl text-court-white mb-1">
+              Elimina partite
+            </h2>
+            <p className="text-court-gray text-sm mb-6">
+              Verranno eliminate tutte le {categoryMatches.length} partite{category ? ` di ${CATEGORY_LABELS[category]}` : ''}. Questa azione non è reversibile.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setConfirmDeleteModalOpen(false)} className="btn-ghost text-sm px-4 py-2">
+                Annulla
+              </button>
+              <button
+                onClick={deleteAllMatches}
+                className="btn-primary text-sm px-4 py-2 bg-red-600 border-red-600 hover:bg-red-700"
+              >
+                Elimina
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {filtered.length === 0 ? (
+        <div className="card p-10 text-center">
+          <p className="text-court-gray">Nessuna partita ancora. Genera le partite dai gironi prima.</p>
+        </div>
+      ) : (
+      <div className="card overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -133,6 +258,7 @@ export default function TournamentCalendar({ editionId, matches, category, searc
               <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">Pts</th>
               <th className="font-display uppercase tracking-wide text-xs text-court-muted text-left px-3 py-2 whitespace-nowrap">Squadra ospite</th>
               <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">Stato</th>
+              <th className="w-px" />
               <th className="w-px" />
             </tr>
           </thead>
@@ -234,12 +360,24 @@ export default function TournamentCalendar({ editionId, matches, category, searc
                       {isSaving ? '…' : actionLabel}
                     </button>
                   </td>
+                  <td className="px-3 py-2 w-px whitespace-nowrap">
+                    <button
+                      onClick={() => deleteMatch(match.id)}
+                      disabled={deletingId === match.id || isSaving}
+                      className="text-court-muted hover:text-red-400 transition-colors p-1"
+                      title="Elimina partita"
+                    >
+                      {deletingId === match.id ? '…' : <Trash2 size={14} />}
+                    </button>
+                  </td>
                 </tr>
               )
             })}
           </tbody>
         </table>
       </div>
+      </div>
+      )}
     </div>
   )
 }
