@@ -68,25 +68,26 @@ export default function LedwallSponsors({ sponsors, variant, rotationIndex }: Pr
           <div
             key={s.id}
             className={clsx(
-              'absolute inset-0 flex flex-col items-center justify-center p-8 transition-opacity duration-1000',
+              'absolute inset-0 flex flex-col items-center p-6 gap-4 transition-opacity duration-1000',
               i === index ? 'opacity-100' : 'opacity-0',
             )}
           >
-            {s.logo_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={s.logo_url}
-                alt={s.name}
-                className="max-w-full max-h-full object-contain"
-                style={{ maxHeight: 260 }}
-              />
-            ) : (
-              <span className="font-display font-bold text-gray-400 text-4xl uppercase text-center">
-                {s.name}
-              </span>
-            )}
+            <div className="flex-1 min-h-0 w-full flex items-center justify-center">
+              {s.logo_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={s.logo_url}
+                  alt={s.name}
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <span className="font-display font-bold text-gray-400 text-4xl uppercase text-center">
+                  {s.name}
+                </span>
+              )}
+            </div>
             <span className={clsx(
-              'mt-6 px-3 py-1 rounded font-display font-bold uppercase text-xs tracking-wide',
+              'shrink-0 px-3 py-1 rounded font-display font-bold uppercase text-xs tracking-wide',
               TIER_CLASS[s.tier],
             )}>
               {TIER_LABEL[s.tier]}
