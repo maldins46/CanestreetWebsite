@@ -17,10 +17,10 @@
 
   /* Admin light theme — scoped to the admin layout wrapper */
   [data-theme="light"] {
-    --color-court-black:   249 249 248;
-    --color-court-dark:    242 242 239;
-    --color-court-surface: 232 232 228;
-    --color-court-border:  170 168 162;
+    --color-court-black:   249 249 249;
+    --color-court-dark:    244 244 244;
+    --color-court-surface: 240 240 240;
+    --color-court-border:  168 168 168;
     --color-court-muted:   100 100 100;
     --color-court-gray:     96  96  96;
     --color-court-light:    48  48  48;
@@ -30,10 +30,10 @@
   /* Admin system theme — follows OS preference */
   @media (prefers-color-scheme: light) {
     [data-theme="system"] {
-      --color-court-black:   249 249 248;
-      --color-court-dark:    242 242 239;
-      --color-court-surface: 232 232 228;
-      --color-court-border:  170 168 162;
+      --color-court-black:   249 249 249;
+      --color-court-dark:    244 244 244;
+      --color-court-surface: 240 240 240;
+      --color-court-border:  168 168 168;
       --color-court-muted:   100 100 100;
       --color-court-gray:     96  96  96;
       --color-court-light:    48  48  48;
