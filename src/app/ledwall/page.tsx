@@ -257,6 +257,33 @@ export default function LedwallPage() {
         }}
       >
 
+        {/* ── Bottom footer bar ── */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: FRAME_INSET_BOTTOM,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            paddingRight: FRAME_INSET_SIDE,
+            gap: 20,
+          }}
+        >
+          <span className="font-display font-bold uppercase tracking-wide text-white text-base">
+            canestreet.it
+          </span>
+          <div style={{ width: 2, height: 28, background: 'rgba(255,255,255,0.6)' }} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/estathe-3x3-italia-logo.png" alt="Estathe 3x3 Italia" style={{ height: 30, width: 'auto' }} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/fip-logo-white.png" alt="FIP" style={{ height: 24, width: 'auto' }} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/lb3-logo-white.png" alt="LB3" style={{ height: 24, width: 'auto' }} />
+        </div>
+
         {/* ── White content box (covers center; frame visible only around edges) ── */}
         <div
           style={{
