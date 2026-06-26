@@ -271,6 +271,29 @@ function computeStandings(matches: MatchWithTeams[], teams: { id: string; name: 
   return rows
 }
 
+// Estimate rendered height of one girone section (group header + col header + team rows)
+function estimateGroupHeight(group: GroupWithTeams): number {
+  const teamCount = group.group_teams.filter(gt => gt.teams).length
+  return 29 + 33 + teamCount * 33
+}
+
+// Split groups into pages that fit within availableHeight
+function splitGroupsToFit(groups: GroupWithTeams[], availableHeight: number): GroupWithTeams[][] {
+  if (!availableHeight || groups.length === 0) return [groups]
+  const pages: GroupWithTeams[][] = [[]]
+  let currentHeight = 0
+  for (const group of groups) {
+    const h = estimateGroupHeight(group)
+    if (currentHeight + h > availableHeight && pages[pages.length - 1].length > 0) {
+      pages.push([group])
+      currentHeight = h
+    } else {
+      pages[pages.length - 1].push(group)
+      currentHeight += h
+    }
+  }
+  return pages
+}
 
 function ShowcaseStandings({ groups, matches, category, theme, carousel }: {
   groups: GroupWithTeams[]
@@ -282,6 +305,52 @@ function ShowcaseStandings({ groups, matches, category, theme, carousel }: {
   const lightMode = theme.bg === 'bg-white'
   const groupsForCat = groups.filter(g => g.category === category)
   const groupMatches = matches.filter(m => m.phase === 'group' && m.category === category)
+
+  const contentRef = React.useRef<HTMLDivElement>(null)
+  const [subPages, setSubPages] = React.useState<GroupWithTeams[][]>([groupsForCat])
+  const [subPageIndex, setSubPageIndex] = React.useState(0)
+
+  // Reset to first sub-page when category changes
+  React.useEffect(() => {
+    setSubPageIndex(0)
+    setSubPages([groupsForCat])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [category])
+
+  // Recompute sub-pages when container height or groups change
+  React.useEffect(() => {
+    const el = contentRef.current
+    if (!el) return
+    const doCompute = () => {
+      const available = el.clientHeight
+      if (!available) return
+      const pages = splitGroupsToFit(groupsForCat, available)
+      setSubPages(pages)
+    }
+    doCompute()
+    const obs = new ResizeObserver(doCompute)
+    obs.observe(el)
+    return () => obs.disconnect()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [category, groups])
+
+  // Clamp index if sub-page count shrinks
+  React.useEffect(() => {
+    setSubPageIndex(prev => Math.min(prev, Math.max(0, subPages.length - 1)))
+  }, [subPages.length])
+
+  // Auto-cycle through sub-pages
+  React.useEffect(() => {
+    if (subPages.length <= 1) return
+    const interval = setInterval(() => {
+      setSubPageIndex(prev => (prev + 1) % subPages.length)
+    }, 10000)
+    return () => clearInterval(interval)
+  }, [subPages.length])
+
+  const safeSubPageIndex = Math.min(subPageIndex, subPages.length - 1)
+  const currentGroups = (subPages[safeSubPageIndex] ?? groupsForCat).filter(g => g.category === category)
+  const hasSubPages = subPages.length > 1
 
   if (groupsForCat.length === 0) {
     return (
@@ -299,10 +368,25 @@ function ShowcaseStandings({ groups, matches, category, theme, carousel }: {
         </h2>
         {carousel ? (
           <div className="flex gap-1.5">
-            {carousel.categories.map((cat, idx) => {
+            {carousel.categories.flatMap((cat, idx) => {
               const isActive = idx === carousel.activeIndex
               const isDisabled = carousel.validCategories && !carousel.validCategories.includes(cat)
-              return (
+              if (isActive && hasSubPages) {
+                return subPages.map((_, pageIdx) => (
+                  <span
+                    key={`${cat}-${pageIdx}`}
+                    className={clsx(
+                      'text-[10px] px-2 py-0.5 rounded font-display uppercase tracking-wide transition-all',
+                      pageIdx === safeSubPageIndex
+                        ? 'bg-brand-orange text-white'
+                        : lightMode ? 'bg-gray-200 text-gray-500' : 'bg-court-border text-court-muted',
+                    )}
+                  >
+                    {CATEGORY_SHORT[cat]} {pageIdx + 1}
+                  </span>
+                ))
+              }
+              return [
                 <span
                   key={cat}
                   className={clsx(
@@ -315,18 +399,34 @@ function ShowcaseStandings({ groups, matches, category, theme, carousel }: {
                   )}
                 >
                   {CATEGORY_SHORT[cat]}
-                </span>
-              )
+                </span>,
+              ]
             })}
           </div>
         ) : (
-          <span className={clsx('text-[10px] px-2 py-0.5 rounded text-white', CATEGORY_COLORS[category])}>
-            {CATEGORY_SHORT[category]}
-          </span>
+          <div className="flex gap-1.5">
+            {hasSubPages ? subPages.map((_, pageIdx) => (
+              <span
+                key={pageIdx}
+                className={clsx(
+                  'text-[10px] px-2 py-0.5 rounded font-display uppercase tracking-wide',
+                  pageIdx === safeSubPageIndex
+                    ? clsx('text-white', CATEGORY_COLORS[category])
+                    : lightMode ? 'bg-gray-200 text-gray-500' : 'bg-court-border text-court-muted',
+                )}
+              >
+                {CATEGORY_SHORT[category]} {pageIdx + 1}
+              </span>
+            )) : (
+              <span className={clsx('text-[10px] px-2 py-0.5 rounded text-white', CATEGORY_COLORS[category])}>
+                {CATEGORY_SHORT[category]}
+              </span>
+            )}
+          </div>
         )}
       </div>
-      <div className={clsx('flex-1 overflow-y-auto overflow-x-hidden', theme.cardBg)}>
-        {groupsForCat.map(group => {
+      <div ref={contentRef} className={clsx('flex-1 overflow-y-hidden overflow-x-hidden', theme.cardBg)}>
+        {currentGroups.map(group => {
           const teams = group.group_teams.flatMap(gt => gt.teams ? [gt.teams] : [])
           const groupSpecificMatches = groupMatches.filter(m => m.group_id === group.id)
           const standings = computeStandings(groupSpecificMatches, teams)
