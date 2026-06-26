@@ -5,7 +5,8 @@ import { createClient } from '@/lib/supabase/client'
 import type { ShowcaseMode } from '@/types'
 import clsx from 'clsx'
 
-const MODES: { key: ShowcaseMode; label: string; description: string }[] = [
+const MODES: { key: ShowcaseMode; label: string; description: string; highlight?: boolean }[] = [
+  { key: 'contextual', label: 'Contestuale', description: 'Auto: segue la partita/gara live', highlight: true },
   { key: 'open', label: 'Open', description: 'Calendario + Classifiche Open' },
   { key: 'under', label: 'Under', description: 'Carosello categorie U14/U16/U18' },
   { key: 'tpc_open', label: '3PT Open', description: 'Risultati 3-Point Contest Open' },
@@ -102,7 +103,7 @@ export default function ShowcaseAdminPage() {
       </div>
 
       {/* Mode buttons */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
         {MODES.map(mode => (
           <button
             key={mode.key}
@@ -112,12 +113,14 @@ export default function ShowcaseAdminPage() {
               'card p-6 text-left transition-all border-2',
               currentMode === mode.key
                 ? 'border-brand-orange bg-brand-orange/10'
-                : 'border-transparent hover:border-court-muted',
+                : mode.highlight
+                  ? 'border-brand-orange/30 hover:border-brand-orange/60'
+                  : 'border-transparent hover:border-court-muted',
             )}
           >
             <p className={clsx(
               'font-display font-bold text-2xl mb-2',
-              currentMode === mode.key ? 'text-brand-orange' : 'text-court-white',
+              currentMode === mode.key ? 'text-brand-orange' : mode.highlight ? 'text-brand-orange/70' : 'text-court-white',
             )}>
               {mode.label}
             </p>

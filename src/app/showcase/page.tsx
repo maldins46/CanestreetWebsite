@@ -4,11 +4,10 @@ import React, { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type {
   Edition, GroupWithTeams, MatchWithTeams,
-  TpcContestFull, Sponsor, TeamCategory, CalendarioEvent
+  TpcContestFull, Sponsor, TeamCategory, CalendarioEvent, ShowcaseMode
 } from '@/types'
 import clsx from 'clsx'
-
-type ShowcaseMode = 'open' | 'under' | 'tpc_open' | 'tpc_under' | 'sponsors'
+import { resolveContextualShowcaseMode } from '@/lib/showcase'
 
 const AUTO_REFRESH_INTERVAL = 15000
 const UNDER_CATEGORY_CYCLE_MS = 20000
@@ -862,7 +861,7 @@ function SingleSponsorDisplay({ sponsors, theme }: { sponsors: Sponsor[]; theme:
 
 export default function ShowcasePage() {
   const [mode, setMode] = useState<ShowcaseMode>('open')
-  const [displayMode, setDisplayMode] = useState<ShowcaseMode>('open')
+  const [displayMode, setDisplayMode] = useState<Exclude<ShowcaseMode, 'contextual'>>('open')
   const [contentVisible, setContentVisible] = useState(true)
   const [lightMode, setLightMode] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -958,6 +957,12 @@ export default function ShowcasePage() {
     return () => clearInterval(interval)
   }, [])
 
+  // Resolve the concrete mode to display — 'contextual' maps to a real mode based on live state
+  const effectiveMode: Exclude<ShowcaseMode, 'contextual'> =
+    mode === 'contextual'
+      ? resolveContextualShowcaseMode(data.matches, data.tpcContests, data.events)
+      : (mode as Exclude<ShowcaseMode, 'contextual'>)
+
   // Snap to first valid category when data loads or mode changes
   useEffect(() => {
     const currentOpenCat = OPEN_CATEGORY_ORDER[openCategoryIndex]
@@ -966,7 +971,7 @@ export default function ShowcasePage() {
       if (first >= 0) setOpenCategoryIndex(first)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data.groups, mode])
+  }, [data.groups, effectiveMode])
 
   useEffect(() => {
     const currentUnderCat = CATEGORY_ORDER[underCategoryIndex]
@@ -975,7 +980,7 @@ export default function ShowcasePage() {
       if (first >= 0) setUnderCategoryIndex(first)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data.groups, mode])
+  }, [data.groups, effectiveMode])
 
   // Open mode carousel — only cycle through categories that have groups
   const validOpenCategories = OPEN_CATEGORY_ORDER.filter(cat =>
@@ -983,7 +988,7 @@ export default function ShowcasePage() {
   )
 
   useEffect(() => {
-    if (mode !== 'open') return
+    if (effectiveMode !== 'open') return
     if (validOpenCategories.length === 0) return
     const interval = setInterval(() => {
       setOpenCategoryIndex(prev => {
@@ -995,7 +1000,7 @@ export default function ShowcasePage() {
     }, UNDER_CATEGORY_CYCLE_MS)
     return () => clearInterval(interval)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, validOpenCategories.join(',')])
+  }, [effectiveMode, validOpenCategories.join(',')])
 
   // Under mode carousel — only cycle through categories that have groups
   const validUnderCategories = CATEGORY_ORDER.filter(cat =>
@@ -1003,7 +1008,7 @@ export default function ShowcasePage() {
   )
 
   useEffect(() => {
-    if (mode !== 'under') return
+    if (effectiveMode !== 'under') return
     if (validUnderCategories.length === 0) return
     const interval = setInterval(() => {
       setUnderCategoryIndex(prev => {
@@ -1015,19 +1020,19 @@ export default function ShowcasePage() {
     }, UNDER_CATEGORY_CYCLE_MS)
     return () => clearInterval(interval)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, validUnderCategories.join(',')])
+  }, [effectiveMode, validUnderCategories.join(',')])
 
-  // Fade transition when mode changes
+  // Fade transition when effective mode changes
   useEffect(() => {
-    if (mode === displayMode) return
+    if (effectiveMode === displayMode) return
     setContentVisible(false)
     const timer = setTimeout(() => {
-      setDisplayMode(mode)
+      setDisplayMode(effectiveMode)
       setContentVisible(true)
     }, 300)
     return () => clearTimeout(timer)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode])
+  }, [effectiveMode])
 
   if (loading) {
     return (

@@ -336,7 +336,7 @@ export interface LedwallState {
 // Showcase mode type
 // ============================================================
 
-export type ShowcaseMode = 'open' | 'under' | 'tpc_open' | 'tpc_under' | 'sponsors'
+export type ShowcaseMode = 'open' | 'under' | 'tpc_open' | 'tpc_under' | 'sponsors' | 'contextual'
 
 export interface ShowcaseModeRow {
   id: string
