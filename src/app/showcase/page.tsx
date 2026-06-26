@@ -291,13 +291,6 @@ function ShowcaseStandings({ groups, matches, category, theme, carousel }: {
     )
   }
 
-  const allRows = groupsForCat.flatMap((group, groupIdx) => {
-    const teams = group.group_teams.flatMap(gt => gt.teams ? [gt.teams] : [])
-    const groupSpecificMatches = groupMatches.filter(m => m.group_id === group.id)
-    const standings = computeStandings(groupSpecificMatches, teams)
-    return standings.map((row, idx) => ({ ...row, groupName: group.name, groupIdx, idx }))
-  })
-
   return (
     <div className="h-full flex flex-col">
       <div className={clsx('px-4 py-3 flex items-center justify-between border-b', lightMode ? 'bg-gray-100' : 'bg-court-surface', theme.border)}>
@@ -333,58 +326,59 @@ function ShowcaseStandings({ groups, matches, category, theme, carousel }: {
         )}
       </div>
       <div className={clsx('flex-1 overflow-y-auto overflow-x-hidden', theme.cardBg)}>
-        <table className="w-full text-xs">
-          <thead className={clsx('sticky top-0 z-10', lightMode ? 'bg-gray-100 shadow-[0_1px_0_0_#d1d5db]' : 'bg-court-surface shadow-[0_1px_0_0_#333]')}>
-            <tr>
-              <th className={clsx('text-center py-2 px-3 font-display uppercase w-px whitespace-nowrap', theme.textMuted)}>Girone</th>
-              <th className={clsx('text-center py-2 px-3 font-display uppercase w-px whitespace-nowrap', theme.textMuted)}>#</th>
-              <th className={clsx('text-left py-2 px-3 font-display uppercase', theme.textMuted)}>Squadra</th>
-              <th className={clsx('text-center py-2 px-3 font-display uppercase w-px whitespace-nowrap', theme.textMuted)}>V</th>
-              <th className={clsx('text-center py-2 px-3 font-display uppercase w-px whitespace-nowrap', theme.textMuted)}>S</th>
-              <th className={clsx('text-center py-2 px-3 font-display uppercase w-px whitespace-nowrap', theme.textMuted)}>PF</th>
-              <th className={clsx('text-center py-2 px-3 font-display uppercase w-px whitespace-nowrap', theme.textMuted)}>PS</th>
-              <th className={clsx('text-center py-2 px-3 font-display uppercase w-px whitespace-nowrap', theme.textMuted)}>+/-</th>
-            </tr>
-          </thead>
-          <tbody>
-            {allRows.map(row => (
-              <tr key={row.team_id} className={clsx('border-b last:border-b-0', theme.tableBorder, theme.tableRow)}>
-                <td className="py-2 px-3 w-px whitespace-nowrap text-center">
-                  <span className={clsx(
-                    'text-[10px] px-2 py-0.5 rounded',
-                    row.groupIdx % 2 === 0
-                      ? 'bg-brand-orange text-white'
-                      : lightMode
-                        ? 'bg-gray-500 text-white'
-                        : 'bg-court-muted text-white',
-                  )}>
-                    {row.groupName}
-                  </span>
-                </td>
-                <td className="py-2 px-3 w-px whitespace-nowrap text-center">
-                  <span className={clsx('font-display font-bold', row.idx < 2 ? 'text-brand-orange' : theme.textMuted)}>
-                    {row.idx + 1}
-                  </span>
-                </td>
-                <td className={clsx('py-2 px-3 max-w-0 overflow-hidden', theme.tableText)}>
-                  <span className="block truncate">{row.team_name}</span>
-                </td>
-                <td className={clsx('py-2 px-3 text-center font-semibold w-px whitespace-nowrap', theme.tableText)}>{row.wins}</td>
-                <td className={clsx('py-2 px-3 text-center w-px whitespace-nowrap', theme.textMuted)}>{row.losses}</td>
-                <td className={clsx('py-2 px-3 text-center w-px whitespace-nowrap', theme.textMuted)}>{row.pf}</td>
-                <td className={clsx('py-2 px-3 text-center w-px whitespace-nowrap', theme.textMuted)}>{row.ps}</td>
-                <td className="py-2 px-3 text-center w-px whitespace-nowrap">
-                  <span className={clsx(
-                    'font-display font-bold',
-                    row.point_differential > 0 ? 'text-green-600' : row.point_differential < 0 ? 'text-red-600' : theme.textMuted
-                  )}>
-                    {row.point_differential > 0 ? `+${row.point_differential}` : row.point_differential}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {groupsForCat.map(group => {
+          const teams = group.group_teams.flatMap(gt => gt.teams ? [gt.teams] : [])
+          const groupSpecificMatches = groupMatches.filter(m => m.group_id === group.id)
+          const standings = computeStandings(groupSpecificMatches, teams)
+          return (
+            <div key={group.id}>
+              <div className={clsx('px-3 py-1.5 border-b border-t', lightMode ? 'bg-gray-200 border-gray-300' : 'bg-court-dark border-court-border')}>
+                <span className={clsx('font-display font-bold uppercase text-xs tracking-wide', theme.textMuted)}>
+                  Girone {group.name}
+                </span>
+              </div>
+              <table className="w-full text-xs">
+                <thead className={clsx(lightMode ? 'bg-gray-100' : 'bg-court-surface')}>
+                  <tr className={clsx('border-b', theme.tableBorder)}>
+                    <th className={clsx('text-center py-2 px-3 font-display uppercase w-px whitespace-nowrap', theme.textMuted)}>#</th>
+                    <th className={clsx('text-left py-2 px-3 font-display uppercase', theme.textMuted)}>Squadra</th>
+                    <th className={clsx('text-center py-2 px-3 font-display uppercase w-px whitespace-nowrap', theme.textMuted)}>V</th>
+                    <th className={clsx('text-center py-2 px-3 font-display uppercase w-px whitespace-nowrap', theme.textMuted)}>S</th>
+                    <th className={clsx('text-center py-2 px-3 font-display uppercase w-px whitespace-nowrap', theme.textMuted)}>PF</th>
+                    <th className={clsx('text-center py-2 px-3 font-display uppercase w-px whitespace-nowrap', theme.textMuted)}>PS</th>
+                    <th className={clsx('text-center py-2 px-3 font-display uppercase w-px whitespace-nowrap', theme.textMuted)}>+/-</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {standings.map((row, idx) => (
+                    <tr key={row.team_id} className={clsx('border-b last:border-b-0', theme.tableBorder, theme.tableRow)}>
+                      <td className="py-2 px-3 w-px whitespace-nowrap text-center">
+                        <span className={clsx('font-display font-bold', idx < 2 ? 'text-brand-orange' : theme.textMuted)}>
+                          {idx + 1}
+                        </span>
+                      </td>
+                      <td className={clsx('py-2 px-3 max-w-0 overflow-hidden', theme.tableText)}>
+                        <span className="block truncate">{row.team_name}</span>
+                      </td>
+                      <td className={clsx('py-2 px-3 text-center font-semibold w-px whitespace-nowrap', theme.tableText)}>{row.wins}</td>
+                      <td className={clsx('py-2 px-3 text-center w-px whitespace-nowrap', theme.textMuted)}>{row.losses}</td>
+                      <td className={clsx('py-2 px-3 text-center w-px whitespace-nowrap', theme.textMuted)}>{row.pf}</td>
+                      <td className={clsx('py-2 px-3 text-center w-px whitespace-nowrap', theme.textMuted)}>{row.ps}</td>
+                      <td className="py-2 px-3 text-center w-px whitespace-nowrap">
+                        <span className={clsx(
+                          'font-display font-bold',
+                          row.point_differential > 0 ? 'text-green-600' : row.point_differential < 0 ? 'text-red-600' : theme.textMuted
+                        )}>
+                          {row.point_differential > 0 ? `+${row.point_differential}` : row.point_differential}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
