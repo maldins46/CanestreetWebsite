@@ -20,6 +20,8 @@ const categories: { value: TeamCategory | 'all'; label: string }[] = [
   { value: 'u14_m',  label: 'U14 M' },
 ]
 
+const STATUS_ORDER: Record<string, number> = { completed: 0, in_progress: 1, scheduled: 2 }
+
 const roundLabels: Record<string, string> = {
   round_of_16: 'Ottavi',
   quarterfinal: 'Quarti',
@@ -71,6 +73,14 @@ export default function TournamentCalendarSection({ matches }: Props) {
       CATEGORY_LABELS[m.category].toLowerCase().includes(q) ||
       getPhaseLabel(m).toLowerCase().includes(q)
     )
+  }).sort((a, b) => {
+    const da = a.scheduled_at ? new Date(a.scheduled_at).getTime() : Infinity
+    const db = b.scheduled_at ? new Date(b.scheduled_at).getTime() : Infinity
+    if (da !== db) return da - db
+    const sa = STATUS_ORDER[a.status] ?? 99
+    const sb = STATUS_ORDER[b.status] ?? 99
+    if (sa !== sb) return sa - sb
+    return getPhaseLabel(a).localeCompare(getPhaseLabel(b))
   })
 
   // Group by day

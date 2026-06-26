@@ -3,7 +3,9 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Trash2, Plus, ChevronDown, ChevronUp } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import type { GroupWithTeams, TeamCategory } from '@/types'
+import type { GroupWithTeams, MatchWithTeams, TeamCategory } from '@/types'
+import { computeStandings } from '@/lib/standings'
+import clsx from 'clsx'
 
 interface Props {
   editionId: string
@@ -11,9 +13,10 @@ interface Props {
   groups: GroupWithTeams[]
   approvedTeams: { id: string; name: string; category: string }[]
   groupsWithMatches: string[]
+  matches: MatchWithTeams[]
 }
 
-export default function TournamentGroups({ editionId, category, groups, approvedTeams, groupsWithMatches }: Props) {
+export default function TournamentGroups({ editionId, category, groups, approvedTeams, groupsWithMatches, matches }: Props) {
   const supabase = createClient()
   const router = useRouter()
   const [saving, setSaving] = useState(false)
@@ -189,22 +192,87 @@ export default function TournamentGroups({ editionId, category, groups, approved
                     <p className="text-court-muted text-xs italic px-4 py-3">Nessuna squadra</p>
                   ) : (
                     <>
-                      {group.group_teams.map(gt => (
-                        <div
-                          key={gt.id}
-                          className="flex items-center gap-3 px-4 py-2.5 border-b border-court-border last:border-b-0"
-                        >
-                          <span className="text-sm text-court-white flex-1 min-w-0 truncate">{gt.teams?.name}</span>
-                          <button
-                            onClick={() => removeTeam(gt.id, gt.team_id, gt.group_id, gt.teams?.name ?? '')}
-                            disabled={saving}
-                            className="text-court-muted hover:text-red-400 transition-colors shrink-0"
-                            aria-label="Rimuovi squadra"
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
-                      ))}
+                      {group.group_teams.length > 0 && (() => {
+                        const gtByTeamId = new Map(group.group_teams.map(gt => [gt.team_id, gt]))
+                        const teams = group.group_teams.flatMap(gt => gt.teams ? [gt.teams] : [])
+                        const standings = computeStandings(matches.filter(m => m.group_id === group.id), teams)
+                        return (
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="border-b border-court-border">
+                                  <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center w-px px-3 py-2 whitespace-nowrap">#</th>
+                                  <th className="font-display uppercase tracking-wide text-xs text-court-muted text-left px-3 py-2 whitespace-nowrap">Squadra</th>
+                                  <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">V</th>
+                                  <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">S</th>
+                                  <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">PF</th>
+                                  <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">PS</th>
+                                  <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">+/-</th>
+                                  <th className="w-px" />
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {standings.map((row, i) => {
+                                  const isQ = i < 2
+                                  const gt = gtByTeamId.get(row.team_id)
+                                  return (
+                                    <tr
+                                      key={row.team_id}
+                                      className={clsx(
+                                        'border-b border-court-border last:border-b-0 transition-colors',
+                                        isQ ? 'bg-brand-orange/10' : 'hover:bg-white/[0.02]',
+                                      )}
+                                    >
+                                      <td className="text-center px-3 py-2.5 w-px whitespace-nowrap">
+                                        <span className={clsx('font-display font-bold text-xs', isQ ? 'text-brand-orange' : 'text-court-muted')}>
+                                          {i + 1}
+                                        </span>
+                                      </td>
+                                      <td className="text-left px-3 py-2.5 whitespace-nowrap">
+                                        <span className="font-body text-court-white text-sm">{row.team_name}</span>
+                                      </td>
+                                      <td className="text-center px-3 py-2.5 w-px whitespace-nowrap">
+                                        <span className="font-body font-semibold text-court-white">{row.wins}</span>
+                                      </td>
+                                      <td className="text-center px-3 py-2.5 w-px whitespace-nowrap">
+                                        <span className="font-body text-court-gray">{row.losses}</span>
+                                      </td>
+                                      <td className="text-center px-3 py-2.5 w-px whitespace-nowrap">
+                                        <span className="font-body text-court-gray">{row.points_for}</span>
+                                      </td>
+                                      <td className="text-center px-3 py-2.5 w-px whitespace-nowrap">
+                                        <span className="font-body text-court-gray">{row.points_against}</span>
+                                      </td>
+                                      <td className="text-center px-3 py-2.5 w-px whitespace-nowrap">
+                                        <span className={clsx(
+                                          'font-body font-semibold text-sm',
+                                          row.point_differential > 0 ? 'text-green-400'
+                                            : row.point_differential < 0 ? 'text-red-400'
+                                            : 'text-court-muted',
+                                        )}>
+                                          {row.point_differential > 0 ? `+${row.point_differential}` : row.point_differential}
+                                        </span>
+                                      </td>
+                                      <td className="px-3 py-2.5 w-px whitespace-nowrap">
+                                        {gt && (
+                                          <button
+                                            onClick={() => removeTeam(gt.id, gt.team_id, gt.group_id, row.team_name)}
+                                            disabled={saving}
+                                            className="text-court-muted hover:text-red-400 transition-colors"
+                                            aria-label="Rimuovi squadra"
+                                          >
+                                            <Trash2 size={13} />
+                                          </button>
+                                        )}
+                                      </td>
+                                    </tr>
+                                  )
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        )
+                      })()}
                       {unassignedTeams.length > 0 && (
                         <div className="px-4 py-2.5 border-t border-court-border">
                           <select

@@ -14,6 +14,8 @@ interface Props {
   search?: string
 }
 
+const STATUS_ORDER: Record<string, number> = { completed: 0, in_progress: 1, scheduled: 2 }
+
 const roundLabels: Record<string, string> = {
   round_of_16: 'Ottavi',
   quarterfinal: 'Quarti',
@@ -46,6 +48,14 @@ export default function TournamentCalendar({ editionId, matches, category, searc
       m.group?.name.toLowerCase().includes(q) ||
       phase.includes(q)
     )
+  }).sort((a, b) => {
+    const da = a.scheduled_at ? new Date(a.scheduled_at).getTime() : Infinity
+    const db = b.scheduled_at ? new Date(b.scheduled_at).getTime() : Infinity
+    if (da !== db) return da - db
+    const sa = STATUS_ORDER[a.status] ?? 99
+    const sb = STATUS_ORDER[b.status] ?? 99
+    if (sa !== sb) return sa - sb
+    return getPhaseLabel(a).localeCompare(getPhaseLabel(b))
   })
 
   function getScore(matchId: string, side: 'home' | 'away', fallback: number | null) {
@@ -80,9 +90,9 @@ export default function TournamentCalendar({ editionId, matches, category, searc
   async function cycleStatus(match: MatchWithTeams) {
     setSaving(match.id)
     if (match.status === 'scheduled') {
-      // Clear any other live match first, then go live
+      // Move any currently live match to completed before going live
       await supabase.from('matches')
-        .update({ status: 'scheduled' })
+        .update({ status: 'completed' })
         .eq('edition_id', editionId)
         .eq('status', 'in_progress')
       await supabase.from('matches').update({ status: 'in_progress' }).eq('id', match.id)
@@ -259,7 +269,6 @@ export default function TournamentCalendar({ editionId, matches, category, searc
               <th className="font-display uppercase tracking-wide text-xs text-court-muted text-left px-3 py-2 whitespace-nowrap">Squadra ospite</th>
               <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">Stato</th>
               <th className="w-px" />
-              <th className="w-px" />
             </tr>
           </thead>
           <tbody>
@@ -267,9 +276,6 @@ export default function TournamentCalendar({ editionId, matches, category, searc
               const isSaving = saving === match.id
               const homeVal = getScore(match.id, 'home', match.score_home)
               const awayVal = getScore(match.id, 'away', match.score_away)
-              const actionLabel = match.status === 'scheduled' ? 'Avvia'
-                : match.status === 'in_progress' ? 'Termina'
-                : 'Resetta'
 
               return (
                 <tr
@@ -335,30 +341,37 @@ export default function TournamentCalendar({ editionId, matches, category, searc
                   </td>
                   <td className="px-3 py-2 w-px whitespace-nowrap text-center">
                     {match.status === 'scheduled' && (
-                      <span className="badge-programma text-xs px-2 py-0.5 font-display uppercase tracking-wide border whitespace-nowrap">
-                        Da giocare
-                      </span>
+                      <button
+                        onClick={() => cycleStatus(match)}
+                        disabled={isSaving}
+                        className="badge-programma text-xs px-2 py-0.5 font-display uppercase tracking-wide border whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity disabled:cursor-not-allowed"
+                      >
+                        {isSaving ? '…' : 'Da giocare'}
+                      </button>
                     )}
                     {match.status === 'in_progress' && (
-                      <span className="badge-live text-xs px-2 py-0.5 font-display uppercase tracking-wide border inline-flex items-center gap-1.5 whitespace-nowrap">
-                        <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse shrink-0" />
-                        Live
-                      </span>
+                      <button
+                        onClick={() => cycleStatus(match)}
+                        disabled={isSaving}
+                        className="badge-live text-xs px-2 py-0.5 font-display uppercase tracking-wide border inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity disabled:cursor-not-allowed"
+                      >
+                        {isSaving ? '…' : (
+                          <>
+                            <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse shrink-0" />
+                            Live
+                          </>
+                        )}
+                      </button>
                     )}
                     {match.status === 'completed' && (
-                      <span className="badge-terminata text-xs px-2 py-0.5 font-display uppercase tracking-wide border whitespace-nowrap">
-                        Terminata
-                      </span>
+                      <button
+                        onClick={() => cycleStatus(match)}
+                        disabled={isSaving}
+                        className="badge-terminata text-xs px-2 py-0.5 font-display uppercase tracking-wide border whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity disabled:cursor-not-allowed"
+                      >
+                        {isSaving ? '…' : 'Terminata'}
+                      </button>
                     )}
-                  </td>
-                  <td className="px-3 py-2 w-px whitespace-nowrap">
-                    <button
-                      onClick={() => cycleStatus(match)}
-                      disabled={isSaving}
-                      className="btn-ghost py-1 px-3 text-xs justify-center"
-                    >
-                      {isSaving ? '…' : actionLabel}
-                    </button>
                   </td>
                   <td className="px-3 py-2 w-px whitespace-nowrap">
                     <button

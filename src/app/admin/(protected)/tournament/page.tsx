@@ -129,6 +129,7 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
           groups={groups}
           approvedTeams={approvedTeams}
           groupsWithMatches={groupsWithMatches}
+          matches={matches.filter(m => m.phase === 'group')}
         />
       ) : tab === 'calendario' ? (
         <TournamentCalendar
