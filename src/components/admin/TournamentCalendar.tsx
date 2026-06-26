@@ -2,16 +2,17 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import type { MatchWithTeams, TeamCategory } from '@/types'
+import type { MatchWithTeams, TeamCategory, CalendarioEvent } from '@/types'
 import { CATEGORY_LABELS, CATEGORY_COLORS } from '@/types'
 import clsx from 'clsx'
-import { Trash2, CalendarClock } from 'lucide-react'
+import { Trash2, CalendarClock, Info } from 'lucide-react'
 
 interface Props {
   editionId: string
   matches: MatchWithTeams[]
-  category?: TeamCategory
+  category?: TeamCategory | 'evento'
   search?: string
+  events?: CalendarioEvent[]
 }
 
 const STATUS_ORDER: Record<string, number> = { completed: 0, in_progress: 1, scheduled: 2 }
@@ -23,7 +24,13 @@ const roundLabels: Record<string, string> = {
   final: 'Finale',
 }
 
-export default function TournamentCalendar({ editionId, matches, category, search }: Props) {
+type AdminRow =
+  | { type: 'match'; data: MatchWithTeams }
+  | { type: 'event'; data: CalendarioEvent }
+
+export default function TournamentCalendar({ editionId, matches, category, search, events }: Props) {
+  // evento: events-only table; specific category: matches only; undefined (Tutte): merge both
+  const isEventMode = category === 'evento'
   const supabase = createClient()
   const router = useRouter()
   const [saving, setSaving] = useState<string | null>(null)
@@ -39,7 +46,7 @@ export default function TournamentCalendar({ editionId, matches, category, searc
 
   const categoryMatches = matches.filter(m => !category || m.category === category)
 
-  const filtered = categoryMatches.filter(m => {
+  const filteredMatches = categoryMatches.filter(m => {
     if (!q) return true
     const phase = getPhaseLabel(m).toLowerCase()
     return (
@@ -48,14 +55,28 @@ export default function TournamentCalendar({ editionId, matches, category, searc
       m.group?.name.toLowerCase().includes(q) ||
       phase.includes(q)
     )
-  }).sort((a, b) => {
-    const da = a.scheduled_at ? new Date(a.scheduled_at).getTime() : Infinity
-    const db = b.scheduled_at ? new Date(b.scheduled_at).getTime() : Infinity
+  })
+
+  // In Tutte mode (no category), blend events with matches
+  const blendEvents = !category && !isEventMode && events && events.length > 0
+  const filteredEvents = blendEvents
+    ? events!.filter(e => !q || e.name.toLowerCase().includes(q))
+    : []
+
+  const allRows: AdminRow[] = [
+    ...filteredMatches.map(m => ({ type: 'match' as const, data: m })),
+    ...filteredEvents.map(e => ({ type: 'event' as const, data: e })),
+  ].sort((a, b) => {
+    const da = a.data.scheduled_at ? new Date(a.data.scheduled_at).getTime() : Infinity
+    const db = b.data.scheduled_at ? new Date(b.data.scheduled_at).getTime() : Infinity
     if (da !== db) return da - db
-    const sa = STATUS_ORDER[a.status] ?? 99
-    const sb = STATUS_ORDER[b.status] ?? 99
+    const sa = STATUS_ORDER[a.data.status] ?? 99
+    const sb = STATUS_ORDER[b.data.status] ?? 99
     if (sa !== sb) return sa - sb
-    return getPhaseLabel(a).localeCompare(getPhaseLabel(b))
+    if (a.type === 'match' && b.type === 'match') {
+      return getPhaseLabel(a.data).localeCompare(getPhaseLabel(b.data))
+    }
+    return 0
   })
 
   function getScore(matchId: string, side: 'home' | 'away', fallback: number | null) {
@@ -71,7 +92,7 @@ export default function TournamentCalendar({ editionId, matches, category, searc
 
   async function saveSchedule(matchId: string, scheduledAt: string) {
     setSaving(matchId)
-    await supabase.from('matches').update({ scheduled_at: scheduledAt || null }).eq('id', matchId)
+    await supabase.from('matches').update({ scheduled_at: fromRomeLocal(scheduledAt) }).eq('id', matchId)
     router.refresh()
     setSaving(null)
   }
@@ -90,8 +111,12 @@ export default function TournamentCalendar({ editionId, matches, category, searc
   async function cycleStatus(match: MatchWithTeams) {
     setSaving(match.id)
     if (match.status === 'scheduled') {
-      // Move any currently live match to completed before going live
+      // Global rule: complete any live match or event before going live
       await supabase.from('matches')
+        .update({ status: 'completed' })
+        .eq('edition_id', editionId)
+        .eq('status', 'in_progress')
+      await supabase.from('events')
         .update({ status: 'completed' })
         .eq('edition_id', editionId)
         .eq('status', 'in_progress')
@@ -122,7 +147,7 @@ export default function TournamentCalendar({ editionId, matches, category, searc
     if (!bulkDate) return
     setSettingDate(true)
     setDateModalOpen(false)
-    let q = supabase.from('matches').update({ scheduled_at: bulkDate }).eq('edition_id', editionId)
+    let q = supabase.from('matches').update({ scheduled_at: fromRomeLocal(bulkDate) }).eq('edition_id', editionId)
     if (category) q = q.eq('category', category)
     await q
     router.refresh()
@@ -146,39 +171,99 @@ export default function TournamentCalendar({ editionId, matches, category, searc
     setDeletingAll(false)
   }
 
+  async function cycleEventStatus(event: CalendarioEvent) {
+    setSaving(event.id)
+    if (event.status === 'scheduled') {
+      await supabase.from('matches').update({ status: 'completed' }).eq('edition_id', editionId).eq('status', 'in_progress')
+      await supabase.from('events').update({ status: 'completed' }).eq('edition_id', editionId).eq('status', 'in_progress')
+      await supabase.from('events').update({ status: 'in_progress' }).eq('id', event.id)
+    } else if (event.status === 'in_progress') {
+      await supabase.from('events').update({ status: 'completed' }).eq('id', event.id)
+    } else {
+      await supabase.from('events').update({ status: 'scheduled' }).eq('id', event.id)
+    }
+    router.refresh()
+    setSaving(null)
+  }
+
+  async function saveEventSchedule(eventId: string, scheduledAt: string) {
+    setSaving(eventId)
+    await supabase.from('events').update({ scheduled_at: fromRomeLocal(scheduledAt) }).eq('id', eventId)
+    router.refresh()
+    setSaving(null)
+  }
+
+  async function deleteEvent(eventId: string) {
+    setDeletingId(eventId)
+    await supabase.from('events').delete().eq('id', eventId)
+    router.refresh()
+    setDeletingId(null)
+  }
+
+  async function deleteAllEvents() {
+    setDeletingAll(true)
+    setConfirmDeleteModalOpen(false)
+    await supabase.from('events').delete().eq('edition_id', editionId)
+    router.refresh()
+    setDeletingAll(false)
+  }
+
+  async function setAllEventDates() {
+    if (!bulkDate) return
+    setSettingDate(true)
+    setDateModalOpen(false)
+    await supabase.from('events').update({ scheduled_at: fromRomeLocal(bulkDate) }).eq('edition_id', editionId)
+    router.refresh()
+    setSettingDate(false)
+  }
+
   function getPhaseLabel(match: MatchWithTeams) {
     if (match.phase === 'group' && match.group) return `Girone ${match.group.name}`
     if (match.phase === 'bracket' && match.bracket_round) return roundLabels[match.bracket_round] ?? match.bracket_round
     return ''
   }
 
-  function toDatetimeLocal(iso: string | null) {
+  function toDatetimeLocal(iso: string | null): string {
     if (!iso) return ''
-    return new Date(iso).toISOString().slice(0, 16)
+    // Show Rome local time in the datetime-local input
+    return new Date(iso).toLocaleString('sv-SE', { timeZone: 'Europe/Rome' }).slice(0, 16).replace(' ', 'T')
   }
+
+  function fromRomeLocal(localStr: string): string | null {
+    if (!localStr) return null
+    // "YYYY-MM-DDTHH:mm" entered as Rome time → UTC ISO string
+    const asIfUtc = new Date(localStr + ':00Z')
+    const romeEquiv = asIfUtc.toLocaleString('sv-SE', { timeZone: 'Europe/Rome' }).slice(0, 16)
+    const offsetMs = new Date(romeEquiv + ':00Z').getTime() - asIfUtc.getTime()
+    return new Date(asIfUtc.getTime() - offsetMs).toISOString()
+  }
+
+  const eventCount = events?.length ?? 0
 
   return (
     <div>
       {/* Action box */}
       <div className="card flex items-center gap-3 mb-6 flex-wrap px-4 py-3">
         <p className="text-court-muted text-sm">
-          {categoryMatches.length} {categoryMatches.length === 1 ? 'partita' : 'partite'}
-          {category ? ` — ${CATEGORY_LABELS[category]}` : ''}
+          {isEventMode
+            ? `${eventCount} ${eventCount === 1 ? 'evento' : 'eventi'}`
+            : `${categoryMatches.length} ${categoryMatches.length === 1 ? 'partita' : 'partite'}${category ? ` — ${CATEGORY_LABELS[category]}` : ''}`
+          }
         </p>
         <div className="flex items-center gap-3 ml-auto">
           <button
             onClick={() => setDateModalOpen(true)}
-            disabled={settingDate || categoryMatches.length === 0}
+            disabled={settingDate || (isEventMode ? eventCount === 0 : categoryMatches.length === 0)}
             className="btn-ghost text-sm px-4 py-2 whitespace-nowrap"
           >
             {settingDate ? '…' : <><CalendarClock size={14} /> Imposta data a tutte</>}
           </button>
           <button
             onClick={() => setConfirmDeleteModalOpen(true)}
-            disabled={deletingAll || categoryMatches.length === 0}
+            disabled={deletingAll || (isEventMode ? eventCount === 0 : categoryMatches.length === 0)}
             className="btn-ghost text-sm px-4 py-2 whitespace-nowrap"
           >
-            {deletingAll ? '…' : <><Trash2 size={14} /> Elimina tutte le partite</>}
+            {deletingAll ? '…' : <><Trash2 size={14} /> {isEventMode ? 'Elimina tutti gli eventi' : 'Elimina tutte le partite'}</>}
           </button>
         </div>
       </div>
@@ -196,7 +281,7 @@ export default function TournamentCalendar({ editionId, matches, category, searc
               Imposta data e ora
             </h2>
             <p className="text-court-gray text-sm mb-5">
-              Verrà applicata a tutte le partite{category ? ` di ${CATEGORY_LABELS[category]}` : ''}.
+              Verrà applicata a tutte le partite{category && category !== 'evento' ? ` di ${CATEGORY_LABELS[category as TeamCategory]}` : ''}.
             </p>
             <input
               type="datetime-local"
@@ -209,7 +294,7 @@ export default function TournamentCalendar({ editionId, matches, category, searc
                 Annulla
               </button>
               <button
-                onClick={setAllDates}
+                onClick={isEventMode ? setAllEventDates : setAllDates}
                 disabled={!bulkDate}
                 className="btn-primary text-sm px-4 py-2"
               >
@@ -230,17 +315,20 @@ export default function TournamentCalendar({ editionId, matches, category, searc
             onClick={e => e.stopPropagation()}
           >
             <h2 className="font-display font-bold uppercase text-xl text-court-white mb-1">
-              Elimina partite
+              {isEventMode ? 'Elimina eventi' : 'Elimina partite'}
             </h2>
             <p className="text-court-gray text-sm mb-6">
-              Verranno eliminate tutte le {categoryMatches.length} partite{category ? ` di ${CATEGORY_LABELS[category]}` : ''}. Questa azione non è reversibile.
+              {isEventMode
+                ? `Verranno eliminati tutti i ${eventCount} eventi. Questa azione non è reversibile.`
+                : `Verranno eliminate tutte le ${categoryMatches.length} partite${category ? ` di ${CATEGORY_LABELS[category]}` : ''}. Questa azione non è reversibile.`
+              }
             </p>
             <div className="flex justify-end gap-3">
               <button onClick={() => setConfirmDeleteModalOpen(false)} className="btn-ghost text-sm px-4 py-2">
                 Annulla
               </button>
               <button
-                onClick={deleteAllMatches}
+                onClick={isEventMode ? deleteAllEvents : deleteAllMatches}
                 className="btn-primary text-sm px-4 py-2 bg-red-600 border-red-600 hover:bg-red-700"
               >
                 Elimina
@@ -250,7 +338,113 @@ export default function TournamentCalendar({ editionId, matches, category, searc
         </div>
       )}
 
-      {filtered.length === 0 ? (
+      {isEventMode ? (
+        events!.length === 0 ? (
+          <div className="card p-10 text-center">
+            <p className="text-court-gray">Nessun evento. Aggiungili dalla scheda <strong>Eventi</strong>.</p>
+          </div>
+        ) : (
+          <div className="card overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-court-border">
+                    <th className="font-display uppercase tracking-wide text-xs text-court-muted text-left px-3 py-2 whitespace-nowrap w-px">Data/Ora</th>
+                    <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">Tipo</th>
+                    <th className="font-display uppercase tracking-wide text-xs text-court-muted text-left px-3 py-2">Nome</th>
+                    <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">Stato</th>
+                    <th className="w-px" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {events!.map(event => {
+                    const isSaving = saving === event.id
+                    return (
+                      <tr
+                        key={event.id}
+                        className={clsx(
+                          'border-b border-court-border last:border-b-0',
+                          event.status === 'in_progress' && 'bg-red-500/10',
+                          event.status === 'completed' && 'opacity-70',
+                        )}
+                      >
+                        <td className="px-3 py-2 w-px whitespace-nowrap">
+                          <input
+                            type="datetime-local"
+                            defaultValue={toDatetimeLocal(event.scheduled_at)}
+                            onBlur={e => saveEventSchedule(event.id, e.target.value)}
+                            disabled={isSaving}
+                            className="input py-1 px-2 text-xs w-40"
+                          />
+                        </td>
+                        <td className="px-3 py-2 w-px whitespace-nowrap text-center">
+                          <span className="text-xs px-2 py-0.5 font-display uppercase tracking-wide rounded bg-teal-500 text-white">
+                            Eventi
+                          </span>
+                        </td>
+                        <td className="px-3 py-2">
+                          <span className="inline-flex items-center gap-1.5">
+                            <span className="text-court-white text-sm">{event.name}</span>
+                            {event.description && (
+                              <span title={event.description} className="text-court-muted hover:text-court-white transition-colors cursor-help shrink-0">
+                                <Info size={13} />
+                              </span>
+                            )}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 w-px whitespace-nowrap text-center">
+                          {event.status === 'scheduled' && (
+                            <button
+                              onClick={() => cycleEventStatus(event)}
+                              disabled={isSaving}
+                              className="badge-programma text-xs px-2 py-0.5 font-display uppercase tracking-wide border whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity disabled:cursor-not-allowed"
+                            >
+                              {isSaving ? '…' : 'In programma'}
+                            </button>
+                          )}
+                          {event.status === 'in_progress' && (
+                            <button
+                              onClick={() => cycleEventStatus(event)}
+                              disabled={isSaving}
+                              className="badge-live text-xs px-2 py-0.5 font-display uppercase tracking-wide border inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity disabled:cursor-not-allowed"
+                            >
+                              {isSaving ? '…' : (
+                                <>
+                                  <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse shrink-0" />
+                                  Live
+                                </>
+                              )}
+                            </button>
+                          )}
+                          {event.status === 'completed' && (
+                            <button
+                              onClick={() => cycleEventStatus(event)}
+                              disabled={isSaving}
+                              className="badge-terminata text-xs px-2 py-0.5 font-display uppercase tracking-wide border whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity disabled:cursor-not-allowed"
+                            >
+                              {isSaving ? '…' : 'Terminato'}
+                            </button>
+                          )}
+                        </td>
+                        <td className="px-3 py-2 w-px whitespace-nowrap">
+                          <button
+                            onClick={() => deleteEvent(event.id)}
+                            disabled={deletingId === event.id || isSaving}
+                            className="text-court-muted hover:text-red-400 transition-colors p-1"
+                            title="Elimina evento"
+                          >
+                            {deletingId === event.id ? '…' : <Trash2 size={14} />}
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )
+      ) : allRows.length === 0 ? (
         <div className="card p-10 text-center">
           <p className="text-court-gray">Nessuna partita ancora. Genera le partite dai gironi prima.</p>
         </div>
@@ -272,14 +466,82 @@ export default function TournamentCalendar({ editionId, matches, category, searc
             </tr>
           </thead>
           <tbody>
-            {filtered.map(match => {
+            {allRows.map(row => {
+              if (row.type === 'event') {
+                const event = row.data
+                const isSaving = saving === event.id
+                return (
+                  <tr
+                    key={`event-${event.id}`}
+                    className={clsx(
+                      'border-b border-court-border last:border-b-0',
+                      event.status === 'in_progress' && 'bg-red-500/10',
+                      event.status === 'completed' && 'opacity-70',
+                    )}
+                  >
+                    <td className="px-3 py-2 w-px whitespace-nowrap">
+                      <input
+                        type="datetime-local"
+                        defaultValue={toDatetimeLocal(event.scheduled_at)}
+                        onBlur={e => saveEventSchedule(event.id, e.target.value)}
+                        disabled={isSaving}
+                        className="input py-1 px-2 text-xs w-40"
+                      />
+                    </td>
+                    <td className="px-3 py-2 w-px whitespace-nowrap text-center">
+                      <span className="text-xs px-2 py-0.5 font-display uppercase tracking-wide rounded bg-teal-500 text-white">
+                        Eventi
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 w-px whitespace-nowrap" />
+                    <td colSpan={4} className="px-3 py-2 text-center">
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="text-court-white text-sm font-medium">{event.name}</span>
+                        {event.description && (
+                          <span title={event.description} className="text-court-muted hover:text-court-white transition-colors cursor-help shrink-0">
+                            <Info size={13} />
+                          </span>
+                        )}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 w-px whitespace-nowrap text-center">
+                      {event.status === 'scheduled' && (
+                        <button onClick={() => cycleEventStatus(event)} disabled={isSaving}
+                          className="badge-programma text-xs px-2 py-0.5 font-display uppercase tracking-wide border whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity disabled:cursor-not-allowed">
+                          {isSaving ? '…' : 'In programma'}
+                        </button>
+                      )}
+                      {event.status === 'in_progress' && (
+                        <button onClick={() => cycleEventStatus(event)} disabled={isSaving}
+                          className="badge-live text-xs px-2 py-0.5 font-display uppercase tracking-wide border inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity disabled:cursor-not-allowed">
+                          {isSaving ? '…' : <><span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse shrink-0" />Live</>}
+                        </button>
+                      )}
+                      {event.status === 'completed' && (
+                        <button onClick={() => cycleEventStatus(event)} disabled={isSaving}
+                          className="badge-terminata text-xs px-2 py-0.5 font-display uppercase tracking-wide border whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity disabled:cursor-not-allowed">
+                          {isSaving ? '…' : 'Terminato'}
+                        </button>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 w-px whitespace-nowrap">
+                      <button onClick={() => deleteEvent(event.id)} disabled={deletingId === event.id || isSaving}
+                        className="text-court-muted hover:text-red-400 transition-colors p-1" title="Elimina evento">
+                        {deletingId === event.id ? '…' : <Trash2 size={14} />}
+                      </button>
+                    </td>
+                  </tr>
+                )
+              }
+
+              const match = row.data as MatchWithTeams
               const isSaving = saving === match.id
               const homeVal = getScore(match.id, 'home', match.score_home)
               const awayVal = getScore(match.id, 'away', match.score_away)
 
               return (
                 <tr
-                  key={match.id}
+                  key={`match-${match.id}`}
                   className={clsx(
                     'border-b border-court-border last:border-b-0',
                     match.status === 'in_progress' && 'bg-red-500/10',

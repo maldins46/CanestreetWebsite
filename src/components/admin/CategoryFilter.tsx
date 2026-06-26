@@ -4,13 +4,14 @@ import { useEffect, useState } from 'react'
 import type { TeamCategory } from '@/types'
 import { Search } from 'lucide-react'
 
-const options: { value: TeamCategory | 'all'; label: string }[] = [
+const options: { value: TeamCategory | 'all' | 'evento'; label: string }[] = [
   { value: 'all',    label: 'Tutte' },
   { value: 'open_m', label: 'Open M' },
   { value: 'open_f', label: 'Open F' },
   { value: 'u14_m',  label: 'U14 M' },
   { value: 'u16_m',  label: 'U16 M' },
   { value: 'u18_m',  label: 'U18 M' },
+  { value: 'evento', label: 'Eventi' },
 ]
 
 export default function CategoryFilter({ showSearch = false, searchPlaceholder = 'Cerca squadra o giocatore…', hideAll = false }: { showSearch?: boolean; searchPlaceholder?: string; hideAll?: boolean }) {

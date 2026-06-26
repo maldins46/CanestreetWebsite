@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { 
-  Edition, GroupWithTeams, MatchWithTeams, 
-  TpcContestFull, Sponsor, TeamCategory 
+import type {
+  Edition, GroupWithTeams, MatchWithTeams,
+  TpcContestFull, Sponsor, TeamCategory, CalendarioEvent
 } from '@/types'
 import clsx from 'clsx'
 
@@ -42,7 +42,11 @@ function formatDate(iso: string | null): string {
 
 // ─── Calendar Component ──────────────────────────────────────────────────────────
 
-function ShowcaseCalendar({ matches, theme }: { matches: MatchWithTeams[]; theme: Record<string, string> }) {
+type ShowcaseRow =
+  | { type: 'match'; data: MatchWithTeams }
+  | { type: 'event'; data: CalendarioEvent }
+
+function ShowcaseCalendar({ matches, events, theme }: { matches: MatchWithTeams[]; events: CalendarioEvent[]; theme: Record<string, string> }) {
   const containerRef = React.useRef<HTMLDivElement>(null)
   const lightMode = theme.bg === 'bg-white'
 
@@ -58,15 +62,24 @@ function ShowcaseCalendar({ matches, theme }: { matches: MatchWithTeams[]; theme
     return match.bracket_round ? (roundLabels[match.bracket_round] ?? '') : ''
   }
 
+  const rows: ShowcaseRow[] = [
+    ...matches.map(m => ({ type: 'match' as const, data: m })),
+    ...events.map(e => ({ type: 'event' as const, data: e })),
+  ].sort((a, b) => {
+    const at = a.data.scheduled_at ? new Date(a.data.scheduled_at).getTime() : Infinity
+    const bt = b.data.scheduled_at ? new Date(b.data.scheduled_at).getTime() : Infinity
+    return at - bt
+  })
+
   React.useEffect(() => {
     if (!containerRef.current) return
-    const liveMatch = matches.find(m => m.status === 'in_progress')
-    if (!liveMatch) return
-    const liveEl = containerRef.current.querySelector(`[data-match-id="${liveMatch.id}"]`)
-    if (liveEl) {
-      liveEl.scrollIntoView({ block: 'center', behavior: 'smooth' })
-    }
-  }, [matches])
+    const liveItem = rows.find(r => r.data.status === 'in_progress')
+    if (!liveItem) return
+    const key = liveItem.type === 'match' ? liveItem.data.id : liveItem.data.id
+    const el = containerRef.current.querySelector(`[data-row-id="${key}"]`)
+    if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [matches, events])
 
   return (
     <div className="h-full flex flex-col">
@@ -76,7 +89,7 @@ function ShowcaseCalendar({ matches, theme }: { matches: MatchWithTeams[]; theme
         </h2>
       </div>
       <div ref={containerRef} className={clsx('flex-1 overflow-auto', theme.cardBg)}>
-        {matches.length === 0 ? (
+        {rows.length === 0 ? (
           <p className={clsx('text-sm text-center py-8', theme.textMuted)}>Nessuna partita programmata</p>
         ) : (
           <table className="w-full text-xs">
@@ -93,7 +106,43 @@ function ShowcaseCalendar({ matches, theme }: { matches: MatchWithTeams[]; theme
               </tr>
             </thead>
             <tbody>
-              {matches.map(m => {
+              {rows.map(row => {
+                if (row.type === 'event') {
+                  const e = row.data
+                  const isLive = e.status === 'in_progress'
+                  return (
+                    <tr
+                      data-row-id={e.id}
+                      key={`event-${e.id}`}
+                      className={clsx('border-b last:border-b-0', theme.tableBorder, isLive && 'bg-red-500/10')}
+                    >
+                      <td className={clsx('px-3 py-2 w-px whitespace-nowrap text-center', theme.textMuted)}>
+                        {formatDate(e.scheduled_at)}
+                      </td>
+                      <td className="px-3 py-2 w-px whitespace-nowrap text-center">
+                        {isLive ? (
+                          <span className="flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full animate-pulse bg-red-500" />
+                            <span className="font-bold text-red-500">LIVE</span>
+                          </span>
+                        ) : (
+                          <span className={theme.textMuted}>{formatTime(e.scheduled_at)}</span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 w-px whitespace-nowrap text-center">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded text-white bg-teal-500">
+                          Eventi
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 w-px whitespace-nowrap" />
+                      <td colSpan={4} className={clsx('px-3 py-2 text-center font-medium', theme.tableText)}>
+                        {e.name}
+                      </td>
+                    </tr>
+                  )
+                }
+
+                const m = row.data as MatchWithTeams
                 const isLive = m.status === 'in_progress'
                 const isDone = m.status === 'completed'
                 const homeWon = isDone && m.score_home != null && m.score_away != null && m.score_home > m.score_away
@@ -101,8 +150,8 @@ function ShowcaseCalendar({ matches, theme }: { matches: MatchWithTeams[]; theme
 
                 return (
                   <tr
-                    data-match-id={m.id}
-                    key={m.id}
+                    data-row-id={m.id}
+                    key={`match-${m.id}`}
                     className={clsx(
                       'border-b last:border-b-0',
                       theme.tableBorder,
@@ -729,12 +778,14 @@ export default function ShowcasePage() {
     groups: GroupWithTeams[]
     tpcContests: TpcContestFull[]
     sponsors: Sponsor[]
+    events: CalendarioEvent[]
   }>({
     edition: null,
     matches: [],
     groups: [],
     tpcContests: [],
     sponsors: [],
+    events: [],
   })
   const [openCategoryIndex, setOpenCategoryIndex] = useState(0)
   const [underCategoryIndex, setUnderCategoryIndex] = useState(0)
@@ -779,7 +830,7 @@ export default function ShowcasePage() {
   const supabase = createClient()
 
   async function fetchAll() {
-    const [{ data: modeData }, { data: editionData }, { data: matchData }, { data: groupData }, { data: tpcData }, { data: sponsorData }] = await Promise.all([
+    const [{ data: modeData }, { data: editionData }, { data: matchData }, { data: groupData }, { data: tpcData }, { data: sponsorData }, { data: eventData }] = await Promise.all([
       supabase.from('showcase_modes').select('mode, light_mode').eq('id', 'default').single(),
       supabase.from('editions').select('*').eq('is_current', true).maybeSingle(),
       supabase
@@ -790,6 +841,7 @@ export default function ShowcasePage() {
       supabase.from('groups').select('*, group_teams(*, teams(id, name))').order('sort_order'),
       supabase.from('tpc_contests').select('*, tpc_players(*), tpc_rounds(*, tpc_entries(*, tpc_players(id, name)))'),
       supabase.from('sponsors').select('*').eq('is_active', true).order('sort_order'),
+      supabase.from('events').select('*').order('scheduled_at', { ascending: true, nullsFirst: false }).order('sort_order'),
     ])
 
     setData({
@@ -798,6 +850,7 @@ export default function ShowcasePage() {
       groups: groupData ?? [],
       tpcContests: tpcData ?? [],
       sponsors: sponsorData ?? [],
+      events: eventData ?? [],
     })
 
     if (modeData?.mode) setMode(modeData.mode)
@@ -924,7 +977,7 @@ export default function ShowcasePage() {
         {displayMode === 'open' && (
           <div className="h-full flex">
             <div style={{ width: `${splitPercent}%` }} className="overflow-hidden">
-              <ShowcaseCalendar matches={data.matches} theme={theme} />
+              <ShowcaseCalendar matches={data.matches} events={data.events} theme={theme} />
             </div>
             <div
               onMouseDown={handleDividerMouseDown}
@@ -951,7 +1004,7 @@ export default function ShowcasePage() {
         {displayMode === 'under' && (
           <div className="h-full flex">
             <div style={{ width: `${splitPercent}%` }} className="overflow-hidden">
-              <ShowcaseCalendar matches={data.matches} theme={theme} />
+              <ShowcaseCalendar matches={data.matches} events={data.events} theme={theme} />
             </div>
             <div
               onMouseDown={handleDividerMouseDown}

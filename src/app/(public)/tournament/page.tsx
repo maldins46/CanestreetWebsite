@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import { createPublicServerSupabaseClient } from "@/lib/supabase/server"
-import type { Edition, GroupWithTeams, MatchWithTeams, TpcContestFull } from '@/types'
+import type { Edition, GroupWithTeams, MatchWithTeams, TpcContestFull, CalendarioEvent } from '@/types'
 import TournamentPageClient from '@/components/public/TournamentPageClient'
 
 export const revalidate = 15
@@ -34,7 +34,7 @@ export default async function TournamentPage() {
           </div>
         </section>
         <Suspense fallback={null}>
-          <TournamentPageClient matches={[]} groups={[]} tpcContests={[]} />
+          <TournamentPageClient matches={[]} groups={[]} tpcContests={[]} events={[]} />
         </Suspense>
       </div>
     )
@@ -44,6 +44,7 @@ export default async function TournamentPage() {
     { data: matchData, error: matchErr },
     { data: groupData, error: groupErr },
     { data: tpcData, error: tpcErr },
+    { data: eventData, error: eventErr },
   ] = await Promise.all([
     supabase
       .from('matches')
@@ -67,15 +68,25 @@ export default async function TournamentPage() {
       .select('*, tpc_players(*), tpc_rounds(*, tpc_entries(*, tpc_players(id, name)))')
       .eq('edition_id', edition.id)
       .returns<TpcContestFull[]>(),
+
+    supabase
+      .from('events')
+      .select('*')
+      .eq('edition_id', edition.id)
+      .order('scheduled_at', { ascending: true, nullsFirst: false })
+      .order('sort_order')
+      .returns<CalendarioEvent[]>(),
   ])
 
   if (matchErr) console.error('[tournament] matches query failed:', matchErr)
   if (groupErr) console.error('[tournament] groups query failed:', groupErr)
   if (tpcErr) console.error('[tournament] tpc query failed:', tpcErr)
+  if (eventErr) console.error('[tournament] events query failed:', eventErr)
 
   const matches = matchData ?? []
   const groups = groupData ?? []
   const tpcContests = tpcData ?? []
+  const events = eventData ?? []
 
   return (
     <div>
@@ -98,6 +109,7 @@ export default async function TournamentPage() {
           matches={matches}
           groups={groups}
           tpcContests={tpcContests}
+          events={events}
         />
       </Suspense>
     </div>

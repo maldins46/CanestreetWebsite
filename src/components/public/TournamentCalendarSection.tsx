@@ -3,21 +3,26 @@ import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Search } from 'lucide-react'
 import MatchCard from './MatchCard'
-import type { MatchWithTeams, TeamCategory } from '@/types'
+import EventCard from './EventCard'
+import type { MatchWithTeams, TeamCategory, CalendarioEvent } from '@/types'
 import { CATEGORY_LABELS } from '@/types'
 import clsx from 'clsx'
 
 interface Props {
   matches: MatchWithTeams[]
+  events: CalendarioEvent[]
 }
 
-const categories: { value: TeamCategory | 'all'; label: string }[] = [
+type FilterCat = TeamCategory | 'all' | 'evento'
+
+const categories: { value: FilterCat; label: string }[] = [
   { value: 'all',    label: 'Tutte' },
   { value: 'open_m', label: 'Open M' },
   { value: 'open_f', label: 'Open F' },
   { value: 'u18_m',  label: 'U18 M' },
   { value: 'u16_m',  label: 'U16 M' },
   { value: 'u14_m',  label: 'U14 M' },
+  { value: 'evento', label: 'Eventi' },
 ]
 
 const STATUS_ORDER: Record<string, number> = { completed: 0, in_progress: 1, scheduled: 2 }
@@ -48,16 +53,20 @@ function getDayKey(iso: string | null): string {
   return new Date(iso).toLocaleDateString('sv-SE', { timeZone: 'Europe/Rome' })
 }
 
-export default function TournamentCalendarSection({ matches }: Props) {
+type CalendarioRow =
+  | { type: 'match'; data: MatchWithTeams }
+  | { type: 'event'; data: CalendarioEvent }
+
+export default function TournamentCalendarSection({ matches, events }: Props) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [search, setSearch] = useState('')
 
-  const catParam = searchParams.get('cat') as TeamCategory | 'all' | null
+  const catParam = searchParams.get('cat') as FilterCat | null
   const validValues = categories.map(c => c.value)
-  const cat: TeamCategory | 'all' = catParam && validValues.includes(catParam) ? catParam : 'all'
+  const cat: FilterCat = catParam && validValues.includes(catParam) ? catParam : 'all'
 
-  function setCat(value: TeamCategory | 'all') {
+  function setCat(value: FilterCat) {
     const params = new URLSearchParams(searchParams.toString())
     params.set('cat', value)
     router.replace(`/tournament?${params}`)
@@ -65,35 +74,67 @@ export default function TournamentCalendarSection({ matches }: Props) {
 
   const q = search.trim().toLowerCase()
 
-  const filtered = (cat === 'all' ? matches : matches.filter(m => m.category === cat)).filter(m => {
-    if (!q) return true
-    return (
-      m.team_home?.name.toLowerCase().includes(q) ||
-      m.team_away?.name.toLowerCase().includes(q) ||
-      CATEGORY_LABELS[m.category].toLowerCase().includes(q) ||
-      getPhaseLabel(m).toLowerCase().includes(q)
-    )
-  }).sort((a, b) => {
-    const da = a.scheduled_at ? new Date(a.scheduled_at).getTime() : Infinity
-    const db = b.scheduled_at ? new Date(b.scheduled_at).getTime() : Infinity
-    if (da !== db) return da - db
-    const sa = STATUS_ORDER[a.status] ?? 99
-    const sb = STATUS_ORDER[b.status] ?? 99
-    if (sa !== sb) return sa - sb
-    return getPhaseLabel(a).localeCompare(getPhaseLabel(b))
-  })
+  let rows: CalendarioRow[]
+  if (cat === 'evento') {
+    rows = events
+      .filter(e => !q || e.name.toLowerCase().includes(q))
+      .sort((a, b) => {
+        const da = a.scheduled_at ? new Date(a.scheduled_at).getTime() : Infinity
+        const db = b.scheduled_at ? new Date(b.scheduled_at).getTime() : Infinity
+        if (da !== db) return da - db
+        return (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99)
+      })
+      .map(e => ({ type: 'event', data: e }))
+  } else {
+    const filteredMatches = (cat === 'all' ? matches : matches.filter(m => m.category === cat))
+      .filter(m => {
+        if (!q) return true
+        return (
+          m.team_home?.name.toLowerCase().includes(q) ||
+          m.team_away?.name.toLowerCase().includes(q) ||
+          CATEGORY_LABELS[m.category].toLowerCase().includes(q) ||
+          getPhaseLabel(m).toLowerCase().includes(q)
+        )
+      })
+    const filteredEvents = cat === 'all'
+      ? events.filter(e => !q || e.name.toLowerCase().includes(q))
+      : []
+
+    const allItems: CalendarioRow[] = [
+      ...filteredMatches.map(m => ({ type: 'match' as const, data: m })),
+      ...filteredEvents.map(e => ({ type: 'event' as const, data: e })),
+    ]
+    rows = allItems.sort((a, b) => {
+      const da = a.data.scheduled_at ? new Date(a.data.scheduled_at).getTime() : Infinity
+      const db = b.data.scheduled_at ? new Date(b.data.scheduled_at).getTime() : Infinity
+      if (da !== db) return da - db
+      const sa = STATUS_ORDER[a.data.status] ?? 99
+      const sb = STATUS_ORDER[b.data.status] ?? 99
+      if (sa !== sb) return sa - sb
+      if (a.type === 'match' && b.type === 'match') {
+        return getPhaseLabel(a.data).localeCompare(getPhaseLabel(b.data))
+      }
+      return 0
+    })
+  }
 
   // Group by day
-  const days = new Map<string, MatchWithTeams[]>()
-  for (const m of filtered) {
-    const key = getDayKey(m.scheduled_at)
+  const days = new Map<string, CalendarioRow[]>()
+  for (const row of rows) {
+    const key = getDayKey(row.data.scheduled_at)
     if (!days.has(key)) days.set(key, [])
-    days.get(key)!.push(m)
+    days.get(key)!.push(row)
+  }
+
+  function getDayLabel(dayKey: string, dayRows: CalendarioRow[]): string {
+    if (dayKey === 'non-programmata') return 'Non programmata'
+    const firstIso = dayRows[0].data.scheduled_at
+    return firstIso ? formatDay(firstIso) : 'Non programmata'
   }
 
   return (
     <div>
-      {/* Search + category pills — search above pills on mobile, inline right on desktop */}
+      {/* Search + category pills */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
         <div className="flex gap-2 flex-wrap order-last sm:order-first">
           {categories.map(opt => (
@@ -103,7 +144,9 @@ export default function TournamentCalendarSection({ matches }: Props) {
               className={clsx(
                 'px-4 py-1.5 font-display uppercase tracking-wide text-xs border transition-colors',
                 cat === opt.value
-                  ? 'bg-brand-orange border-brand-orange text-white'
+                  ? opt.value === 'evento'
+                    ? 'bg-teal-500 border-teal-500 text-white'
+                    : 'bg-brand-orange border-brand-orange text-white'
                   : 'border-court-border text-court-muted hover:border-court-muted hover:text-court-white',
               )}
             >
@@ -117,28 +160,32 @@ export default function TournamentCalendarSection({ matches }: Props) {
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Cerca squadra o turno…"
+            placeholder="Cerca…"
             className="input pl-7 pr-3 py-1.5 text-xs w-full sm:w-52"
           />
         </div>
       </div>
 
-      {filtered.length === 0 ? (
+      {rows.length === 0 ? (
         <div className="card p-10 text-center">
           <p className="text-court-gray">
-            {q ? `Nessun risultato per "${search}".` : `Nessuna partita programmata${cat !== 'all' ? ` per la categoria ${categories.find(c => c.value === cat)?.label ?? cat}` : ' ancora'}.`}
+            {q
+              ? `Nessun risultato per "${search}".`
+              : cat === 'evento'
+                ? 'Nessun evento programmato ancora.'
+                : `Nessuna partita programmata${cat !== 'all' ? ` per la categoria ${categories.find(c => c.value === cat)?.label ?? cat}` : ' ancora'}.`}
           </p>
         </div>
       ) : (
         <div className="space-y-4">
-          {Array.from(days.entries()).map(([dayKey, dayMatches]) => (
+          {Array.from(days.entries()).map(([dayKey, dayRows]) => (
             <div key={dayKey} className="card overflow-hidden">
               <div className="px-4 py-3 border-b border-court-border bg-court-dark">
                 <h3
                   className="font-display font-bold uppercase tracking-wide text-sm text-court-white"
                   suppressHydrationWarning
                 >
-                  {dayKey !== 'non-programmata' ? formatDay(dayMatches[0].scheduled_at!) : 'Non programmata'}
+                  {getDayLabel(dayKey, dayRows)}
                 </h3>
               </div>
               <div className="overflow-x-auto">
@@ -155,9 +202,11 @@ export default function TournamentCalendarSection({ matches }: Props) {
                     </tr>
                   </thead>
                   <tbody>
-                    {dayMatches.map(m => (
-                      <MatchCard key={m.id} match={m} />
-                    ))}
+                    {dayRows.map(row =>
+                      row.type === 'match'
+                        ? <MatchCard key={`match-${row.data.id}`} match={row.data} />
+                        : <EventCard key={`event-${row.data.id}`} event={row.data} />
+                    )}
                   </tbody>
                 </table>
               </div>

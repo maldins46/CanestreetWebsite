@@ -1,7 +1,7 @@
 'use client'
 
 import clsx from 'clsx'
-import type { MatchWithTeams } from '@/types'
+import type { MatchWithTeams, CalendarioEvent } from '@/types'
 
 const ROUND_LABELS: Record<string, string> = {
   round_of_16: 'Ottavi',
@@ -41,14 +41,28 @@ function getPhaseLabel(m: MatchWithTeams): string {
   return m.bracket_round ? (ROUND_LABELS[m.bracket_round] ?? '') : ''
 }
 
+type Row =
+  | { type: 'match'; data: MatchWithTeams }
+  | { type: 'event'; data: CalendarioEvent }
+
 interface Props {
   matches: MatchWithTeams[]
+  events?: CalendarioEvent[]
 }
 
-export default function LedwallMatches({ matches }: Props) {
-  const completed = matches.filter(m => m.status === 'completed')
-  const live      = matches.filter(m => m.status === 'in_progress')
-  const scheduled = matches.filter(m => m.status === 'scheduled')
+export default function LedwallMatches({ matches, events = [] }: Props) {
+  const allRows: Row[] = [
+    ...matches.map(m => ({ type: 'match' as const, data: m })),
+    ...events.map(e => ({ type: 'event' as const, data: e })),
+  ].sort((a, b) => {
+    const at = a.data.scheduled_at ? new Date(a.data.scheduled_at).getTime() : Infinity
+    const bt = b.data.scheduled_at ? new Date(b.data.scheduled_at).getTime() : Infinity
+    return at - bt
+  })
+
+  const completed = allRows.filter(r => r.data.status === 'completed')
+  const live      = allRows.filter(r => r.data.status === 'in_progress')
+  const scheduled = allRows.filter(r => r.data.status === 'scheduled')
 
   const display = [
     ...completed.slice(-4),
@@ -86,14 +100,46 @@ export default function LedwallMatches({ matches }: Props) {
             </tr>
           </thead>
           <tbody>
-            {display.map(m => {
+            {display.map(row => {
+              if (row.type === 'event') {
+                const e = row.data
+                const isLive = e.status === 'in_progress'
+                return (
+                  <tr key={`event-${e.id}`} className={clsx('border-b border-gray-100', isLive && 'bg-red-50')}>
+                    <td className="px-3 py-2 text-center text-gray-500 text-xs whitespace-nowrap w-px">
+                      {formatDate(e.scheduled_at)}
+                    </td>
+                    <td className="px-3 py-2 text-center whitespace-nowrap w-px">
+                      {isLive ? (
+                        <span className="flex items-center gap-1 justify-center">
+                          <span className="w-1.5 h-1.5 rounded-full animate-pulse bg-red-500" />
+                          <span className="font-bold text-red-600 text-xs">LIVE</span>
+                        </span>
+                      ) : (
+                        <span className="text-gray-500 text-xs">{formatTime(e.scheduled_at)}</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 text-center whitespace-nowrap w-px">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded text-white bg-teal-500">
+                        Eventi
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 w-px whitespace-nowrap" />
+                    <td colSpan={4} className="px-3 py-2 text-center text-gray-700 text-xs font-medium">
+                      {e.name}
+                    </td>
+                  </tr>
+                )
+              }
+
+              const m = row.data as MatchWithTeams
               const isLive  = m.status === 'in_progress'
               const isDone  = m.status === 'completed'
               const homeWon = isDone && m.score_home != null && m.score_away != null && m.score_home > m.score_away
               const awayWon = isDone && m.score_home != null && m.score_away != null && m.score_away > m.score_home
 
               return (
-                <tr key={m.id} className={clsx('border-b border-gray-100', isLive && 'bg-red-50')}>
+                <tr key={`match-${m.id}`} className={clsx('border-b border-gray-100', isLive && 'bg-red-50')}>
                   <td className="px-3 py-2 text-center text-gray-500 text-xs whitespace-nowrap w-px">
                     {formatDate(m.scheduled_at)}
                   </td>

@@ -282,6 +282,22 @@ export interface TpcContestFull extends TpcContest {
 }
 
 // ============================================================
+// Events — keep in sync with supabase/migrations/026_events.sql
+// ============================================================
+
+export interface CalendarioEvent {
+  id: string
+  edition_id: string
+  name: string
+  description: string | null
+  scheduled_at: string | null
+  status: MatchStatus
+  sort_order: number
+  live_started_at: string | null
+  created_at: string
+}
+
+// ============================================================
 // Ledwall types — keep in sync with supabase/migrations/023_ledwall_state.sql
 // ============================================================
 
@@ -300,6 +316,9 @@ export interface LedwallSceneConfig {
   // sponsors
   variant?: 'rotation' | 'all' | 'gold'
   rotation_index?: number
+  // event contextual scene
+  event_name?: string
+  event_description?: string | null
 }
 
 export interface LedwallState {

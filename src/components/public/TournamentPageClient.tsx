@@ -8,7 +8,7 @@ import TournamentCalendarSection from './TournamentCalendarSection'
 import StandingsSection from './StandingsTable'
 import BracketSection from './BracketView'
 import ThreePointContestSection from './ThreePointContestSection'
-import type { GroupWithTeams, MatchWithTeams, TpcContestFull } from '@/types'
+import type { GroupWithTeams, MatchWithTeams, TpcContestFull, CalendarioEvent } from '@/types'
 
 const TABS = [
   { key: 'calendario', label: 'Calendario' },
@@ -23,9 +23,10 @@ interface Props {
   matches: MatchWithTeams[]
   groups: GroupWithTeams[]
   tpcContests: TpcContestFull[]
+  events: CalendarioEvent[]
 }
 
-export default function TournamentPageClient({ matches, groups, tpcContests }: Props) {
+export default function TournamentPageClient({ matches, groups, tpcContests, events }: Props) {
   const searchParams = useSearchParams()
   const tabParam = searchParams.get('tab') as TabKey | null
   const router = useRouter()
@@ -111,7 +112,7 @@ export default function TournamentPageClient({ matches, groups, tpcContests }: P
 
       <div className="max-w-6xl mx-auto px-6 py-8">
         {activeTab === 'calendario' && (
-          <TournamentCalendarSection matches={matches} />
+          <TournamentCalendarSection matches={matches} events={events} />
         )}
         {activeTab === 'classifiche' && (
           <StandingsSection groups={groups} matches={matches} />

@@ -1,11 +1,12 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import type { Edition, GroupWithTeams, MatchWithTeams, TeamCategory } from '@/types'
+import type { Edition, GroupWithTeams, MatchWithTeams, TeamCategory, CalendarioEvent } from '@/types'
 import EditionSwitcher from '@/components/admin/EditionSwitcher'
 import ModeToggle from '@/components/admin/ModeToggle'
 import CategoryFilter from '@/components/admin/CategoryFilter'
 import TournamentGroups from '@/components/admin/TournamentGroups'
 import TournamentCalendar from '@/components/admin/TournamentCalendar'
 import TournamentBracket from '@/components/admin/TournamentBracket'
+import TournamentEvents from '@/components/admin/TournamentEvents'
 import { Suspense } from 'react'
 
 const categoryLabel: Record<TeamCategory, string> = {
@@ -17,6 +18,7 @@ const TOURNAMENT_MODES = [
   { value: 'calendario', label: 'Calendario' },
   { value: 'gironi',     label: 'Gironi' },
   { value: 'tabellone',  label: 'Tabellone Finals' },
+  { value: 'eventi',     label: 'Eventi' },
 ]
 
 interface Props {
@@ -47,6 +49,7 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
   let approvedTeams: { id: string; name: string; category: string }[] = []
   let groupsWithMatches: string[] = []
   let matches: MatchWithTeams[] = []
+  let events: CalendarioEvent[] = []
 
   if (activeEdition) {
     const { data: g } = await supabase
@@ -82,6 +85,17 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
       .order('sort_order')
       .returns<MatchWithTeams[]>()
     matches = matchData ?? []
+
+    if (tab === 'eventi' || tab === 'calendario') {
+      const { data: eventData } = await supabase
+        .from('events')
+        .select('*')
+        .eq('edition_id', activeEdition.id)
+        .order('scheduled_at', { ascending: true, nullsFirst: false })
+        .order('sort_order')
+        .returns<CalendarioEvent[]>()
+      events = eventData ?? []
+    }
   }
 
   // Suppress unused variable warning — categoryLabel is available for future use
@@ -106,16 +120,18 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
         </div>
       </div>
 
-      {/* Category filter */}
-      <div className="mb-4">
-        <Suspense>
-          <CategoryFilter
-            showSearch={tab === 'calendario'}
-            searchPlaceholder="Cerca squadra, girone o turno…"
-            hideAll={tab !== 'calendario'}
-          />
-        </Suspense>
-      </div>
+      {/* Category filter — hidden on eventi tab */}
+      {tab !== 'eventi' && (
+        <div className="mb-4">
+          <Suspense>
+            <CategoryFilter
+              showSearch={tab === 'calendario'}
+              searchPlaceholder="Cerca squadra, girone o turno…"
+              hideAll={tab !== 'calendario'}
+            />
+          </Suspense>
+        </div>
+      )}
 
       {/* Tab content */}
       {!activeEdition ? (
@@ -135,8 +151,14 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
         <TournamentCalendar
           editionId={activeEdition.id}
           matches={matches}
-          category={sp.category as TeamCategory | undefined}
+          category={sp.category as TeamCategory | 'evento' | undefined}
           search={sp.search}
+          events={events}
+        />
+      ) : tab === 'eventi' ? (
+        <TournamentEvents
+          editionId={activeEdition.id}
+          events={events}
         />
       ) : (
         <TournamentBracket

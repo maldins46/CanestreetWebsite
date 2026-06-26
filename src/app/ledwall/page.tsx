@@ -8,9 +8,10 @@ import LedwallStandings from '@/components/ledwall/LedwallStandings'
 import LedwallFinals    from '@/components/ledwall/LedwallFinals'
 import LedwallSponsors  from '@/components/ledwall/LedwallSponsors'
 import LedwallTpc       from '@/components/ledwall/LedwallTpc'
+import LedwallEvent     from '@/components/ledwall/LedwallEvent'
 import type {
   Edition, GroupWithTeams, MatchWithTeams, TpcContestFull, Sponsor,
-  LedwallState, LedwallScene, LedwallSceneConfig,
+  LedwallState, LedwallScene, LedwallSceneConfig, CalendarioEvent,
 } from '@/types'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -34,16 +35,17 @@ type Data = {
   groups:     GroupWithTeams[]
   tpcContests: TpcContestFull[]
   sponsors:   Sponsor[]
+  events:     CalendarioEvent[]
 }
 
-type SceneSlot = { scene: LedwallScene; config: LedwallSceneConfig }
+type SceneSlot = { scene: LedwallScene | 'event'; config: LedwallSceneConfig }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function LedwallPage() {
   const [ledwallState, setLedwallState] = useState<LedwallState | null>(null)
   const [data, setData] = useState<Data>({
-    edition: null, matches: [], groups: [], tpcContests: [], sponsors: [],
+    edition: null, matches: [], groups: [], tpcContests: [], sponsors: [], events: [],
   })
   const [loading,  setLoading]  = useState(true)
 
@@ -91,6 +93,7 @@ export default function LedwallPage() {
       { data: groupData   },
       { data: tpcData     },
       { data: sponsorData },
+      { data: eventData   },
     ] = await Promise.all([
       supabase.from('editions').select('*').eq('is_current', true).maybeSingle(),
       supabase
@@ -101,6 +104,7 @@ export default function LedwallPage() {
       supabase.from('groups').select('*, group_teams(*, teams(id, name))').order('sort_order'),
       supabase.from('tpc_contests').select('*, tpc_players(*), tpc_rounds(*, tpc_entries(*, tpc_players(id, name)))'),
       supabase.from('sponsors').select('*').eq('is_active', true).order('sort_order'),
+      supabase.from('events').select('*').order('scheduled_at', { ascending: true, nullsFirst: false }).order('sort_order'),
     ])
 
     setData({
@@ -109,6 +113,7 @@ export default function LedwallPage() {
       groups:     groupData    ?? [],
       tpcContests: tpcData     ?? [],
       sponsors:   sponsorData  ?? [],
+      events:     eventData    ?? [],
     })
   }
 
@@ -174,7 +179,7 @@ export default function LedwallPage() {
       }
     }
     // contextual slot — derive from live events
-    return resolveContextualScene(data.matches, data.tpcContests)
+    return resolveContextualScene(data.matches, data.tpcContests, data.events)
   }, [ledwallState, rotationSlot, sponsorCycleIndex, data.sponsors.length, data.matches, data.tpcContests])
 
   // Stable key for change detection (scene + serialised config)
@@ -363,7 +368,11 @@ function SceneRenderer({ slot, data }: { slot: SceneSlot; data: Data }) {
   const { scene, config } = slot
 
   if (scene === 'matches') {
-    return <LedwallMatches matches={data.matches} />
+    return <LedwallMatches matches={data.matches} events={data.events} />
+  }
+
+  if (scene === 'event') {
+    return <LedwallEvent name={config.event_name!} description={config.event_description} />
   }
 
   if (scene === 'standings') {
