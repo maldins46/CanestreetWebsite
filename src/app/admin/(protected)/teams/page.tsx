@@ -184,7 +184,7 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
       {/* Filters: category pills + search */}
       <div className="mb-4">
         <Suspense>
-          <CategoryFilter showSearch />
+          <CategoryFilter showSearch hideEvento />
         </Suspense>
       </div>
 

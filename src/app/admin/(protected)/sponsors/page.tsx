@@ -54,7 +54,7 @@ export default async function AdminSponsorsPage({ searchParams }: Props) {
     <div>
       <div className="flex flex-col md:flex-row items-start md:items-end justify-between mb-10 gap-4">
         <div>
-          <p className="text-brand-orange font-display uppercase tracking-widest text-xs mb-1">Backoffice</p>
+          <p className="text-brand-orange font-display uppercase tracking-widest text-xs mb-1">Sponsor</p>
           <h1 className="font-display font-bold uppercase text-3xl text-court-white">Gestione Sponsor</h1>
         </div>
         <Link href="/admin/sponsors/new" className="btn-primary text-sm px-5 py-2 shrink-0">

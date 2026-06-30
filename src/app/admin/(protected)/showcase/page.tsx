@@ -73,7 +73,7 @@ export default function ShowcaseAdminPage() {
     <div>
       {/* Header */}
       <div className="mb-8">
-        <p className="text-brand-orange font-display uppercase tracking-widest text-xs mb-2">Showcase</p>
+        <p className="text-brand-orange font-display uppercase tracking-widest text-xs mb-1">Showcase</p>
         <h1 className="font-display font-bold uppercase text-3xl text-court-white">
           Controllo Schermo
         </h1>

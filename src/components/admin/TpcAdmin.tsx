@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Plus, Trash2, ChevronDown, ChevronUp, GripVertical, Search } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronUp, GripVertical, Search, Check } from 'lucide-react'
 import clsx from 'clsx'
 import { createClient } from '@/lib/supabase/client'
 import type { TpcCategory, TpcContestFull, TpcEntryWithPlayer, TpcRoundWithEntries } from '@/types'
@@ -360,7 +360,7 @@ function RoundCard({ round, contest, prevRound, expanded, onToggle, onDelete }: 
                     <th className="font-display uppercase tracking-wide text-xs text-court-muted text-left px-3 py-2 whitespace-nowrap">Giocatore</th>
                     <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">Punti</th>
                     <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">Live</th>
-                    <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">Qualif.</th>
+                    <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">Qualificato</th>
                     <th className="w-px" />
                   </tr>
                 </thead>
@@ -472,10 +472,11 @@ function SortableEntryRow({ entry, onUpdateScore, onToggleQualified, onSetLive, 
         <button
           onClick={() => onSetLive(entry.id, entry.is_live)}
           className={clsx(
-            'btn-ghost py-1 px-2 text-xs',
+            'btn-ghost py-1 px-2 text-xs inline-flex items-center gap-1.5',
             entry.is_live && 'border-red-500/40 text-red-400 hover:border-red-500/60',
           )}
         >
+          <span className={clsx('w-1.5 h-1.5 rounded-full shrink-0', entry.is_live ? 'bg-current animate-pulse' : 'bg-court-muted')} />
           Live
         </button>
       </td>
@@ -483,11 +484,12 @@ function SortableEntryRow({ entry, onUpdateScore, onToggleQualified, onSetLive, 
         <button
           onClick={() => onToggleQualified(entry)}
           className={clsx(
-            'btn-ghost py-1 px-2 text-xs',
-            entry.is_qualified && 'border-brand-orange/40 text-brand-orange hover:border-brand-orange/60',
+            'btn-ghost py-1 px-2 text-xs inline-flex items-center gap-1.5',
+            entry.is_qualified ? 'border-brand-orange/40 text-brand-orange hover:border-brand-orange/60' : 'text-court-muted',
           )}
         >
-          Qualif.
+          <Check size={10} strokeWidth={entry.is_qualified ? 3 : 2} className={entry.is_qualified ? '' : 'text-court-muted'} />
+          Qualificato
         </button>
       </td>
       <td className="px-3 py-2.5 w-px whitespace-nowrap">

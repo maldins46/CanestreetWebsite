@@ -122,7 +122,7 @@ export default async function AdminDashboard() {
     <div>
       {/* Header */}
       <div className="mb-10">
-        <p className="text-brand-orange font-display uppercase tracking-widest text-xs mb-1">Backoffice</p>
+        <p className="text-brand-orange font-display uppercase tracking-widest text-xs mb-1">Dashboard</p>
         <div className="flex items-center gap-3 flex-wrap">
           <h1 className="font-display font-bold uppercase text-3xl text-court-white">Dashboard</h1>
           {edition && (

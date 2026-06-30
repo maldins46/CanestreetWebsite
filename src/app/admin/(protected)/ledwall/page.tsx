@@ -113,7 +113,7 @@ export default function LedwallAdminPage() {
 
       {/* ── Header ── */}
       <div>
-        <p className="text-brand-orange font-display uppercase tracking-widest text-xs mb-2">Ledwall</p>
+        <p className="text-brand-orange font-display uppercase tracking-widest text-xs mb-1">Ledwall</p>
         <h1 className="font-display font-bold uppercase text-3xl text-court-white">
           Controllo Ledwall
         </h1>

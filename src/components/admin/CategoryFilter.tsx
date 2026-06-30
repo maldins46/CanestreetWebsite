@@ -14,7 +14,7 @@ const options: { value: TeamCategory | 'all' | 'evento'; label: string }[] = [
   { value: 'evento', label: 'Eventi' },
 ]
 
-export default function CategoryFilter({ showSearch = false, searchPlaceholder = 'Cerca squadra o giocatore…', hideAll = false }: { showSearch?: boolean; searchPlaceholder?: string; hideAll?: boolean }) {
+export default function CategoryFilter({ showSearch = false, searchPlaceholder = 'Cerca squadra o giocatore…', hideAll = false, hideEvento = false }: { showSearch?: boolean; searchPlaceholder?: string; hideAll?: boolean; hideEvento?: boolean }) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -54,7 +54,7 @@ export default function CategoryFilter({ showSearch = false, searchPlaceholder =
 
   return (
     <div className="flex gap-2 flex-wrap items-center">
-      {options.filter(opt => !(hideAll && opt.value === 'all')).map(opt => (
+      {options.filter(opt => !(hideAll && opt.value === 'all')).filter(opt => !(hideEvento && opt.value === 'evento')).map(opt => (
         <button
           key={opt.value}
           onClick={() => selectCategory(opt.value)}
