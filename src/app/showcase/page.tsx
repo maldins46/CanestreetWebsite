@@ -134,7 +134,7 @@ function ShowcaseCalendar({ matches, events, theme }: { matches: MatchWithTeams[
                         </span>
                       </td>
                       <td className="px-3 py-2 w-px whitespace-nowrap" />
-                      <td colSpan={4} className={clsx('px-3 py-2 text-center font-medium', theme.tableText)}>
+                      <td colSpan={4} className={clsx('px-3 py-2 text-center', theme.textMuted)}>
                         {e.name}
                       </td>
                     </tr>

@@ -125,7 +125,7 @@ export default function LedwallMatches({ matches, events = [] }: Props) {
                       </span>
                     </td>
                     <td className="px-3 py-2 w-px whitespace-nowrap" />
-                    <td colSpan={4} className="px-3 py-2 text-center text-gray-700 text-xs font-medium">
+                    <td colSpan={4} className="px-3 py-2 text-center text-gray-500">
                       {e.name}
                     </td>
                   </tr>
