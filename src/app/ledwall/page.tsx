@@ -123,12 +123,18 @@ export default function LedwallPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // State poll — re-read control row every 20s
+  // State poll — 2s when pinned to a single sponsor (for fast admin-driven switching), 20s otherwise
+  const isFixedSponsor =
+    ledwallState?.mode === 'fixed' &&
+    ledwallState?.fixed_scene === 'sponsors' &&
+    ledwallState?.scene_config?.variant === 'fixed_single'
+  const statePollMs = isFixedSponsor ? 2_000 : STATE_POLL_MS
+
   useEffect(() => {
-    const interval = setInterval(fetchState, STATE_POLL_MS)
+    const interval = setInterval(fetchState, statePollMs)
     return () => clearInterval(interval)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [statePollMs])
 
   // Data refresh — re-fetch tournament data every 25s
   useEffect(() => {
@@ -398,6 +404,7 @@ function SceneRenderer({ slot, data }: { slot: SceneSlot; data: Data }) {
         sponsors={data.sponsors}
         variant={config.variant ?? 'rotation'}
         rotationIndex={config.rotation_index ?? 0}
+        sponsorId={config.sponsor_id}
       />
     )
   }

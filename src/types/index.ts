@@ -314,8 +314,9 @@ export interface LedwallSceneConfig {
   contest_category?: TpcCategory
   round_id?: string
   // sponsors
-  variant?: 'rotation' | 'all' | 'gold'
+  variant?: 'rotation' | 'all' | 'gold' | 'fixed_single'
   rotation_index?: number
+  sponsor_id?: string
   // event contextual scene
   event_name?: string
   event_description?: string | null

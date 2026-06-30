@@ -6,8 +6,9 @@ import type { Sponsor } from '@/types'
 
 interface Props {
   sponsors: Sponsor[]
-  variant: 'rotation' | 'all' | 'gold'
+  variant: 'rotation' | 'all' | 'gold' | 'fixed_single'
   rotationIndex: number
+  sponsorId?: string
 }
 
 const TIER_LABEL: Record<string, string> = {
@@ -24,15 +25,18 @@ const TIER_CLASS: Record<string, string> = {
   bronze: 'bg-amber-700 text-white',
 }
 
-export default function LedwallSponsors({ sponsors, variant, rotationIndex }: Props) {
+export default function LedwallSponsors({ sponsors, variant, rotationIndex, sponsorId }: Props) {
   const [index, setIndex] = useState(0)
 
   // Build the pool based on variant
-  const pool: Sponsor[] = variant === 'gold'
-    ? sponsors.filter(s => s.tier === 'gold' || s.tier === 'main')
-    : variant === 'rotation'
-      ? sponsors.slice(rotationIndex * 4, rotationIndex * 4 + 4)
-      : sponsors
+  const pool: Sponsor[] =
+    variant === 'fixed_single'
+      ? sponsors.filter(s => s.id === sponsorId)
+      : variant === 'gold'
+        ? sponsors.filter(s => s.tier === 'gold' || s.tier === 'main')
+        : variant === 'rotation'
+          ? sponsors.slice(rotationIndex * 4, rotationIndex * 4 + 4)
+          : sponsors
 
   // Reset index when pool changes
   useEffect(() => { setIndex(0) }, [variant, rotationIndex, pool.length])

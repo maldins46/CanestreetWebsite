@@ -6,7 +6,7 @@ import MediaPickerInput from '@/components/admin/MediaPickerInput'
 import clsx from 'clsx'
 import type {
   LedwallState, LedwallMode, LedwallScene, LedwallTransition, LedwallSceneConfig,
-  GroupWithTeams, TpcContestFull, TeamCategory,
+  GroupWithTeams, TpcContestFull, TeamCategory, Sponsor,
 } from '@/types'
 
 // ─── Category / scene labels ──────────────────────────────────────────────────
@@ -33,6 +33,7 @@ export default function LedwallAdminPage() {
   const [state,    setState]    = useState<LedwallState | null>(null)
   const [groups,   setGroups]   = useState<GroupWithTeams[]>([])
   const [contests, setContests] = useState<TpcContestFull[]>([])
+  const [sponsors, setSponsors] = useState<Sponsor[]>([])
   const [loading,  setLoading]  = useState(true)
   const [saving,   setSaving]   = useState(false)
 
@@ -41,14 +42,16 @@ export default function LedwallAdminPage() {
   // ── Fetch current state + option data ─────────────────────────────────────
   useEffect(() => {
     async function load() {
-      const [{ data: st }, { data: gr }, { data: tc }] = await Promise.all([
+      const [{ data: st }, { data: gr }, { data: tc }, { data: sp }] = await Promise.all([
         supabase.from('ledwall_state').select('*').eq('id', 'default').single(),
         supabase.from('groups').select('*, group_teams(*, teams(id, name))').order('category').order('sort_order'),
         supabase.from('tpc_contests').select('*, tpc_rounds(id, name, round_number)').order('category'),
+        supabase.from('sponsors').select('*').eq('is_active', true).order('sort_order'),
       ])
       if (st) setState(st as LedwallState)
       setGroups(gr ?? [])
       setContests(tc ?? [])
+      setSponsors(sp ?? [])
       setLoading(false)
     }
     load()
@@ -200,6 +203,7 @@ export default function LedwallAdminPage() {
               scene={state.fixed_scene}
               config={config}
               groups={groups}
+              sponsors={sponsors}
               groupsForCategory={groupsForCategory}
               sortedRounds={sortedRounds}
               saving={saving}
@@ -265,7 +269,7 @@ export default function LedwallAdminPage() {
       <div className="p-4 bg-court-surface rounded border border-court-border">
         <p className="text-court-gray text-sm">
           <span className="text-brand-orange font-display uppercase tracking-wide">Nota:</span>{' '}
-          Il ledwall si aggiorna ogni ~20 secondi. I dati delle scene si aggiornano ogni ~25 secondi.
+          Il ledwall si aggiorna ogni ~20 secondi (ogni 2 secondi in modalità sponsor fisso). I dati delle scene si aggiornano ogni ~25 secondi.
         </p>
       </div>
     </div>
@@ -275,11 +279,12 @@ export default function LedwallAdminPage() {
 // ─── Scene-specific config form ───────────────────────────────────────────────
 
 function SceneConfig({
-  scene, config, groups, groupsForCategory, sortedRounds, saving, onChange,
+  scene, config, groups, sponsors, groupsForCategory, sortedRounds, saving, onChange,
 }: {
   scene: LedwallScene
   config: LedwallSceneConfig
   groups: GroupWithTeams[]
+  sponsors: Sponsor[]
   groupsForCategory: (cat: TeamCategory) => GroupWithTeams[]
   sortedRounds: (cat: 'open' | 'under') => { id: string; name: string; round_number: number }[]
   saving: boolean
@@ -346,32 +351,64 @@ function SceneConfig({
   }
 
   if (scene === 'sponsors') {
+    const variant = config.variant ?? 'all'
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
+      <div className="space-y-4">
+        <div className="max-w-xs">
           <label className="label">Visualizzazione</label>
           <select
             className="input"
-            value={config.variant ?? 'rotation'}
-            onChange={e => onChange({ ...config, variant: e.target.value as 'rotation' | 'all' | 'gold' })}
+            value={variant}
+            onChange={e => onChange({ ...config, variant: e.target.value as LedwallSceneConfig['variant'], sponsor_id: undefined })}
             disabled={saving}
           >
-            <option value="rotation">Rotazione fissa (4 sponsor fissi)</option>
-            <option value="all">Tutti gli sponsor (4 alla volta, auto)</option>
-            <option value="gold">Solo Gold/Main (4 alla volta, auto)</option>
+            <option value="all">Ruota tutti gli sponsor</option>
+            <option value="gold">Ruota solo Gold/Main</option>
+            <option value="fixed_single">Sponsor fisso</option>
           </select>
         </div>
-        {(config.variant ?? 'rotation') === 'rotation' && (
+        {variant === 'fixed_single' && (
           <div>
-            <label className="label">Gruppo di 4 (0 = primi 4, 1 = dal 5° all&apos;8°…)</label>
-            <input
-              type="number"
-              min={0}
-              className="input"
-              value={config.rotation_index ?? 0}
-              onChange={e => onChange({ ...config, rotation_index: Math.max(0, parseInt(e.target.value) || 0) })}
-              disabled={saving}
-            />
+            <label className="label">Sponsor da mostrare</label>
+            <div className="overflow-y-auto max-h-52 border border-court-border rounded p-3 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+              {[...sponsors]
+                .sort((a, b) => {
+                  const TIER_ORDER: Record<string, number> = { main: 0, gold: 1, silver: 2, bronze: 3 }
+                  const tierDiff = (TIER_ORDER[a.tier] ?? 9) - (TIER_ORDER[b.tier] ?? 9)
+                  return tierDiff !== 0 ? tierDiff : a.name.localeCompare(b.name)
+                })
+                .map(s => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => onChange({ ...config, sponsor_id: s.id })}
+                    disabled={saving}
+                    className={clsx(
+                      'flex flex-col items-center gap-1 p-2 rounded border-2 transition-all',
+                      config.sponsor_id === s.id
+                        ? 'border-brand-orange bg-brand-orange/10'
+                        : 'border-court-border hover:border-court-muted bg-white',
+                    )}
+                  >
+                    <div className="w-full h-12 flex items-center justify-center bg-white rounded">
+                      {s.logo_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={s.logo_url} alt={s.name} className="w-full h-full object-contain" />
+                      ) : (
+                        <span className="font-display font-bold text-xs text-gray-500 text-center uppercase leading-tight">
+                          {s.name}
+                        </span>
+                      )}
+                    </div>
+                    <span className={clsx(
+                      'text-xs font-display uppercase text-center leading-tight line-clamp-2',
+                      config.sponsor_id === s.id ? 'text-brand-orange' : 'text-court-muted',
+                    )}>
+                      {s.name}
+                    </span>
+                  </button>
+                ))}
+            </div>
           </div>
         )}
       </div>
