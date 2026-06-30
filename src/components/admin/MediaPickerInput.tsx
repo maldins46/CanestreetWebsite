@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 
-type PreviewVariant = 'landscape' | 'portrait' | 'cover'
+type PreviewVariant = 'landscape' | 'portrait' | 'cover' | 'none'
 
 interface Props {
   label: string
@@ -19,18 +19,21 @@ const PREVIEW_CONTAINER: Record<PreviewVariant, string> = {
   landscape: 'w-32 h-20',
   portrait:  'w-20 h-[107px]',
   cover:     'w-full h-48',
+  none:      '',
 }
 
 const PREVIEW_IMG: Record<PreviewVariant, string> = {
   landscape: 'object-contain p-2',
   portrait:  'object-cover object-top',
   cover:     'object-cover',
+  none:      '',
 }
 
 const PREVIEW_BG: Record<PreviewVariant, string> = {
   landscape: 'bg-white',
   portrait:  'bg-court-dark',
   cover:     'bg-court-dark',
+  none:      '',
 }
 
 export default function MediaPickerInput({
@@ -110,7 +113,7 @@ export default function MediaPickerInput({
         </div>
       )}
 
-      {value && (
+      {value && preview !== 'none' && (
         <div className={`mt-3 relative ${PREVIEW_CONTAINER[preview]} overflow-hidden border border-court-border ${PREVIEW_BG[preview]}`}>
           <Image src={value} alt="Anteprima" fill className={PREVIEW_IMG[preview]} sizes="512px" />
         </div>

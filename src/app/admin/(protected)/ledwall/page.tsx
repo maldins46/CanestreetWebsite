@@ -274,19 +274,63 @@ export default function LedwallAdminPage() {
       <div className="card p-6">
         <h2 className="font-display font-bold uppercase text-lg text-court-white mb-2">Cornice</h2>
         <p className="text-court-muted text-sm mb-4">
-          Immagine decorativa visibile attorno al riquadro bianco (896×512).
-          Carica un&apos;immagine con sfondo trasparente per ottenere l&apos;effetto cornice.
+          Sfondo del ledwall (896×512 px) visibile nella fascia attorno al riquadro bianco dei contenuti.
         </p>
         <MediaPickerInput
           label="Immagine cornice"
           value={state.frame_url ?? ''}
           onChange={setFrame}
-          preview="landscape"
+          preview="none"
         />
+
+        {/* Ledwall mockup preview */}
+        <div
+          className="mt-3 relative w-full aspect-[896/512] overflow-hidden bg-black border border-court-border rounded"
+          style={{ containerType: 'inline-size' }}
+        >
+          {state.frame_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={state.frame_url} alt="" className="absolute inset-0 w-full h-full object-cover" />
+          )}
+          {/* White content box — matches actual ledwall insets */}
+          <div
+            className="absolute bg-white"
+            style={{
+              top:    `${28 / 512 * 100}%`,
+              left:   `${32 / 896 * 100}%`,
+              right:  `${32 / 896 * 100}%`,
+              bottom: `${52 / 512 * 100}%`,
+            }}
+          />
+          {/* Bottom bar — mirrors real ledwall footer */}
+          <div
+            className="absolute bottom-0 left-0 right-0 flex items-center justify-end"
+            style={{
+              height:       `${52 / 512 * 100}%`,
+              paddingRight: `${32 / 896 * 100}%`,
+              gap:          `${20 / 896 * 100}%`,
+            }}
+          >
+            <span
+              className="font-display font-bold uppercase tracking-wide text-white leading-none whitespace-nowrap"
+              style={{ fontSize: '1.6cqw' }}
+            >
+              canestreet.it
+            </span>
+            <div className="bg-white/60 w-px" style={{ height: '55%' }} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/estathe-3x3-italia-logo.png" alt="" style={{ height: '58%', width: 'auto' }} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/fip-logo-white.png" alt="" style={{ height: '46%', width: 'auto' }} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/lb3-logo-white.png" alt="" style={{ height: '46%', width: 'auto' }} />
+          </div>
+        </div>
+
         {state.frame_url && (
           <button
             onClick={() => save({ frame_url: null })}
-            className="mt-3 text-xs text-court-muted hover:text-red-400 transition-colors"
+            className="mt-2 text-xs text-court-muted hover:text-red-400 transition-colors"
             disabled={saving}
           >
             Rimuovi cornice
