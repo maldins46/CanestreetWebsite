@@ -32,14 +32,29 @@ const SCENES: { key: LedwallScene; label: string; description: string }[] = [
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function LedwallAdminPage() {
-  const [state,    setState]    = useState<LedwallState | null>(null)
-  const [groups,   setGroups]   = useState<GroupWithTeams[]>([])
-  const [contests, setContests] = useState<TpcContestFull[]>([])
-  const [sponsors, setSponsors] = useState<Sponsor[]>([])
-  const [loading,  setLoading]  = useState(true)
-  const [saving,   setSaving]   = useState(false)
+  const [state,         setState]        = useState<LedwallState | null>(null)
+  const [draft,         setDraft]        = useState<{
+    mode: LedwallMode
+    fixed_scene: LedwallScene
+    scene_config: LedwallSceneConfig
+  } | null>(null)
+  const [groups,        setGroups]       = useState<GroupWithTeams[]>([])
+  const [contests,      setContests]     = useState<TpcContestFull[]>([])
+  const [sponsors,      setSponsors]     = useState<Sponsor[]>([])
+  const [bachecaImages, setBachecaImages]= useState<LedwallBachecaImage[]>([])
+  const [loading,       setLoading]      = useState(true)
+  const [saving,        setSaving]       = useState(false)
 
   const supabase = createClient()
+
+  async function loadBachecaImages() {
+    const { data } = await supabase
+      .from('ledwall_bacheca_images')
+      .select('*')
+      .order('sort_order')
+      .order('created_at')
+    setBachecaImages((data as LedwallBachecaImage[]) ?? [])
+  }
 
   // ── Fetch current state + option data ─────────────────────────────────────
   useEffect(() => {
@@ -50,13 +65,17 @@ export default function LedwallAdminPage() {
         supabase.from('tpc_contests').select('*, tpc_rounds(id, name, round_number)').order('category'),
         supabase.from('sponsors').select('*').eq('is_active', true).order('sort_order'),
       ])
-      if (st) setState(st as LedwallState)
+      if (st) {
+        const ledwallSt = st as LedwallState
+        setState(ledwallSt)
+        setDraft({ mode: ledwallSt.mode, fixed_scene: ledwallSt.fixed_scene, scene_config: ledwallSt.scene_config ?? {} })
+      }
       setGroups(gr ?? [])
       setContests(tc ?? [])
       setSponsors(sp ?? [])
       setLoading(false)
     }
-    load()
+    Promise.all([load(), loadBachecaImages()])
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -71,16 +90,21 @@ export default function LedwallAdminPage() {
     setSaving(false)
   }
 
-  async function saveConfig(config: LedwallSceneConfig) {
-    await save({ scene_config: config })
+  async function applyDraft() {
+    if (!draft) return
+    await save({ mode: draft.mode, fixed_scene: draft.fixed_scene, scene_config: draft.scene_config })
   }
 
-  function setMode(mode: LedwallMode)             { save({ mode }) }
-  function setScene(fixed_scene: LedwallScene)     { save({ fixed_scene }) }
   function setTransition(transition: LedwallTransition) { save({ transition }) }
-  function setFrame(frame_url: string)             { save({ frame_url }) }
+  function setFrame(frame_url: string)                  { save({ frame_url }) }
 
-  // ── Derived options ──────────────────────────────────────────────────────
+  // ── Derived ──────────────────────────────────────────────────────────────
+  const isDirty = draft && state && (
+    draft.mode !== state.mode ||
+    draft.fixed_scene !== state.fixed_scene ||
+    JSON.stringify(draft.scene_config) !== JSON.stringify(state.scene_config ?? {})
+  )
+
   const groupsForCategory = (cat: TeamCategory) =>
     groups.filter(g => g.category === cat)
 
@@ -103,15 +127,13 @@ export default function LedwallAdminPage() {
     )
   }
 
-  if (!state) {
+  if (!state || !draft) {
     return (
       <div className="flex items-center justify-center h-64">
         <p className="text-red-400">Errore: ledwall_state non trovato.</p>
       </div>
     )
   }
-
-  const config = state.scene_config ?? {}
 
   return (
     <div className="space-y-8">
@@ -145,75 +167,80 @@ export default function LedwallAdminPage() {
         </a>
       </div>
 
-      {/* ── Mode selector ── */}
-      <div className="card p-6">
-        <h2 className="font-display font-bold uppercase text-lg text-court-white mb-4">Modalità</h2>
-        <div className="grid grid-cols-2 gap-4">
-          {([
-            { key: 'contextual' as LedwallMode, label: 'Contestuale', desc: 'Rotazione automatica: partite → sponsor → scena live' },
-            { key: 'fixed'      as LedwallMode, label: 'Fisso',       desc: 'Mostra sempre la scena selezionata' },
-          ]).map(m => (
-            <button
-              key={m.key}
-              onClick={() => setMode(m.key)}
-              disabled={saving}
-              className={clsx(
-                'p-5 text-left rounded border-2 transition-all',
-                state.mode === m.key
-                  ? 'border-brand-orange bg-brand-orange/10'
-                  : 'border-court-border bg-court-surface hover:border-court-muted',
-              )}
-            >
-              <p className={clsx('font-display font-bold text-xl mb-1', state.mode === m.key ? 'text-brand-orange' : 'text-court-white')}>
-                {m.label}
-              </p>
-              <p className="text-court-muted text-sm">{m.desc}</p>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ── Fixed scene picker ── */}
-      {state.mode === 'fixed' && (
-        <div className="card p-6 space-y-6">
+      {/* ── Scene / mode picker ── */}
+      <div className="card p-6 space-y-6">
+        <div className="flex items-center justify-between">
           <h2 className="font-display font-bold uppercase text-lg text-court-white">Scena</h2>
+          {isDirty && (
+            <button
+              onClick={applyDraft}
+              disabled={saving}
+              className="btn-primary text-sm px-5 py-2"
+            >
+              {saving ? 'Applicazione…' : 'Applica →'}
+            </button>
+          )}
+        </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
-            {SCENES.map(s => (
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+          {/* Contestuale tile */}
+          <button
+            onClick={() => setDraft(d => ({ ...d!, mode: 'contextual' }))}
+            className={clsx(
+              'p-4 text-left rounded border-2 transition-all',
+              draft.mode === 'contextual'
+                ? 'border-brand-orange bg-brand-orange/10'
+                : 'border-court-border bg-court-surface hover:border-court-muted',
+            )}
+          >
+            <p className={clsx('font-display font-bold text-lg mb-1', draft.mode === 'contextual' ? 'text-brand-orange' : 'text-court-white')}>
+              Contestuale
+            </p>
+            <p className="text-court-muted text-xs">Rotazione automatica: partite → sponsor → scena live</p>
+          </button>
+
+          {SCENES.map(s => {
+            const selected = draft.mode === 'fixed' && draft.fixed_scene === s.key
+            return (
               <button
                 key={s.key}
-                onClick={() => setScene(s.key)}
-                disabled={saving}
+                onClick={() => setDraft(d => ({ ...d!, mode: 'fixed', fixed_scene: s.key }))}
                 className={clsx(
                   'p-4 text-left rounded border-2 transition-all',
-                  state.fixed_scene === s.key
+                  selected
                     ? 'border-brand-orange bg-brand-orange/10'
                     : 'border-court-border bg-court-surface hover:border-court-muted',
                 )}
               >
-                <p className={clsx('font-display font-bold text-lg mb-1', state.fixed_scene === s.key ? 'text-brand-orange' : 'text-court-white')}>
+                <p className={clsx('font-display font-bold text-lg mb-1', selected ? 'text-brand-orange' : 'text-court-white')}>
                   {s.label}
                 </p>
                 <p className="text-court-muted text-xs">{s.description}</p>
               </button>
-            ))}
-          </div>
+            )
+          })}
+        </div>
 
-          {/* ── Scene config ── */}
-          <div className="pt-4 border-t border-court-border">
+        {/* ── Scene config ── */}
+        <div className="pt-4 border-t border-court-border">
+          {draft.mode === 'contextual' ? (
+            <p className="text-court-muted text-sm italic">Nessuna configurazione necessaria per questa scena.</p>
+          ) : (
             <SceneConfig
-              scene={state.fixed_scene}
-              config={config}
+              scene={draft.fixed_scene}
+              config={draft.scene_config}
               groups={groups}
               sponsors={sponsors}
+              bachecaImages={bachecaImages}
               groupsForCategory={groupsForCategory}
               sortedRounds={sortedRounds}
               saving={saving}
-              onChange={saveConfig}
+              onChange={c => setDraft(d => ({ ...d!, scene_config: c }))}
+              onRefreshBacheca={loadBachecaImages}
             />
-          </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* ── Transition selector ── */}
       <div className="card p-6">
@@ -267,15 +294,6 @@ export default function LedwallAdminPage() {
         )}
       </div>
 
-      {/* ── Bacheca image library ── */}
-      <div className="card p-6">
-        <h2 className="font-display font-bold uppercase text-lg text-court-white mb-1">Bacheca</h2>
-        <p className="text-court-muted text-sm mb-4">
-          Prepara le immagini anche mentre è attiva un&apos;altra scena. Quando attivi la scena Bacheca verrà mostrata l&apos;immagine selezionata.
-        </p>
-        <BachecaConfig config={config} onChange={saveConfig} />
-      </div>
-
       {/* ── Info note ── */}
       <div className="p-4 bg-court-surface rounded border border-court-border">
         <p className="text-court-gray text-sm">
@@ -290,16 +308,18 @@ export default function LedwallAdminPage() {
 // ─── Scene-specific config form ───────────────────────────────────────────────
 
 function SceneConfig({
-  scene, config, groups, sponsors, groupsForCategory, sortedRounds, saving, onChange,
+  scene, config, groups, sponsors, bachecaImages, groupsForCategory, sortedRounds, saving, onChange, onRefreshBacheca,
 }: {
   scene: LedwallScene
   config: LedwallSceneConfig
   groups: GroupWithTeams[]
   sponsors: Sponsor[]
+  bachecaImages: LedwallBachecaImage[]
   groupsForCategory: (cat: TeamCategory) => GroupWithTeams[]
   sortedRounds: (cat: 'open' | 'under') => { id: string; name: string; round_number: number }[]
   saving: boolean
   onChange: (c: LedwallSceneConfig) => void
+  onRefreshBacheca: () => Promise<void>
 }) {
   if (scene === 'matches') {
     return (
@@ -395,24 +415,24 @@ function SceneConfig({
                     onClick={() => onChange({ ...config, sponsor_id: s.id })}
                     disabled={saving}
                     className={clsx(
-                      'flex flex-col items-center gap-1 p-2 rounded border-2 transition-all',
+                      'flex flex-col rounded border-2 transition-all overflow-hidden',
                       config.sponsor_id === s.id
-                        ? 'border-brand-orange bg-brand-orange/10'
-                        : 'border-court-border hover:border-court-muted bg-white',
+                        ? 'border-brand-orange'
+                        : 'border-court-border hover:border-court-muted',
                     )}
                   >
-                    <div className="w-full h-12 flex items-center justify-center bg-white rounded">
+                    <div className="bg-white w-full aspect-[52/27] relative">
                       {s.logo_url ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={s.logo_url} alt={s.name} className="w-full h-full object-contain" />
+                        <img src={s.logo_url} alt={s.name} className="absolute inset-0 w-full h-full object-contain" />
                       ) : (
-                        <span className="font-display font-bold text-xs text-gray-500 text-center uppercase leading-tight">
+                        <span className="absolute inset-0 flex items-center justify-center font-display font-bold text-xs text-gray-400 text-center uppercase leading-tight p-1">
                           {s.name}
                         </span>
                       )}
                     </div>
                     <span className={clsx(
-                      'text-xs font-display uppercase text-center leading-tight line-clamp-2',
+                      'text-xs font-display uppercase text-center leading-tight line-clamp-1 px-1 py-1 bg-court-surface',
                       config.sponsor_id === s.id ? 'text-brand-orange' : 'text-court-muted',
                     )}>
                       {s.name}
@@ -462,72 +482,13 @@ function SceneConfig({
   }
 
   if (scene === 'bacheca') {
-    return <BachecaImagePicker config={config} onChange={onChange} />
+    return <BachecaSceneConfig images={bachecaImages} config={config} onChange={onChange} onRefresh={onRefreshBacheca} />
   }
 
   return null
 }
 
-// ─── Bacheca image picker (scene config — select only) ────────────────────────
-
-function BachecaImagePicker({
-  config,
-  onChange,
-}: {
-  config: LedwallSceneConfig
-  onChange: (c: LedwallSceneConfig) => void
-}) {
-  const supabase = createClient()
-  const [images, setImages] = useState<LedwallBachecaImage[]>([])
-
-  useEffect(() => {
-    supabase
-      .from('ledwall_bacheca_images')
-      .select('*')
-      .order('sort_order')
-      .order('created_at')
-      .then(({ data }) => setImages((data as LedwallBachecaImage[]) ?? []))
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  if (images.length === 0) {
-    return (
-      <p className="text-court-muted text-sm italic">
-        Nessuna immagine in bacheca. Aggiungile dalla sezione Bacheca qui sotto.
-      </p>
-    )
-  }
-
-  return (
-    <div className="overflow-y-auto max-h-52 border border-court-border rounded p-3 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
-      {images.map(img => (
-        <button
-          key={img.id}
-          type="button"
-          onClick={() => onChange({ ...config, bacheca_image_url: img.url })}
-          className={clsx(
-            'flex flex-col rounded border-2 transition-all overflow-hidden',
-            config.bacheca_image_url === img.url
-              ? 'border-brand-orange'
-              : 'border-court-border hover:border-court-muted',
-          )}
-        >
-          <div className="bg-white w-full aspect-[52/27] relative">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={img.url} alt={img.label} className="absolute inset-0 w-full h-full object-contain" />
-          </div>
-          <span className={clsx(
-            'text-xs font-display uppercase text-center leading-tight px-1 py-1 line-clamp-1 bg-court-surface',
-            config.bacheca_image_url === img.url ? 'text-brand-orange' : 'text-court-muted',
-          )}>
-            {img.label || '—'}
-          </span>
-        </button>
-      ))}
-    </div>
-  )
-}
-
-// ─── Bacheca library management (always-visible card) ─────────────────────────
+// ─── Bacheca unified component (upload + select + rename + delete) ────────────
 
 async function convertToWebP(file: File, quality = 0.85): Promise<File> {
   if (file.type === 'image/gif' || file.type === 'image/webp') return file
@@ -545,30 +506,21 @@ async function convertToWebP(file: File, quality = 0.85): Promise<File> {
   )
 }
 
-function BachecaConfig({
+function BachecaSceneConfig({
+  images,
   config,
+  onRefresh,
   onChange,
 }: {
+  images: LedwallBachecaImage[]
   config: LedwallSceneConfig
+  onRefresh: () => Promise<void>
   onChange: (c: LedwallSceneConfig) => void
 }) {
   const supabase = createClient()
-  const [images,    setImages]    = useState<LedwallBachecaImage[]>([])
   const [uploading, setUploading] = useState(false)
   const [uploadErr, setUploadErr] = useState<string | null>(null)
-  const [pendingLabel, setPendingLabel] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
-
-  async function loadImages() {
-    const { data } = await supabase
-      .from('ledwall_bacheca_images')
-      .select('*')
-      .order('sort_order')
-      .order('created_at')
-    setImages((data as LedwallBachecaImage[]) ?? [])
-  }
-
-  useEffect(() => { loadImages() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -597,19 +549,11 @@ function BachecaConfig({
     if (storageErr) { setUploadErr(storageErr.message); setUploading(false); return }
 
     const url   = base + path
-    const label = pendingLabel.trim() || file.name.replace(/\.[^.]+$/, '')
-    const { data: row } = await supabase
-      .from('ledwall_bacheca_images')
-      .insert({ url, label })
-      .select()
-      .single()
+    const label = file.name.replace(/\.[^.]+$/, '')
+    await supabase.from('ledwall_bacheca_images').insert({ url, label })
+    await onRefresh()
+    onChange({ ...config, bacheca_image_url: url })
 
-    if (row) {
-      await loadImages()
-      onChange({ ...config, bacheca_image_url: url })
-    }
-
-    setPendingLabel('')
     if (fileRef.current) fileRef.current.value = ''
     setUploading(false)
   }
@@ -618,102 +562,86 @@ function BachecaConfig({
     const filename = img.url.split('/media/')[1]
     if (filename) await supabase.storage.from('media').remove([filename])
     await supabase.from('ledwall_bacheca_images').delete().eq('id', img.id)
-    await loadImages()
+    await onRefresh()
     if (config.bacheca_image_url === img.url) {
       onChange({ ...config, bacheca_image_url: undefined })
     }
   }
 
-  async function handleLabelChange(img: LedwallBachecaImage, label: string) {
-    setImages(prev => prev.map(i => i.id === img.id ? { ...i, label } : i))
+  async function handleLabelBlur(img: LedwallBachecaImage, label: string) {
     await supabase.from('ledwall_bacheca_images').update({ label }).eq('id', img.id)
+    await onRefresh()
   }
 
   return (
-    <div className="space-y-4">
-      {/* Upload row */}
-      <div className="flex flex-col sm:flex-row gap-3 items-start">
-        <div className="flex-1">
-          <label className="label">Etichetta (opzionale)</label>
+    <div className="space-y-3">
+      {/* Upload */}
+      <div className="flex items-center gap-3">
+        <label className={clsx(
+          'btn-ghost text-sm px-4 py-2 cursor-pointer flex items-center gap-2 whitespace-nowrap',
+          uploading && 'opacity-50 pointer-events-none',
+        )}>
+          {uploading ? 'Caricamento…' : '+ Carica immagine'}
           <input
-            className="input"
-            placeholder="Nome immagine…"
-            value={pendingLabel}
-            onChange={e => setPendingLabel(e.target.value)}
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="sr-only"
+            onChange={handleUpload}
             disabled={uploading}
           />
-        </div>
-        <div className="shrink-0">
-          <label className="label">Carica immagine</label>
-          <label className={clsx(
-            'btn-ghost text-sm px-4 py-2 cursor-pointer flex items-center gap-2 whitespace-nowrap',
-            uploading && 'opacity-50 pointer-events-none',
-          )}>
-            {uploading ? 'Caricamento…' : '+ Carica'}
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              className="sr-only"
-              onChange={handleUpload}
-              disabled={uploading}
-            />
-          </label>
-        </div>
+        </label>
+        {uploadErr && <p className="text-red-400 text-sm">{uploadErr}</p>}
       </div>
-
-      {uploadErr && (
-        <p className="text-red-400 text-sm">{uploadErr}</p>
-      )}
 
       {/* Image grid */}
       {images.length === 0 ? (
         <p className="text-court-muted text-sm italic">Nessuna immagine in bacheca. Caricane una.</p>
       ) : (
         <div className="overflow-y-auto max-h-72 border border-court-border rounded p-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-          {images.map(img => (
-            <div
-              key={img.id}
-              className={clsx(
-                'flex flex-col rounded border-2 transition-all overflow-hidden',
-                config.bacheca_image_url === img.url
-                  ? 'border-brand-orange'
-                  : 'border-court-border hover:border-court-muted',
-              )}
-            >
-              {/* Thumbnail — click to select */}
-              <button
-                type="button"
-                onClick={() => onChange({ ...config, bacheca_image_url: img.url })}
-                className="w-full bg-white aspect-[52/27] relative"
+          {images.map(img => {
+            const selected = config.bacheca_image_url === img.url
+            return (
+              <div
+                key={img.id}
+                className={clsx(
+                  'flex flex-col rounded border-2 overflow-hidden transition-all',
+                  selected ? 'border-brand-orange' : 'border-court-border hover:border-court-muted',
+                )}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={img.url}
-                  alt={img.label}
-                  className="absolute inset-0 w-full h-full object-contain"
-                />
-              </button>
-
-              {/* Label + delete */}
-              <div className="bg-court-surface px-2 py-1.5 flex items-center gap-1">
-                <input
-                  className="flex-1 min-w-0 bg-transparent text-xs font-display uppercase text-court-muted focus:outline-none focus:text-court-white"
-                  value={img.label}
-                  onChange={e => handleLabelChange(img, e.target.value)}
-                  title="Modifica etichetta"
-                />
+                {/* Click thumbnail to select */}
                 <button
                   type="button"
-                  onClick={() => handleDelete(img)}
-                  className="shrink-0 text-court-muted hover:text-red-400 transition-colors ml-1"
-                  title="Elimina"
+                  onClick={() => onChange({ ...config, bacheca_image_url: img.url })}
+                  className="block w-full bg-white aspect-[52/27] relative"
                 >
-                  ×
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={img.url} alt={img.label} className="absolute inset-0 w-full h-full object-contain" />
                 </button>
+                {/* Label + delete */}
+                <div className="bg-court-surface px-2 py-1.5 flex items-center gap-1">
+                  <input
+                    key={img.label}
+                    className={clsx(
+                      'flex-1 min-w-0 bg-transparent text-xs font-display uppercase focus:outline-none focus:text-court-white',
+                      selected ? 'text-brand-orange' : 'text-court-muted',
+                    )}
+                    defaultValue={img.label}
+                    onBlur={e => handleLabelBlur(img, e.target.value)}
+                    title="Modifica etichetta"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(img)}
+                    className="shrink-0 text-court-muted hover:text-red-400 transition-colors ml-1"
+                    title="Elimina"
+                  >
+                    ×
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
