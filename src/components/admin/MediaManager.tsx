@@ -50,7 +50,7 @@ export default function MediaManager() {
       offset: targetPage * PAGE_SIZE,
     })
     if (!data) { setLoading(false); return }
-    const filtered = data.filter(f => f.name !== '.emptyFolderPlaceholder')
+    const filtered = data.filter(f => f.name !== '.emptyFolderPlaceholder' && f.name !== 'bacheca')
     const base = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/media/`
     setFiles(filtered.map(f => ({ name: f.name, url: base + f.name })))
     setHasMore(filtered.length === PAGE_SIZE)

@@ -9,6 +9,7 @@ import LedwallFinals    from '@/components/ledwall/LedwallFinals'
 import LedwallSponsors  from '@/components/ledwall/LedwallSponsors'
 import LedwallTpc       from '@/components/ledwall/LedwallTpc'
 import LedwallEvent     from '@/components/ledwall/LedwallEvent'
+import LedwallBacheca   from '@/components/ledwall/LedwallBacheca'
 import type {
   Edition, GroupWithTeams, MatchWithTeams, TpcContestFull, Sponsor,
   LedwallState, LedwallScene, LedwallSceneConfig, CalendarioEvent,
@@ -124,11 +125,12 @@ export default function LedwallPage() {
   }, [])
 
   // State poll — 2s when pinned to a single sponsor (for fast admin-driven switching), 20s otherwise
-  const isFixedSponsor =
-    ledwallState?.mode === 'fixed' &&
-    ledwallState?.fixed_scene === 'sponsors' &&
-    ledwallState?.scene_config?.variant === 'fixed_single'
-  const statePollMs = isFixedSponsor ? 2_000 : STATE_POLL_MS
+  const needsFastPoll =
+    ledwallState?.mode === 'fixed' && (
+      (ledwallState.fixed_scene === 'sponsors' && ledwallState.scene_config?.variant === 'fixed_single') ||
+      ledwallState.fixed_scene === 'bacheca'
+    )
+  const statePollMs = needsFastPoll ? 2_000 : STATE_POLL_MS
 
   useEffect(() => {
     const interval = setInterval(fetchState, statePollMs)
@@ -417,6 +419,10 @@ function SceneRenderer({ slot, data }: { slot: SceneSlot; data: Data }) {
         roundId={config.round_id}
       />
     )
+  }
+
+  if (scene === 'bacheca') {
+    return <LedwallBacheca imageUrl={config.bacheca_image_url} />
   }
 
   return null

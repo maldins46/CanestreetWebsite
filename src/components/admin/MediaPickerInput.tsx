@@ -54,7 +54,7 @@ export default function MediaPickerInput({
     const base = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/media/`
     setMediaFiles(
       data
-        .filter(f => f.name !== '.emptyFolderPlaceholder')
+        .filter(f => f.name !== '.emptyFolderPlaceholder' && f.name !== 'bacheca')
         .map(f => ({ name: f.name, url: base + f.name }))
     )
   }

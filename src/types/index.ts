@@ -302,7 +302,7 @@ export interface CalendarioEvent {
 // ============================================================
 
 export type LedwallMode = 'fixed' | 'contextual'
-export type LedwallScene = 'standings' | 'finals' | 'matches' | 'sponsors' | 'tpc'
+export type LedwallScene = 'standings' | 'finals' | 'matches' | 'sponsors' | 'tpc' | 'bacheca'
 export type LedwallTransition = 'fade' | 'sting'
 
 export interface LedwallSceneConfig {
@@ -317,9 +317,19 @@ export interface LedwallSceneConfig {
   variant?: 'rotation' | 'all' | 'gold' | 'fixed_single'
   rotation_index?: number
   sponsor_id?: string
+  // bacheca
+  bacheca_image_url?: string
   // event contextual scene
   event_name?: string
   event_description?: string | null
+}
+
+export interface LedwallBachecaImage {
+  id: string
+  url: string
+  label: string
+  sort_order: number
+  created_at: string
 }
 
 export interface LedwallState {
