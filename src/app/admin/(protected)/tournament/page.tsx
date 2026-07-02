@@ -128,6 +128,7 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
               showSearch={tab === 'calendario'}
               searchPlaceholder="Cerca squadra, girone o turno…"
               hideAll={tab !== 'calendario'}
+              hideEvento={tab !== 'calendario'}
             />
           </Suspense>
         </div>
