@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import clsx from 'clsx'
 import type { TpcContestFull, TpcCategory } from '@/types'
 
@@ -10,7 +11,24 @@ interface Props {
 }
 
 export default function LedwallTpc({ contests, contestCategory, roundId }: Props) {
+  const containerRef = useRef<HTMLDivElement>(null)
   const contest = contests.find(c => c.category === contestCategory) ?? null
+
+  const sortedRounds = contest ? [...contest.tpc_rounds].sort((a, b) => a.round_number - b.round_number) : []
+  const round = roundId
+    ? (sortedRounds.find(r => r.id === roundId) ?? sortedRounds[sortedRounds.length - 1])
+    : sortedRounds[sortedRounds.length - 1]
+
+  const entries = round ? [...round.tpc_entries].sort((a, b) => a.sort_order - b.sort_order) : []
+
+  // Keep the live player centered — the ledwall is a passive display, nobody can scroll it manually.
+  useEffect(() => {
+    if (!containerRef.current) return
+    const liveEntry = containerRef.current.querySelector('[data-is-live="true"]')
+    if (liveEntry) {
+      liveEntry.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    }
+  }, [round])
 
   if (!contest) {
     return (
@@ -20,11 +38,6 @@ export default function LedwallTpc({ contests, contestCategory, roundId }: Props
     )
   }
 
-  const sortedRounds = [...contest.tpc_rounds].sort((a, b) => a.round_number - b.round_number)
-  const round = roundId
-    ? (sortedRounds.find(r => r.id === roundId) ?? sortedRounds[sortedRounds.length - 1])
-    : sortedRounds[sortedRounds.length - 1]
-
   if (!round) {
     return (
       <div className="w-full h-full flex items-center justify-center">
@@ -32,8 +45,6 @@ export default function LedwallTpc({ contests, contestCategory, roundId }: Props
       </div>
     )
   }
-
-  const entries = [...round.tpc_entries].sort((a, b) => a.sort_order - b.sort_order)
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -43,7 +54,7 @@ export default function LedwallTpc({ contests, contestCategory, roundId }: Props
         </h2>
       </div>
 
-      <div className="flex-1 overflow-hidden">
+      <div ref={containerRef} className="flex-1 overflow-y-auto scrollbar-hide">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 sticky top-0">
             <tr>
