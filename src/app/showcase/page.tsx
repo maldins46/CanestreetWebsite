@@ -4,12 +4,18 @@ import React, { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type {
   Edition, GroupWithTeams, MatchWithTeams,
-  TpcContestFull, Sponsor, TeamCategory, CalendarioEvent, ShowcaseMode
+  TpcContestFull, Sponsor, TeamCategory, CalendarioEvent, ShowcaseMode, Match, TpcEntry,
 } from '@/types'
 import clsx from 'clsx'
 import { resolveContextualShowcaseMode } from '@/lib/showcase'
+import { fetchTournamentSnapshot } from '@/lib/tournamentData'
+import { patchMatches, patchTpcEntries, patchEvents } from '@/lib/tournamentRealtimePatchers'
 
-const AUTO_REFRESH_INTERVAL = 15000
+// Coarse safety-net poll — self-heals a silently-dead realtime websocket on
+// the venue's cellular SIM connection. Not the primary update mechanism.
+const RESYNC_POLL_MS = 60_000
+
+// Cosmetic category-carousel cadence, unrelated to data freshness.
 const UNDER_CATEGORY_CYCLE_MS = 20000
 
 const OPEN_CATEGORY_ORDER: TeamCategory[] = ['open_m', 'open_f']
@@ -922,39 +928,101 @@ export default function ShowcasePage() {
 
   const supabase = createClient()
 
-  async function fetchAll() {
-    const [{ data: modeData }, { data: editionData }, { data: matchData }, { data: groupData }, { data: tpcData }, { data: sponsorData }, { data: eventData }] = await Promise.all([
-      supabase.from('showcase_modes').select('mode, light_mode').eq('id', 'default').single(),
-      supabase.from('editions').select('*').eq('is_current', true).maybeSingle(),
-      supabase
-        .from('matches')
-        .select('*, team_home:teams!matches_team_home_id_fkey(id, name), team_away:teams!matches_team_away_id_fkey(id, name), group:groups!matches_group_id_fkey(id, name)')
-        .order('scheduled_at', { ascending: true, nullsFirst: false })
-        .order('sort_order'),
-      supabase.from('groups').select('*, group_teams(*, teams(id, name))').order('sort_order'),
-      supabase.from('tpc_contests').select('*, tpc_players(*), tpc_rounds(*, tpc_entries(*, tpc_players(id, name)))'),
-      supabase.from('sponsors').select('*').eq('is_active', true).order('sort_order'),
-      supabase.from('events').select('*').order('scheduled_at', { ascending: true, nullsFirst: false }).order('sort_order'),
-    ])
-
-    setData({
-      edition: editionData,
-      matches: matchData ?? [],
-      groups: groupData ?? [],
-      tpcContests: tpcData ?? [],
-      sponsors: sponsorData ?? [],
-      events: eventData ?? [],
-    })
-
+  async function fetchMode() {
+    const { data: modeData } = await supabase.from('showcase_modes').select('mode, light_mode').eq('id', 'default').single()
     if (modeData?.mode) setMode(modeData.mode)
     if (modeData?.light_mode !== undefined) setLightMode(modeData.light_mode)
-    setLoading(false)
   }
 
+  async function fetchData() {
+    setData(await fetchTournamentSnapshot(supabase))
+  }
+
+  // Initial load
   useEffect(() => {
-    fetchAll()
-    const interval = setInterval(fetchAll, AUTO_REFRESH_INTERVAL)
+    Promise.all([fetchMode(), fetchData()]).then(() => setLoading(false))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Realtime — push-driven updates instead of polling. `showcase_modes`
+  // swaps (admin panel) and `matches`/`tpc_entries`/`events` changes (scores,
+  // live flags) arrive as soon as they happen; resolveContextualShowcaseMode()
+  // picks them up on its next render since it's a pure function of this state.
+  useEffect(() => {
+    let hasSubscribedOnce = false
+
+    const channel = supabase
+      .channel('showcase-realtime')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'showcase_modes', filter: 'id=eq.default' },
+        payload => {
+          const row = payload.new as { mode: ShowcaseMode; light_mode: boolean }
+          if (row.mode) setMode(row.mode)
+          if (row.light_mode !== undefined) setLightMode(row.light_mode)
+        }
+      )
+      .on<Match>(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'matches' },
+        payload => {
+          setData(d => {
+            const patched = patchMatches(d.matches, payload)
+            if (patched === null) {
+              fetchData()
+              return d
+            }
+            return { ...d, matches: patched }
+          })
+        }
+      )
+      .on<TpcEntry>(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tpc_entries' },
+        payload => {
+          setData(d => {
+            const patched = patchTpcEntries(d.tpcContests, payload)
+            if (patched === null) {
+              fetchData()
+              return d
+            }
+            return { ...d, tpcContests: patched }
+          })
+        }
+      )
+      .on<CalendarioEvent>(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'events' },
+        payload => {
+          setData(d => ({ ...d, events: patchEvents(d.events, payload) }))
+        }
+      )
+      .subscribe(status => {
+        if (status === 'SUBSCRIBED') {
+          if (hasSubscribedOnce) {
+            // Reconnected after a drop — resync in case events were missed.
+            fetchMode()
+            fetchData()
+          }
+          hasSubscribedOnce = true
+        }
+      })
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Coarse safety-net poll — self-heals a silently-dead websocket regardless
+  // of realtime connection state.
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchMode()
+      fetchData()
+    }, RESYNC_POLL_MS)
     return () => clearInterval(interval)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Resolve the concrete mode to display — 'contextual' maps to a real mode based on live state

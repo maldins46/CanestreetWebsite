@@ -4,7 +4,7 @@ import { createPublicServerSupabaseClient } from "@/lib/supabase/server"
 import type { Edition, GroupWithTeams, MatchWithTeams, TpcContestFull, CalendarioEvent } from '@/types'
 import TournamentPageClient from '@/components/public/TournamentPageClient'
 
-export const revalidate = 15
+export const revalidate = 30
 
 export const metadata: Metadata = { title: 'Torneo' }
 

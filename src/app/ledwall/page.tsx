@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { resolveContextualScene } from '@/lib/ledwall'
+import { fetchTournamentSnapshot, type TournamentSnapshot } from '@/lib/tournamentData'
+import { patchMatches, patchTpcEntries, patchEvents } from '@/lib/tournamentRealtimePatchers'
 import LedwallMatches   from '@/components/ledwall/LedwallMatches'
 import LedwallStandings from '@/components/ledwall/LedwallStandings'
 import LedwallFinals    from '@/components/ledwall/LedwallFinals'
@@ -11,8 +13,7 @@ import LedwallTpc       from '@/components/ledwall/LedwallTpc'
 import LedwallEvent     from '@/components/ledwall/LedwallEvent'
 import LedwallBacheca   from '@/components/ledwall/LedwallBacheca'
 import type {
-  Edition, GroupWithTeams, MatchWithTeams, TpcContestFull, Sponsor,
-  LedwallState, LedwallScene, LedwallSceneConfig, CalendarioEvent,
+  LedwallState, LedwallScene, LedwallSceneConfig, Match, TpcEntry, CalendarioEvent,
 } from '@/types'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -22,22 +23,21 @@ const STAGE_H        = 512
 const FRAME_INSET_TOP    = 28   // px
 const FRAME_INSET_SIDE   = 32   // px
 const FRAME_INSET_BOTTOM = 52   // px — taller bottom frame border
-const STATE_POLL_MS  = 20_000
-const DATA_REFRESH_MS = 25_000
+
+// Coarse safety-net poll — self-heals a silently-dead realtime websocket on
+// the venue's cellular SIM connection. Not the primary update mechanism.
+const RESYNC_POLL_MS = 60_000
+
+// Cosmetic screen-time-sharing cadence, unrelated to data freshness — do not
+// tie this to any data-refresh interval.
+const CONTEXTUAL_SLOT_MS = 20_000
 
 // Contextual rotation: matches → 4 sponsors → contextual (live-event-driven)
 const CONTEXTUAL_ROTATION = ['matches', 'sponsors', 'contextual'] as const
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Data = {
-  edition:    Edition | null
-  matches:    MatchWithTeams[]
-  groups:     GroupWithTeams[]
-  tpcContests: TpcContestFull[]
-  sponsors:   Sponsor[]
-  events:     CalendarioEvent[]
-}
+type Data = TournamentSnapshot
 
 type SceneSlot = { scene: LedwallScene | 'event'; config: LedwallSceneConfig }
 
@@ -88,34 +88,7 @@ export default function LedwallPage() {
   }
 
   async function fetchData() {
-    const [
-      { data: editionData },
-      { data: matchData   },
-      { data: groupData   },
-      { data: tpcData     },
-      { data: sponsorData },
-      { data: eventData   },
-    ] = await Promise.all([
-      supabase.from('editions').select('*').eq('is_current', true).maybeSingle(),
-      supabase
-        .from('matches')
-        .select('*, team_home:teams!matches_team_home_id_fkey(id, name), team_away:teams!matches_team_away_id_fkey(id, name), group:groups!matches_group_id_fkey(id, name)')
-        .order('scheduled_at', { ascending: true, nullsFirst: false })
-        .order('sort_order'),
-      supabase.from('groups').select('*, group_teams(*, teams(id, name))').order('sort_order'),
-      supabase.from('tpc_contests').select('*, tpc_players(*), tpc_rounds(*, tpc_entries(*, tpc_players(id, name)))'),
-      supabase.from('sponsors').select('*').eq('is_active', true).order('sort_order'),
-      supabase.from('events').select('*').order('scheduled_at', { ascending: true, nullsFirst: false }).order('sort_order'),
-    ])
-
-    setData({
-      edition:    editionData,
-      matches:    matchData    ?? [],
-      groups:     groupData    ?? [],
-      tpcContests: tpcData     ?? [],
-      sponsors:   sponsorData  ?? [],
-      events:     eventData    ?? [],
-    })
+    setData(await fetchTournamentSnapshot(supabase))
   }
 
   // Initial load
@@ -124,28 +97,85 @@ export default function LedwallPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // State poll — 2s when pinned to a single sponsor (for fast admin-driven switching), 20s otherwise
-  const needsFastPoll =
-    ledwallState?.mode === 'fixed' && (
-      (ledwallState.fixed_scene === 'sponsors' && ledwallState.scene_config?.variant === 'fixed_single') ||
-      ledwallState.fixed_scene === 'bacheca'
-    )
-  const statePollMs = needsFastPoll ? 2_000 : STATE_POLL_MS
-
+  // Realtime — push-driven updates instead of polling. `ledwall_state` swaps
+  // (admin "Applica") and `matches`/`tpc_entries`/`events` changes (scores,
+  // live flags) arrive as soon as they happen; resolveContextualScene() picks
+  // them up on its next render since it's a pure function of this state.
   useEffect(() => {
-    const interval = setInterval(fetchState, statePollMs)
-    return () => clearInterval(interval)
+    let hasSubscribedOnce = false
+
+    const channel = supabase
+      .channel('ledwall-realtime')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'ledwall_state', filter: 'id=eq.default' },
+        payload => setLedwallState(payload.new as LedwallState)
+      )
+      .on<Match>(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'matches' },
+        payload => {
+          setData(d => {
+            const patched = patchMatches(d.matches, payload)
+            if (patched === null) {
+              fetchData()
+              return d
+            }
+            return { ...d, matches: patched }
+          })
+        }
+      )
+      .on<TpcEntry>(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tpc_entries' },
+        payload => {
+          setData(d => {
+            const patched = patchTpcEntries(d.tpcContests, payload)
+            if (patched === null) {
+              fetchData()
+              return d
+            }
+            return { ...d, tpcContests: patched }
+          })
+        }
+      )
+      .on<CalendarioEvent>(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'events' },
+        payload => {
+          setData(d => ({ ...d, events: patchEvents(d.events, payload) }))
+        }
+      )
+      .subscribe(status => {
+        if (status === 'SUBSCRIBED') {
+          if (hasSubscribedOnce) {
+            // Reconnected after a drop — resync in case events were missed.
+            fetchState()
+            fetchData()
+          }
+          hasSubscribedOnce = true
+        }
+      })
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statePollMs])
+  }, [])
 
-  // Data refresh — re-fetch tournament data every 25s
+  // Coarse safety-net poll — self-heals a silently-dead websocket regardless
+  // of realtime connection state.
   useEffect(() => {
-    const interval = setInterval(fetchData, DATA_REFRESH_MS)
+    const interval = setInterval(() => {
+      fetchState()
+      fetchData()
+    }, RESYNC_POLL_MS)
     return () => clearInterval(interval)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Contextual rotation — advance slot every 20s when mode = 'contextual'
+  // Contextual rotation — advance slot every 20s when mode = 'contextual'.
+  // Cosmetic screen-time-sharing, independent of data freshness/realtime.
   useEffect(() => {
     if (ledwallState?.mode !== 'contextual') {
       setRotationSlot(0)
@@ -153,7 +183,7 @@ export default function LedwallPage() {
     }
     const interval = setInterval(() => {
       setRotationSlot(s => (s + 1) % CONTEXTUAL_ROTATION.length)
-    }, STATE_POLL_MS)
+    }, CONTEXTUAL_SLOT_MS)
     return () => clearInterval(interval)
   }, [ledwallState?.mode])
 
