@@ -31,6 +31,7 @@ for f in "$MEDIA"/*; do
   curl -s -X POST "$API/object/media/$filename" \
     -H "Authorization: Bearer $SRK" \
     -H "Content-Type: $ct" \
+    -H "cache-control: 31536000" \
     --data-binary "@$f" | grep -o '"Key":"[^"]*"' || echo "error"
 done
 

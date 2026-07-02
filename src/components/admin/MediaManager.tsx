@@ -90,7 +90,7 @@ export default function MediaManager() {
       }
       const ext = toUpload.name.split('.').pop()
       const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-      await supabase.storage.from('media').upload(path, toUpload)
+      await supabase.storage.from('media').upload(path, toUpload, { cacheControl: '31536000', upsert: false })
     }
 
     setUploading(false)

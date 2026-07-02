@@ -589,7 +589,7 @@ function BachecaSceneConfig({
     const path = `bacheca/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
     const base = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/media/`
 
-    const { error: storageErr } = await supabase.storage.from('media').upload(path, compressed)
+    const { error: storageErr } = await supabase.storage.from('media').upload(path, compressed, { cacheControl: '31536000', upsert: false })
     if (storageErr) { setUploadErr(storageErr.message); setUploading(false); return }
 
     const url   = base + path
