@@ -45,6 +45,9 @@ export default function LedwallAdminPage() {
   const [loading,       setLoading]      = useState(true)
   const [saving,        setSaving]       = useState(false)
 
+  const [customText, setCustomText] = useState('')
+  const [firing, setFiring] = useState(false)
+
   const supabase = createClient()
 
   async function loadBachecaImages() {
@@ -97,6 +100,19 @@ export default function LedwallAdminPage() {
 
   function setTransition(transition: LedwallTransition) { save({ transition }) }
   function setFrame(frame_url: string)                  { save({ frame_url }) }
+
+  const CUSTOM_TEXT_MAX = 36
+
+  async function launchPulse(text: string) {
+    if (firing || !text) return
+    setFiring(true)
+    await save({
+      launchpad_text: text,
+      launchpad_count: (state?.launchpad_count ?? 0) + 1,
+    })
+    if (text === customText) setCustomText('')
+    setTimeout(() => setFiring(false), 1500)
+  }
 
   // ── Derived ──────────────────────────────────────────────────────────────
   const isDirty = draft && state && (
@@ -239,6 +255,49 @@ export default function LedwallAdminPage() {
               onRefreshBacheca={loadBachecaImages}
             />
           )}
+        </div>
+      </div>
+
+      {/* ── Launchpad ── */}
+      <div className="card p-6">
+        <h2 className="font-display font-bold uppercase text-lg text-court-white mb-2">Launchpad</h2>
+        <p className="text-court-muted text-sm mb-4">
+          Mostra un&apos;animazione a schermo intero sul ledwall per ~2 secondi, sopra qualsiasi scena attiva.
+        </p>
+        <div className="flex flex-wrap gap-4 items-end">
+          <button
+            onClick={() => launchPulse('TRIPLA!')}
+            disabled={firing}
+            className={clsx('btn-primary px-6 py-3 text-lg', firing && 'opacity-60')}
+          >
+            {firing ? 'Inviato ✓' : 'Tripla!'}
+          </button>
+          <button
+            onClick={() => launchPulse('DAJE!')}
+            disabled={firing}
+            className={clsx('btn-primary px-6 py-3 text-lg', firing && 'opacity-60')}
+          >
+            {firing ? 'Inviato ✓' : 'Daje!'}
+          </button>
+          <div className="w-px bg-court-border self-stretch" />
+          <div className="flex gap-3 items-center min-w-0 md:flex-1">
+            <input
+              type="text"
+              className="input min-w-40 uppercase flex-1 min-w-0"
+              value={customText.toUpperCase()}
+              onChange={e => setCustomText(e.target.value)}
+              maxLength={CUSTOM_TEXT_MAX}
+              placeholder="Es. FORZA CANESTREET"
+              disabled={firing}
+            />
+            <button
+              onClick={() => launchPulse(customText)}
+              disabled={firing || customText.trim().length === 0}
+              className={clsx('btn-primary px-6 py-3 whitespace-nowrap', firing && 'opacity-60')}
+            >
+              {firing ? 'Inviato ✓' : 'Mostra'}
+            </button>
+          </div>
         </div>
       </div>
 

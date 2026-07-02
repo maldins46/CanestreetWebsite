@@ -55,6 +55,11 @@ export default function LedwallPage() {
   const [contentVisible, setContentVisible] = useState(true)
   const [stingActive,    setStingActive]    = useState(false)
 
+  // Pulsantiera animation overlay
+  const [activeAnimation, setActiveAnimation] = useState<string | null>(null)
+  const animationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastLaunchpadCount = useRef(0)
+
   // Contextual rotation index (0=matches, 1=sponsors, 2=contextual)
   const [rotationSlot, setRotationSlot] = useState(0)
   // Auto-advances after each complete cycle so each loop shows the next group of 4 sponsors
@@ -109,7 +114,17 @@ export default function LedwallPage() {
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'ledwall_state', filter: 'id=eq.default' },
-        payload => setLedwallState(payload.new as LedwallState)
+        payload => {
+          const newState = payload.new as LedwallState
+          setLedwallState(newState)
+          // Detect launchpad animation trigger: launchpad_count incremented
+          if (newState.launchpad_count > lastLaunchpadCount.current && newState.launchpad_text) {
+            lastLaunchpadCount.current = newState.launchpad_count
+            if (animationTimeoutRef.current) clearTimeout(animationTimeoutRef.current)
+            setActiveAnimation(newState.launchpad_text)
+            animationTimeoutRef.current = setTimeout(() => setActiveAnimation(null), 2300)
+          }
+        }
       )
       .on<Match>(
         'postgres_changes',
@@ -394,6 +409,41 @@ export default function LedwallPage() {
               position: 'relative',
             }}
           />
+        </div>
+      )}
+
+      {/* ── Pulsantiera animation overlay — fixed, full-screen, over sting ── */}
+      {activeAnimation && (
+        <div
+          aria-hidden="true"
+          key={`${activeAnimation}-${ledwallState?.launchpad_count}`}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 100,
+            pointerEvents: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+            animation: 'ledwall-animation-flash 2.3s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <span
+            className="font-display font-black uppercase text-center"
+            style={{
+              fontSize: 'clamp(4rem, 16vw, 9rem)',
+              color: '#ffffff',
+              WebkitTextStroke: '3px #f97316',
+              textShadow: '0 0 40px rgba(249,115,22,0.9), 0 8px 24px rgba(0,0,0,0.5)',
+              lineHeight: 1,
+              padding: '0 5%',
+              animation: 'ledwall-animation-text 2.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+            }}
+          >
+            {activeAnimation}
+          </span>
         </div>
       )}
     </div>

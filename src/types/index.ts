@@ -339,6 +339,8 @@ export interface LedwallState {
   scene_config: LedwallSceneConfig
   frame_url: string | null
   transition: LedwallTransition
+  launchpad_text: string | null
+  launchpad_count: number
   updated_at: string
   updated_by: string | null
 }
