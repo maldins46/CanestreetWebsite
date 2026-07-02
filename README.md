@@ -129,6 +129,58 @@ To add new images to the project:
 
 
 
+## Seeding mock data for local testing
+
+`supabase/utils/seed-mock-data.sql` is a dev-only utility script — **not** a migration, so it's
+never applied by `supabase db reset` or `supabase db push --local`. It seeds the **current
+edition** (`is_current = true`) with approved mock teams, players, and sponsors so you have
+realistic data to test against locally:
+
+- `open_m`: 12 teams · `u14_m`: 12 · `u16_m`: 16 · `u18_m`: 12 · `open_f`: 0
+- 4 players per team (captain + vice-captain + 2 others), matching the registration form's roster cap
+- 20 sponsors cycled across `gold`/`silver`/`bronze` tiers (no `main`, no logo images)
+- 20 3-Point Contest entrants for the `under` category and 20 for `open` (gets or creates the
+  contest for the current edition — reuses it if one already exists, so it won't clobber real
+  entrants), each with 2 rounds: **Qualificazioni** (all 20 entered, first half already scored,
+  second half not yet) and an empty **Finals**
+- Gironi (groups), teams filled in order (A first, then B, ...): `u16_m` gets 4 (A–D), `u14_m`/
+  `u18_m`/`open_m` get 3 each (A–C), `open_f` gets none
+- Round-robin group-phase matches for every girone, on 14–16 July 2026 between 15:00 and 24:00
+  Italian local time, each at a distinct time (non-open categories: 5 min apart, always before
+  18:00; `open_m`: 10 min apart, always from 18:00 onward). All 14 July matches are `completed`
+  with a random score, as if day 1 already happened; 15–16 July matches are still `scheduled`
+  with no score
+- Empty final-stage bracket matches (quarterfinal → semifinal → final, no teams or scores yet)
+  for every category with teams, on 17 July 2026 (`open_m` again after 18:00)
+- 6 calendar events (`events` table), 30-minute slots: 3-Point Contest Qualificazioni/Finals for
+  `under` and `open` (14th/15th), plus the two exhibition slots — dance school Lunatics and
+  Cantanti Emergenti (16th)
+
+Run it with the Supabase CLI (no `psql` install required):
+
+```bash
+supabase db query --local -f supabase/utils/seed-mock-data.sql
+```
+
+Re-running adds another batch on top (no uniqueness constraint on team/sponsor/contest-entrant/
+group names). To fully wipe prior mock data first:
+
+```bash
+supabase db query --local "delete from teams where captain_email like '%@mockmail.test';"
+supabase db query --local "delete from sponsors where name like 'Sponsor Mock %';"
+supabase db query --local "delete from groups where edition_id = (select id from editions where is_current=true) and category in ('u14_m','u16_m','u18_m','open_m');"
+supabase db query --local "delete from matches where edition_id = (select id from editions where is_current=true) and category in ('u14_m','u16_m','u18_m','open_m');"
+supabase db query --local "delete from events where edition_id = (select id from editions where is_current=true) and (name like '%3-Point Contest%' or name like 'Esibizione%');"
+```
+
+Deleting teams cascades to their players and group-assignment rows, but **not** to matches —
+`matches.team_home_id`/`team_away_id` use `on delete set null`, not cascade, so the `matches`
+delete above is required too (it also removes the now-empty-of-teams bracket matches). Mock
+3-Point Contest entrants have no distinguishing marker (`tpc_players` is name-only) — remove
+them manually in Studio if needed.
+
+
+
 ## Deploying to production
 
 1. Create a Supabase project at [supabase.com](https://supabase.com)
