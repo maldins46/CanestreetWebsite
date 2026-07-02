@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import clsx from 'clsx'
 import type { MatchWithTeams, CalendarioEvent } from '@/types'
 
@@ -51,7 +52,9 @@ interface Props {
 }
 
 export default function LedwallMatches({ matches, events = [] }: Props) {
-  const allRows: Row[] = [
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const display: Row[] = [
     ...matches.map(m => ({ type: 'match' as const, data: m })),
     ...events.map(e => ({ type: 'event' as const, data: e })),
   ].sort((a, b) => {
@@ -60,15 +63,15 @@ export default function LedwallMatches({ matches, events = [] }: Props) {
     return at - bt
   })
 
-  const completed = allRows.filter(r => r.data.status === 'completed')
-  const live      = allRows.filter(r => r.data.status === 'in_progress')
-  const scheduled = allRows.filter(r => r.data.status === 'scheduled')
-
-  const display = [
-    ...completed.slice(-4),
-    ...live,
-    ...scheduled.slice(0, 4),
-  ]
+  // Keep the live match/event centered — the ledwall is a passive display, nobody can scroll it manually.
+  useEffect(() => {
+    if (!containerRef.current) return
+    const liveRow = display.find(r => r.data.status === 'in_progress')
+    if (!liveRow) return
+    const el = containerRef.current.querySelector(`[data-row-id="${liveRow.data.id}"]`)
+    if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [matches, events])
 
   if (display.length === 0) {
     return (
@@ -85,7 +88,7 @@ export default function LedwallMatches({ matches, events = [] }: Props) {
           Calendario Partite
         </h2>
       </div>
-      <div className="flex-1 overflow-hidden">
+      <div ref={containerRef} className="flex-1 overflow-y-auto scrollbar-hide">
         <table className="w-full text-sm">
           <thead className="bg-gray-100 sticky top-0">
             <tr>
@@ -105,7 +108,7 @@ export default function LedwallMatches({ matches, events = [] }: Props) {
                 const e = row.data
                 const isLive = e.status === 'in_progress'
                 return (
-                  <tr key={`event-${e.id}`} className={clsx('border-b border-gray-100', isLive && 'bg-red-50')}>
+                  <tr data-row-id={e.id} key={`event-${e.id}`} className={clsx('border-b border-gray-100', isLive && 'bg-red-50')}>
                     <td className="px-3 py-2 text-center text-gray-500 text-xs whitespace-nowrap w-px">
                       {formatDate(e.scheduled_at)}
                     </td>
@@ -139,7 +142,7 @@ export default function LedwallMatches({ matches, events = [] }: Props) {
               const awayWon = isDone && m.score_home != null && m.score_away != null && m.score_away > m.score_home
 
               return (
-                <tr key={`match-${m.id}`} className={clsx('border-b border-gray-100', isLive && 'bg-red-50')}>
+                <tr data-row-id={m.id} key={`match-${m.id}`} className={clsx('border-b border-gray-100', isLive && 'bg-red-50')}>
                   <td className="px-3 py-2 text-center text-gray-500 text-xs whitespace-nowrap w-px">
                     {formatDate(m.scheduled_at)}
                   </td>
