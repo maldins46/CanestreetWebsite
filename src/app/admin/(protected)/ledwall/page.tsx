@@ -264,26 +264,27 @@ export default function LedwallAdminPage() {
         <p className="text-court-muted text-sm mb-4">
           Mostra un&apos;animazione a schermo intero sul ledwall per ~2 secondi, sopra qualsiasi scena attiva.
         </p>
-        <div className="flex flex-wrap gap-4 items-end">
-          <button
-            onClick={() => launchPulse('TRIPLA!')}
-            disabled={firing}
-            className={clsx('btn-primary px-6 py-3 text-lg', firing && 'opacity-60')}
-          >
-            {firing ? 'Inviato ✓' : 'Tripla!'}
-          </button>
-          <button
-            onClick={() => launchPulse('DAJE!')}
-            disabled={firing}
-            className={clsx('btn-primary px-6 py-3 text-lg', firing && 'opacity-60')}
-          >
-            {firing ? 'Inviato ✓' : 'Daje!'}
-          </button>
-          <div className="w-px bg-court-border self-stretch" />
-          <div className="flex gap-3 items-center min-w-0 md:flex-1">
+        <div className="flex flex-col gap-4">
+          <div className="flex gap-4">
+            <button
+              onClick={() => launchPulse('TRIPLA!')}
+              disabled={firing}
+              className={clsx('btn-primary px-6 py-3 text-lg flex-1', firing && 'opacity-60')}
+            >
+              {firing ? 'Inviato ✓' : 'Tripla!'}
+            </button>
+            <button
+              onClick={() => launchPulse('DAJE!')}
+              disabled={firing}
+              className={clsx('btn-primary px-6 py-3 text-lg flex-1', firing && 'opacity-60')}
+            >
+              {firing ? 'Inviato ✓' : 'Daje!'}
+            </button>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
             <input
               type="text"
-              className="input min-w-40 uppercase flex-1 min-w-0"
+              className="input uppercase flex-1 min-w-0"
               value={customText.toUpperCase()}
               onChange={e => setCustomText(e.target.value)}
               maxLength={CUSTOM_TEXT_MAX}
@@ -293,7 +294,7 @@ export default function LedwallAdminPage() {
             <button
               onClick={() => launchPulse(customText)}
               disabled={firing || customText.trim().length === 0}
-              className={clsx('btn-primary px-6 py-3 whitespace-nowrap', firing && 'opacity-60')}
+              className={clsx('btn-primary px-6 py-3 whitespace-nowrap w-full sm:w-auto', firing && 'opacity-60')}
             >
               {firing ? 'Inviato ✓' : 'Mostra'}
             </button>

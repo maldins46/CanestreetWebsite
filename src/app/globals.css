@@ -258,12 +258,30 @@
   100% { transform: translateX(-50%); }
 }
 
-/* Ledwall sting transition: lion sweeps left → right across the full viewport */
+/* Ledwall contextual-rotation progress bar — linear fill representing
+   elapsed time within the current CONTEXTUAL_SLOT_MS slot; keyed by
+   rotationSlot in ledwall/page.tsx so it restarts exactly when the
+   rotation advances to the next scene. */
+@keyframes ledwall-progress-fill {
+  0%   { transform: scaleX(0); }
+  100% { transform: scaleX(1); }
+}
+
+/* Ledwall sting transition — broadcast-bumper style: lion snaps in fast,
+   settles with a tiny hard snap (no elastic bounce, no blur), holds crisp,
+   snaps out. Percentages below are fractions of STING_DURATION_MS in
+   ledwall/page.tsx. The 38%-62% hold window (fully centered, opacity 1)
+   brackets the scene-swap instant (exactly 50%) with margin — this is the
+   only thing masking the swap; there is no separate full-screen occlusion
+   element, so the background stays visible/transparent through the
+   transition by design. */
 @keyframes ledwall-sting {
-  0%   { transform: translateX(-120vw) rotate(-5deg); opacity: 1; }
-  35%  { transform: translateX(0)       rotate(0deg);  opacity: 1; }
-  65%  { transform: translateX(0)       rotate(0deg);  opacity: 1; }
-  100% { transform: translateX(120vw)   rotate(5deg);  opacity: 0; }
+  0%   { transform: translateX(-120vw) rotate(-3deg);  opacity: 1; }
+  30%  { transform: translateX(0)      rotate(0deg);   opacity: 1; }
+  34%  { transform: translateX(2vw)    rotate(0.5deg); opacity: 1; }
+  38%  { transform: translateX(0)      rotate(0deg);   opacity: 1; }
+  62%  { transform: translateX(0)      rotate(0deg);   opacity: 1; }
+  100% { transform: translateX(120vw)  rotate(3deg);   opacity: 0; }
 }
 
 @keyframes ledwall-sting-wipe {
@@ -271,14 +289,37 @@
   100% { left: 110%; }
 }
 
-/* Ledwall pulsantiera animation overlay: radial "explosion" flash behind bold text.
-   Single 2.3s timeline: flash-in (0-8%) → hold (8-83%) → fade-out (83-100%). */
-@keyframes ledwall-animation-flash {
-  0%   { background: radial-gradient(circle, rgba(249,115,22,0) 0%, rgba(0,0,0,0) 100%); opacity: 0; }
-  8%   { background: radial-gradient(circle, rgba(249,115,22,0.85) 0%, rgba(0,0,0,0.55) 70%); opacity: 1; }
-  20%  { background: radial-gradient(circle, rgba(249,115,22,0.35) 0%, rgba(0,0,0,0.55) 70%); opacity: 1; }
-  83%  { background: radial-gradient(circle, rgba(249,115,22,0.35) 0%, rgba(0,0,0,0.55) 70%); opacity: 1; }
-  100% { background: radial-gradient(circle, rgba(249,115,22,0) 0%, rgba(0,0,0,0) 100%); opacity: 0; }
+/* Ledwall pulsantiera explosion overlay — layered burst behind bold text:
+   dark vignette + scale-based flash core (smoothly interpolable, unlike
+   swapping gradient strings) + two staggered shockwave rings + flying
+   particles. Timeline percentages below track the overlay's total lifetime
+   (LAUNCHPAD_ANIMATION_MS in ledwall/page.tsx); shockwave/particle elements
+   use their own shorter fixed durations, set via inline animation styles. */
+@keyframes ledwall-vignette {
+  0%   { opacity: 0; }
+  8%   { opacity: 1; }
+  83%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes ledwall-flash-core {
+  0%   { transform: scale(0);    opacity: 0; }
+  8%   { transform: scale(1);    opacity: 1; }
+  20%  { transform: scale(1.15); opacity: 0.85; }
+  83%  { transform: scale(1.15); opacity: 0.85; }
+  100% { transform: scale(1.6);  opacity: 0; }
+}
+
+@keyframes ledwall-shockwave {
+  0%   { transform: scale(0.2); opacity: 0.9;  border-width: 6px; }
+  60%  { opacity: 0.35; }
+  100% { transform: scale(1);   opacity: 0;    border-width: 1px; }
+}
+
+@keyframes ledwall-particle-burst {
+  0%   { transform: translate(-50%, -50%) rotate(var(--p-rot, 0deg)) translate(0, 0) scale(1); opacity: 1; }
+  70%  { opacity: 0.9; }
+  100% { transform: translate(-50%, -50%) rotate(var(--p-rot, 0deg)) translate(var(--p-dx, 0px), var(--p-dy, 0px)) scale(0.3); opacity: 0; }
 }
 
 @keyframes ledwall-animation-text {

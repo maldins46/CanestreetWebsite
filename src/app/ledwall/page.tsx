@@ -28,6 +28,50 @@ const FRAME_INSET_BOTTOM = 52   // px — taller bottom frame border
 // the venue's cellular SIM connection. Not the primary update mechanism.
 const RESYNC_POLL_MS = 60_000
 
+// Pulsantiera overlay total lifetime — the single source of truth for every
+// `animation-duration` used inside the overlay (flash core, vignette, text)
+// AND the setTimeout that clears it. Change here only; never hardcode 2300
+// elsewhere or the cleanup and the CSS can drift apart again.
+const LAUNCHPAD_ANIMATION_MS  = 2300
+// Shockwave rings and particles are fast effects nested inside the window
+// above — they don't need to equal the total, just fit inside it.
+const LAUNCHPAD_SHOCKWAVE_MS  = 1100
+const LAUNCHPAD_PARTICLE_MS   = 1500
+
+const LAUNCHPAD_PARTICLE_COUNT = 12
+const LAUNCHPAD_PARTICLES = Array.from({ length: LAUNCHPAD_PARTICLE_COUNT }, (_, i) => {
+  const angle    = (i / LAUNCHPAD_PARTICLE_COUNT) * 360 + (i % 2 === 0 ? -8 : 8)
+  const rad      = (angle * Math.PI) / 180
+  const distance = 140 + (i % 3) * 30
+  return {
+    dx: Math.cos(rad) * distance,
+    dy: Math.sin(rad) * distance,
+    rot: angle,
+    delayMs: (i % 4) * 15,
+  }
+})
+
+// Sting transition total lifetime — the single source of truth for every
+// `animation-duration` used inside the sting overlay (lion sweep, diagonal
+// panels) AND the setTimeout that swaps the underlying scene and the one
+// that clears the overlay. Change here only; never hardcode a duration
+// elsewhere or the cleanup and the CSS can drift apart again. Kept short and
+// snappy — broadcast-bumper pacing, not a lingering effect.
+const STING_DURATION_MS = 800
+// Scene swap happens at the exact midpoint — see ledwall-sting's 38%-62%
+// hold window in globals.css, which brackets this instant. No dedicated
+// full-screen occlusion element: the background stays visible/transparent
+// through the transition (by design), same as before this overlay existed.
+const STING_SWAP_MS = STING_DURATION_MS / 2
+
+// Broadcast-style diagonal wipe panels: one big brand-orange bar with a
+// thin bright leading edge riding it. Fully opaque, hard diagonal edges via
+// clip-path — a solid graphic-card wipe, not a soft glow.
+const STING_PANELS = [
+  { widthPct: 55, color: '#f97316', opacity: 1, delayMs: 0   },
+  { widthPct: 4,  color: '#fed7aa', opacity: 1, delayMs: -20 },
+]
+
 // Cosmetic screen-time-sharing cadence, unrelated to data freshness — do not
 // tie this to any data-refresh interval.
 const CONTEXTUAL_SLOT_MS = 20_000
@@ -122,7 +166,7 @@ export default function LedwallPage() {
             lastLaunchpadCount.current = newState.launchpad_count
             if (animationTimeoutRef.current) clearTimeout(animationTimeoutRef.current)
             setActiveAnimation(newState.launchpad_text)
-            animationTimeoutRef.current = setTimeout(() => setActiveAnimation(null), 2300)
+            animationTimeoutRef.current = setTimeout(() => setActiveAnimation(null), LAUNCHPAD_ANIMATION_MS)
           }
         }
       )
@@ -263,11 +307,11 @@ export default function LedwallPage() {
     setStingActive(true)
     const tSwap = setTimeout(() => {
       setDisplayedSlot(desiredSlot)
-    }, 450)
+    }, STING_SWAP_MS)
     const tDone = setTimeout(() => {
       setStingActive(false)
       transitioning.current = false
-    }, 900)
+    }, STING_DURATION_MS)
     return () => {
       clearTimeout(tSwap)
       clearTimeout(tDone)
@@ -368,6 +412,37 @@ export default function LedwallPage() {
 
       </div>
 
+      {/* ── Top progress bar — fixed to the physical screen edge (not the
+          scaled stage), fills over CONTEXTUAL_SLOT_MS and restarts each
+          time rotationSlot advances, so it always shows how close the
+          contextual rotation is to switching to the next scene. Only
+          meaningful in contextual mode — fixed mode has no timer. */}
+      {ledwallState?.mode === 'contextual' && (
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 4,
+            background: 'rgba(255,255,255,0.15)',
+            zIndex: 60,
+          }}
+        >
+          <div
+            key={rotationSlot}
+            style={{
+              width: '100%',
+              height: '100%',
+              background: '#f97316',
+              transformOrigin: 'left center',
+              animation: `ledwall-progress-fill ${CONTEXTUAL_SLOT_MS / 1000}s linear both`,
+            }}
+          />
+        </div>
+      )}
+
       {/* ── Sting transition overlay — fixed, covers full screen outside scaled stage ── */}
       {stingActive && (
         <div
@@ -378,41 +453,45 @@ export default function LedwallPage() {
             overflow: 'hidden',
             pointerEvents: 'none',
             zIndex: 50,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
           }}
         >
-          {/* Orange wipe strip */}
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              bottom: 0,
-              width: '60%',
-              background: '#f97316',
-              animation: 'ledwall-sting-wipe 0.9s cubic-bezier(0.4, 0, 0.2, 1) forwards',
-              opacity: 0.15,
-            }}
-          />
-          {/* Lion logo — centered via flexbox, animation only translates horizontally */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/lion.png"
-            alt=""
-            style={{
-              height: '90vh',
-              width: 'auto',
-              objectFit: 'contain',
-              animation: 'ledwall-sting 0.9s cubic-bezier(0.4, 0, 0.2, 1) forwards',
-              filter: 'drop-shadow(0 0 32px rgba(249,115,22,0.6))',
-              position: 'relative',
-            }}
-          />
+          {/* Diagonal broadcast-style wipe panels — hard clip-path edges, solid color */}
+          {STING_PANELS.map((p, i) => (
+            <div
+              key={i}
+              style={{
+                position: 'absolute',
+                top: 0,
+                bottom: 0,
+                width: `${p.widthPct}%`,
+                background: p.color,
+                opacity: p.opacity,
+                clipPath: 'polygon(18% 0%, 100% 0%, 82% 100%, 0% 100%)',
+                animation: `ledwall-sting-wipe ${STING_DURATION_MS / 1000}s cubic-bezier(0.4, 0, 0.2, 1) both`,
+                animationDelay: `${p.delayMs}ms`,
+              }}
+            />
+          ))}
+
+          {/* Main lion */}
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/lion.png"
+              alt=""
+              style={{
+                height: '90vh',
+                width: 'auto',
+                objectFit: 'contain',
+                filter: 'drop-shadow(0 0 32px rgba(249,115,22,0.6))',
+                animation: `ledwall-sting ${STING_DURATION_MS / 1000}s cubic-bezier(0.4, 0, 0.2, 1) both`,
+              }}
+            />
+          </div>
         </div>
       )}
 
-      {/* ── Pulsantiera animation overlay — fixed, full-screen, over sting ── */}
+      {/* ── Pulsantiera explosion overlay — fixed, full-screen, over sting ── */}
       {activeAnimation && (
         <div
           aria-hidden="true"
@@ -426,20 +505,83 @@ export default function LedwallPage() {
             alignItems: 'center',
             justifyContent: 'center',
             overflow: 'hidden',
-            animation: 'ledwall-animation-flash 2.3s cubic-bezier(0.4, 0, 0.2, 1) forwards',
           }}
         >
+          {/* Dark vignette */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'radial-gradient(circle, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 70%)',
+              animation: `ledwall-vignette ${LAUNCHPAD_ANIMATION_MS / 1000}s cubic-bezier(0.4, 0, 0.2, 1) both`,
+            }}
+          />
+          {/* Flash core — smoothly-scaling circle, not a gradient-stop swap */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              width: '60vmin',
+              height: '60vmin',
+              marginTop: '-30vmin',
+              marginLeft: '-30vmin',
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(249,115,22,0.9) 0%, rgba(249,115,22,0) 70%)',
+              animation: `ledwall-flash-core ${LAUNCHPAD_ANIMATION_MS / 1000}s cubic-bezier(0.4, 0, 0.2, 1) both`,
+            }}
+          />
+          {/* Staggered shockwave rings */}
+          {[0, 120].map(delay => (
+            <div
+              key={delay}
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                width: '40vmin',
+                height: '40vmin',
+                marginTop: '-20vmin',
+                marginLeft: '-20vmin',
+                borderRadius: '50%',
+                border: '6px solid rgba(249,115,22,0.8)',
+                animation: `ledwall-shockwave ${LAUNCHPAD_SHOCKWAVE_MS / 1000}s ease-out both`,
+                animationDelay: `${delay}ms`,
+              }}
+            />
+          ))}
+          {/* Flying particles */}
+          {LAUNCHPAD_PARTICLES.map((p, i) => (
+            <div
+              key={i}
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                width: 8,
+                height: 16,
+                background: '#f97316',
+                borderRadius: 2,
+                animation: `ledwall-particle-burst ${LAUNCHPAD_PARTICLE_MS / 1000}s cubic-bezier(0.15, 0.6, 0.35, 1) both`,
+                animationDelay: `${p.delayMs}ms`,
+                ['--p-dx' as string]: `${p.dx}px`,
+                ['--p-dy' as string]: `${p.dy}px`,
+                ['--p-rot' as string]: `${p.rot}deg`,
+              } as React.CSSProperties}
+            />
+          ))}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <span
             className="font-display font-black uppercase text-center"
             style={{
+              position: 'relative',
               fontSize: 'clamp(4rem, 16vw, 9rem)',
               color: '#ffffff',
               WebkitTextStroke: '3px #f97316',
               textShadow: '0 0 40px rgba(249,115,22,0.9), 0 8px 24px rgba(0,0,0,0.5)',
               lineHeight: 1,
               padding: '0 5%',
-              animation: 'ledwall-animation-text 2.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+              animation: `ledwall-animation-text ${LAUNCHPAD_ANIMATION_MS / 1000}s cubic-bezier(0.34, 1.56, 0.64, 1) both`,
             }}
           >
             {activeAnimation}
