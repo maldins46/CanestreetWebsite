@@ -3,6 +3,8 @@
 import { useEffect, useRef } from 'react'
 import clsx from 'clsx'
 import type { MatchWithTeams, CalendarioEvent } from '@/types'
+import { useNow } from '@/hooks/useNow'
+import { computeCascadingDelays } from '@/lib/matchDelay'
 
 const ROUND_LABELS: Record<string, string> = {
   round_of_16: 'Ottavi',
@@ -53,6 +55,7 @@ interface Props {
 
 export default function LedwallMatches({ matches, events = [] }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const now = useNow()
 
   const display: Row[] = [
     ...matches.map(m => ({ type: 'match' as const, data: m })),
@@ -62,6 +65,8 @@ export default function LedwallMatches({ matches, events = [] }: Props) {
     const bt = b.data.scheduled_at ? new Date(b.data.scheduled_at).getTime() : Infinity
     return at - bt
   })
+
+  const delays = computeCascadingDelays(display.map(r => r.data), now)
 
   // Keep the live match/event centered — the ledwall is a passive display, nobody can scroll it manually.
   useEffect(() => {
@@ -103,7 +108,8 @@ export default function LedwallMatches({ matches, events = [] }: Props) {
             </tr>
           </thead>
           <tbody>
-            {display.map(row => {
+            {display.map((row, idx) => {
+              const delay = delays[idx]
               if (row.type === 'event') {
                 const e = row.data
                 const isLive = e.status === 'in_progress'
@@ -119,7 +125,10 @@ export default function LedwallMatches({ matches, events = [] }: Props) {
                           <span className="font-bold text-red-600 text-sm">LIVE</span>
                         </span>
                       ) : (
-                        <span className="text-gray-500 text-sm">{formatTime(e.scheduled_at)}</span>
+                        <span>
+                          <span className="text-gray-500 text-sm">{formatTime(e.scheduled_at)}</span>
+                          {delay >= 1 && <span className="ml-1 text-red-500 font-bold text-sm">+{delay}&apos;</span>}
+                        </span>
                       )}
                     </td>
                     <td className="px-3 py-3 text-center whitespace-nowrap w-px">
@@ -153,7 +162,10 @@ export default function LedwallMatches({ matches, events = [] }: Props) {
                         <span className="font-bold text-red-600 text-sm">LIVE</span>
                       </span>
                     ) : (
-                      <span className="text-gray-500 text-sm">{formatTime(m.scheduled_at)}</span>
+                      <span>
+                        <span className="text-gray-500 text-sm">{formatTime(m.scheduled_at)}</span>
+                        {delay >= 1 && <span className="ml-1 text-red-500 font-bold text-sm">+{delay}&apos;</span>}
+                      </span>
                     )}
                   </td>
                   <td className="px-3 py-3 text-center whitespace-nowrap w-px">

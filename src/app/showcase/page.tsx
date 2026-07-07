@@ -10,6 +10,8 @@ import clsx from 'clsx'
 import { resolveContextualShowcaseMode } from '@/lib/showcase'
 import { fetchTournamentSnapshot } from '@/lib/tournamentData'
 import { patchMatches, patchTpcEntries, patchEvents } from '@/lib/tournamentRealtimePatchers'
+import { useNow } from '@/hooks/useNow'
+import { computeCascadingDelays } from '@/lib/matchDelay'
 
 // Coarse safety-net poll — self-heals a silently-dead realtime websocket on
 // the venue's cellular SIM connection. Not the primary update mechanism.
@@ -54,6 +56,7 @@ type ShowcaseRow =
 function ShowcaseCalendar({ matches, events, theme }: { matches: MatchWithTeams[]; events: CalendarioEvent[]; theme: Record<string, string> }) {
   const containerRef = React.useRef<HTMLDivElement>(null)
   const lightMode = theme.bg === 'bg-white'
+  const now = useNow()
 
   const roundLabels: Record<string, string> = {
     round_of_16: 'Ottavi',
@@ -75,6 +78,8 @@ function ShowcaseCalendar({ matches, events, theme }: { matches: MatchWithTeams[
     const bt = b.data.scheduled_at ? new Date(b.data.scheduled_at).getTime() : Infinity
     return at - bt
   })
+
+  const delays = computeCascadingDelays(rows.map(r => r.data), now)
 
   React.useEffect(() => {
     if (!containerRef.current) return
@@ -111,7 +116,8 @@ function ShowcaseCalendar({ matches, events, theme }: { matches: MatchWithTeams[
               </tr>
             </thead>
             <tbody>
-              {rows.map(row => {
+              {rows.map((row, idx) => {
+                const delay = delays[idx]
                 if (row.type === 'event') {
                   const e = row.data
                   const isLive = e.status === 'in_progress'
@@ -126,12 +132,15 @@ function ShowcaseCalendar({ matches, events, theme }: { matches: MatchWithTeams[
                       </td>
                       <td className="px-3 py-2 w-px whitespace-nowrap text-center">
                         {isLive ? (
-                          <span className="flex items-center gap-1">
+                          <span className="flex items-center gap-1 justify-center">
                             <span className="w-1.5 h-1.5 rounded-full animate-pulse bg-red-500" />
                             <span className="font-bold text-red-500">LIVE</span>
                           </span>
                         ) : (
-                          <span className={theme.textMuted}>{formatTime(e.scheduled_at)}</span>
+                          <span>
+                            <span className={theme.textMuted}>{formatTime(e.scheduled_at)}</span>
+                            {delay >= 1 && <span className="ml-1 text-red-500 font-bold">+{delay}&apos;</span>}
+                          </span>
                         )}
                       </td>
                       <td className="px-3 py-2 w-px whitespace-nowrap text-center">
@@ -168,12 +177,15 @@ function ShowcaseCalendar({ matches, events, theme }: { matches: MatchWithTeams[
                     </td>
                     <td className="px-3 py-2 w-px whitespace-nowrap text-center">
                       {isLive ? (
-                        <span className="flex items-center gap-1">
+                        <span className="flex items-center gap-1 justify-center">
                           <span className={clsx('w-1.5 h-1.5 rounded-full animate-pulse', lightMode ? 'bg-red-600' : 'bg-red-500')} />
                           <span className={clsx('font-bold', theme.liveText)}>LIVE</span>
                         </span>
                       ) : (
-                        <span className={theme.textMuted}>{formatTime(m.scheduled_at)}</span>
+                        <span>
+                          <span className={theme.textMuted}>{formatTime(m.scheduled_at)}</span>
+                          {delay >= 1 && <span className="ml-1 text-red-500 font-bold">+{delay}&apos;</span>}
+                        </span>
                       )}
                     </td>
                     <td className="px-3 py-2 w-px whitespace-nowrap text-center">

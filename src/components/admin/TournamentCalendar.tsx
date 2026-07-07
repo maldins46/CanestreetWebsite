@@ -6,6 +6,8 @@ import type { MatchWithTeams, TeamCategory, CalendarioEvent } from '@/types'
 import { CATEGORY_LABELS, CATEGORY_COLORS } from '@/types'
 import clsx from 'clsx'
 import { Trash2, CalendarClock, Info } from 'lucide-react'
+import { useNow } from '@/hooks/useNow'
+import { computeCascadingDelays } from '@/lib/matchDelay'
 
 interface Props {
   editionId: string
@@ -41,6 +43,7 @@ export default function TournamentCalendar({ editionId, matches, category, searc
   const [bulkDate, setBulkDate] = useState('')
   const [settingDate, setSettingDate] = useState(false)
   const [dateModalOpen, setDateModalOpen] = useState(false)
+  const now = useNow()
 
   const q = search?.trim().toLowerCase() ?? ''
 
@@ -78,6 +81,9 @@ export default function TournamentCalendar({ editionId, matches, category, searc
     }
     return 0
   })
+
+  const allRowsDelays = computeCascadingDelays(allRows.map(r => r.data), now)
+  const eventOnlyDelays = computeCascadingDelays(events ?? [], now)
 
   function getScore(matchId: string, side: 'home' | 'away', fallback: number | null) {
     return scores[matchId]?.[side] ?? (fallback != null ? String(fallback) : '')
@@ -357,8 +363,9 @@ export default function TournamentCalendar({ editionId, matches, category, searc
                   </tr>
                 </thead>
                 <tbody>
-                  {events!.map(event => {
+                  {events!.map((event, idx) => {
                     const isSaving = saving === event.id
+                    const delay = eventOnlyDelays[idx]
                     return (
                       <tr
                         key={event.id}
@@ -369,13 +376,16 @@ export default function TournamentCalendar({ editionId, matches, category, searc
                         )}
                       >
                         <td className="px-3 py-2 w-px whitespace-nowrap">
-                          <input
-                            type="datetime-local"
-                            defaultValue={toDatetimeLocal(event.scheduled_at)}
-                            onBlur={e => saveEventSchedule(event.id, e.target.value)}
-                            disabled={isSaving}
-                            className="input py-1 px-2 text-xs w-40"
-                          />
+                          <span className="inline-flex items-center gap-1.5">
+                            <input
+                              type="datetime-local"
+                              defaultValue={toDatetimeLocal(event.scheduled_at)}
+                              onBlur={e => saveEventSchedule(event.id, e.target.value)}
+                              disabled={isSaving}
+                              className="input py-1 px-2 text-xs w-40"
+                            />
+                            {delay >= 1 && <span className="text-red-500 font-bold text-xs shrink-0">+{delay}&apos;</span>}
+                          </span>
                         </td>
                         <td className="px-3 py-2 w-px whitespace-nowrap text-center">
                           <span className="text-xs px-2 py-0.5 font-display uppercase tracking-wide rounded bg-teal-500 text-white">
@@ -466,7 +476,8 @@ export default function TournamentCalendar({ editionId, matches, category, searc
             </tr>
           </thead>
           <tbody>
-            {allRows.map(row => {
+            {allRows.map((row, idx) => {
+              const delay = allRowsDelays[idx]
               if (row.type === 'event') {
                 const event = row.data
                 const isSaving = saving === event.id
@@ -480,13 +491,16 @@ export default function TournamentCalendar({ editionId, matches, category, searc
                     )}
                   >
                     <td className="px-3 py-2 w-px whitespace-nowrap">
-                      <input
-                        type="datetime-local"
-                        defaultValue={toDatetimeLocal(event.scheduled_at)}
-                        onBlur={e => saveEventSchedule(event.id, e.target.value)}
-                        disabled={isSaving}
-                        className="input py-1 px-2 text-xs w-40"
-                      />
+                      <span className="inline-flex items-center gap-1.5">
+                        <input
+                          type="datetime-local"
+                          defaultValue={toDatetimeLocal(event.scheduled_at)}
+                          onBlur={e => saveEventSchedule(event.id, e.target.value)}
+                          disabled={isSaving}
+                          className="input py-1 px-2 text-xs w-40"
+                        />
+                        {delay >= 1 && <span className="text-red-500 font-bold text-xs shrink-0">+{delay}&apos;</span>}
+                      </span>
                     </td>
                     <td className="px-3 py-2 w-px whitespace-nowrap text-center">
                       <span className="text-xs px-2 py-0.5 font-display uppercase tracking-wide rounded bg-teal-500 text-white">
@@ -549,13 +563,16 @@ export default function TournamentCalendar({ editionId, matches, category, searc
                   )}
                 >
                   <td className="px-3 py-2 w-px whitespace-nowrap">
-                    <input
-                      type="datetime-local"
-                      defaultValue={toDatetimeLocal(match.scheduled_at)}
-                      onBlur={e => saveSchedule(match.id, e.target.value)}
-                      disabled={isSaving}
-                      className="input py-1 px-2 text-xs w-40"
-                    />
+                    <span className="inline-flex items-center gap-1.5">
+                      <input
+                        type="datetime-local"
+                        defaultValue={toDatetimeLocal(match.scheduled_at)}
+                        onBlur={e => saveSchedule(match.id, e.target.value)}
+                        disabled={isSaving}
+                        className="input py-1 px-2 text-xs w-40"
+                      />
+                      {delay >= 1 && <span className="text-red-500 font-bold text-xs shrink-0">+{delay}&apos;</span>}
+                    </span>
                   </td>
                   <td className="px-3 py-2 w-px whitespace-nowrap text-center">
                     <span className={clsx('text-xs px-2 py-0.5 font-display uppercase tracking-wide rounded', CATEGORY_COLORS[match.category])}>
