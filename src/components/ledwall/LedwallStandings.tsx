@@ -53,15 +53,15 @@ export default function LedwallStandings({ groups, matches, category, group_id }
           className="w-full h-full grid"
           style={{ gridTemplateRows: `auto repeat(${rows.length}, 1fr)` }}
         >
-          <div className="grid items-center bg-gray-50" style={{ gridTemplateColumns: COLUMN_TEMPLATE }}>
-            <span className="text-center font-display font-bold uppercase text-sm text-gray-600">#</span>
-            <span className="text-left pl-3 font-display font-bold uppercase text-sm text-gray-600">Squadra</span>
-            <span className="text-center font-display font-bold uppercase text-sm text-gray-600">G</span>
-            <span className="text-center font-display font-bold uppercase text-sm text-gray-600">V</span>
-            <span className="text-center font-display font-bold uppercase text-sm text-gray-600">S</span>
-            <span className="text-center font-display font-bold uppercase text-sm text-gray-600">PF</span>
-            <span className="text-center font-display font-bold uppercase text-sm text-gray-600">PS</span>
-            <span className="text-center font-display font-bold uppercase text-sm text-gray-600">+/-</span>
+          <div className="grid items-center bg-gray-100" style={{ gridTemplateColumns: COLUMN_TEMPLATE }}>
+            <span className="text-center px-3 py-3 font-display font-bold uppercase text-sm text-gray-600">#</span>
+            <span className="text-left px-3 py-3 font-display font-bold uppercase text-sm text-gray-600">Squadra</span>
+            <span className="text-center px-3 py-3 font-display font-bold uppercase text-sm text-gray-600">G</span>
+            <span className="text-center px-3 py-3 font-display font-bold uppercase text-sm text-gray-600">V</span>
+            <span className="text-center px-3 py-3 font-display font-bold uppercase text-sm text-gray-600">S</span>
+            <span className="text-center px-3 py-3 font-display font-bold uppercase text-sm text-gray-600">PF</span>
+            <span className="text-center px-3 py-3 font-display font-bold uppercase text-sm text-gray-600">PS</span>
+            <span className="text-center px-3 py-3 font-display font-bold uppercase text-sm text-gray-600">+/-</span>
           </div>
 
           {rows.map((row, idx) => (
@@ -79,7 +79,7 @@ export default function LedwallStandings({ groups, matches, category, group_id }
               )}>
                 {idx + 1}
               </span>
-              <span className="pl-3 min-w-0 overflow-hidden font-body font-bold text-2xl text-gray-800">
+              <span className="px-3 min-w-0 overflow-hidden font-body font-bold text-2xl text-gray-800">
                 <span className="block truncate">{row.team_name}</span>
               </span>
               <span className="text-center text-lg text-gray-400">{row.played}</span>

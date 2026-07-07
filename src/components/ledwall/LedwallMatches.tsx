@@ -89,17 +89,17 @@ export default function LedwallMatches({ matches, events = [] }: Props) {
         </h2>
       </div>
       <div ref={containerRef} className="flex-1 overflow-y-auto scrollbar-hide">
-        <table className="w-full text-sm">
+        <table className="w-full text-base">
           <thead className="bg-gray-100 sticky top-0">
             <tr>
-              <th className="text-center px-3 py-2 font-display uppercase text-xs text-gray-500 whitespace-nowrap w-px">Data</th>
-              <th className="text-center px-3 py-2 font-display uppercase text-xs text-gray-500 whitespace-nowrap w-px">Ora</th>
-              <th className="text-center px-3 py-2 font-display uppercase text-xs text-gray-500 whitespace-nowrap w-px">Cat.</th>
-              <th className="text-center px-3 py-2 font-display uppercase text-xs text-gray-500 whitespace-nowrap w-px">Turno</th>
-              <th className="text-right px-3 py-2 font-display uppercase text-xs text-gray-500">Casa</th>
-              <th className="text-center px-3 py-2 font-display uppercase text-xs text-gray-500 whitespace-nowrap w-px">Pts</th>
-              <th className="text-center px-3 py-2 font-display uppercase text-xs text-gray-500 whitespace-nowrap w-px">Pts</th>
-              <th className="text-left px-3 py-2 font-display uppercase text-xs text-gray-500">Ospite</th>
+              <th className="text-center px-3 py-3 font-display font-bold uppercase text-sm text-gray-600 whitespace-nowrap w-px">Data</th>
+              <th className="text-center px-3 py-3 font-display font-bold uppercase text-sm text-gray-600 whitespace-nowrap w-px">Ora</th>
+              <th className="text-center px-3 py-3 font-display font-bold uppercase text-sm text-gray-600 whitespace-nowrap w-px">Cat.</th>
+              <th className="text-center px-3 py-3 font-display font-bold uppercase text-sm text-gray-600 whitespace-nowrap w-px">Turno</th>
+              <th className="text-right px-3 py-3 font-display font-bold uppercase text-sm text-gray-600">Casa</th>
+              <th className="text-center px-3 py-3 font-display font-bold uppercase text-sm text-gray-600 whitespace-nowrap w-px">Pts</th>
+              <th className="text-center px-3 py-3 font-display font-bold uppercase text-sm text-gray-600 whitespace-nowrap w-px">Pts</th>
+              <th className="text-left px-3 py-3 font-display font-bold uppercase text-sm text-gray-600">Ospite</th>
             </tr>
           </thead>
           <tbody>
@@ -109,26 +109,26 @@ export default function LedwallMatches({ matches, events = [] }: Props) {
                 const isLive = e.status === 'in_progress'
                 return (
                   <tr data-row-id={e.id} key={`event-${e.id}`} className={clsx('border-b border-gray-100', isLive && 'bg-red-50')}>
-                    <td className="px-3 py-2 text-center text-gray-500 text-xs whitespace-nowrap w-px">
+                    <td className="px-3 py-3 text-center text-gray-500 text-sm whitespace-nowrap w-px">
                       {formatDate(e.scheduled_at)}
                     </td>
-                    <td className="px-3 py-2 text-center whitespace-nowrap w-px">
+                    <td className="px-3 py-3 text-center whitespace-nowrap w-px">
                       {isLive ? (
                         <span className="flex items-center gap-1 justify-center">
-                          <span className="w-1.5 h-1.5 rounded-full animate-pulse bg-red-500" />
-                          <span className="font-bold text-red-600 text-xs">LIVE</span>
+                          <span className="w-2 h-2 rounded-full animate-pulse bg-red-500" />
+                          <span className="font-bold text-red-600 text-sm">LIVE</span>
                         </span>
                       ) : (
-                        <span className="text-gray-500 text-xs">{formatTime(e.scheduled_at)}</span>
+                        <span className="text-gray-500 text-sm">{formatTime(e.scheduled_at)}</span>
                       )}
                     </td>
-                    <td className="px-3 py-2 text-center whitespace-nowrap w-px">
-                      <span className="text-[10px] px-1.5 py-0.5 rounded text-white bg-teal-500">
+                    <td className="px-3 py-3 text-center whitespace-nowrap w-px">
+                      <span className="text-xs px-1.5 py-0.5 rounded text-white bg-teal-500">
                         Eventi
                       </span>
                     </td>
-                    <td className="px-3 py-2 w-px whitespace-nowrap" />
-                    <td colSpan={4} className="px-3 py-2 text-center text-gray-500">
+                    <td className="px-3 py-3 w-px whitespace-nowrap" />
+                    <td colSpan={4} className="px-3 py-3 text-center font-bold text-gray-700">
                       {e.name}
                     </td>
                   </tr>
@@ -143,45 +143,45 @@ export default function LedwallMatches({ matches, events = [] }: Props) {
 
               return (
                 <tr data-row-id={m.id} key={`match-${m.id}`} className={clsx('border-b border-gray-100', isLive && 'bg-red-50')}>
-                  <td className="px-3 py-2 text-center text-gray-500 text-xs whitespace-nowrap w-px">
+                  <td className="px-3 py-3 text-center text-gray-500 text-sm whitespace-nowrap w-px">
                     {formatDate(m.scheduled_at)}
                   </td>
-                  <td className="px-3 py-2 text-center whitespace-nowrap w-px">
+                  <td className="px-3 py-3 text-center whitespace-nowrap w-px">
                     {isLive ? (
                       <span className="flex items-center gap-1 justify-center">
-                        <span className="w-1.5 h-1.5 rounded-full animate-pulse bg-red-500" />
-                        <span className="font-bold text-red-600 text-xs">LIVE</span>
+                        <span className="w-2 h-2 rounded-full animate-pulse bg-red-500" />
+                        <span className="font-bold text-red-600 text-sm">LIVE</span>
                       </span>
                     ) : (
-                      <span className="text-gray-500 text-xs">{formatTime(m.scheduled_at)}</span>
+                      <span className="text-gray-500 text-sm">{formatTime(m.scheduled_at)}</span>
                     )}
                   </td>
-                  <td className="px-3 py-2 text-center whitespace-nowrap w-px">
-                    <span className={clsx('text-[10px] px-1.5 py-0.5 rounded text-white', CATEGORY_COLORS[m.category])}>
+                  <td className="px-3 py-3 text-center whitespace-nowrap w-px">
+                    <span className={clsx('text-xs px-1.5 py-0.5 rounded text-white', CATEGORY_COLORS[m.category])}>
                       {CATEGORY_SHORT[m.category]}
                     </span>
                   </td>
-                  <td className="px-3 py-2 text-center text-gray-500 text-xs whitespace-nowrap w-px">
+                  <td className="px-3 py-3 text-center text-gray-500 text-sm whitespace-nowrap w-px">
                     {getPhaseLabel(m) || '—'}
                   </td>
-                  <td className={clsx('px-3 py-2 max-w-0 overflow-hidden text-right', homeWon ? 'text-gray-900 font-bold' : 'text-gray-500')}>
+                  <td className={clsx('px-3 py-3 max-w-0 overflow-hidden text-right font-bold text-lg', homeWon ? 'text-gray-900' : 'text-gray-500')}>
                     <span className="block truncate">{m.team_home?.name ?? 'TBD'}</span>
                   </td>
-                  <td className="px-3 py-2 text-center whitespace-nowrap w-px">
+                  <td className="px-3 py-3 text-center whitespace-nowrap w-px">
                     {isDone && m.score_home != null ? (
-                      <span className={clsx('font-display font-bold', homeWon ? 'text-green-600' : 'text-gray-400')}>
+                      <span className={clsx('font-display font-bold text-2xl', homeWon ? 'text-green-600' : 'text-gray-400')}>
                         {m.score_home}
                       </span>
-                    ) : <span className="text-gray-300">—</span>}
+                    ) : <span className="text-gray-300 text-xl">—</span>}
                   </td>
-                  <td className="px-3 py-2 text-center whitespace-nowrap w-px">
+                  <td className="px-3 py-3 text-center whitespace-nowrap w-px">
                     {isDone && m.score_away != null ? (
-                      <span className={clsx('font-display font-bold', awayWon ? 'text-green-600' : 'text-gray-400')}>
+                      <span className={clsx('font-display font-bold text-2xl', awayWon ? 'text-green-600' : 'text-gray-400')}>
                         {m.score_away}
                       </span>
-                    ) : <span className="text-gray-300">—</span>}
+                    ) : <span className="text-gray-300 text-xl">—</span>}
                   </td>
-                  <td className={clsx('px-3 py-2 max-w-0 overflow-hidden', awayWon ? 'text-gray-900 font-bold' : 'text-gray-500')}>
+                  <td className={clsx('px-3 py-3 max-w-0 overflow-hidden font-bold text-lg', awayWon ? 'text-gray-900' : 'text-gray-500')}>
                     <span className="block truncate">{m.team_away?.name ?? 'TBD'}</span>
                   </td>
                 </tr>
