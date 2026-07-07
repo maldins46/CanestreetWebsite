@@ -55,12 +55,12 @@ export default function LedwallTpc({ contests, contestCategory, roundId }: Props
       </div>
 
       <div ref={containerRef} className="flex-1 overflow-y-auto scrollbar-hide">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 sticky top-0">
+        <table className="w-full text-base">
+          <thead className="bg-gray-100 sticky top-0">
             <tr>
-              <th className="text-center px-3 py-2 font-display uppercase text-xs text-gray-400 w-10">#</th>
-              <th className="text-left px-3 py-2 font-display uppercase text-xs text-gray-400">Giocatore</th>
-              <th className="text-center px-4 py-2 font-display uppercase text-xs text-gray-400 w-24">Punti</th>
+              <th className="text-center px-3 py-3 font-display font-bold uppercase text-sm text-gray-600 w-12">#</th>
+              <th className="text-left px-3 py-3 font-display font-bold uppercase text-sm text-gray-600">Giocatore</th>
+              <th className="text-center px-4 py-3 font-display font-bold uppercase text-sm text-gray-600 w-28">Punti</th>
             </tr>
           </thead>
           <tbody>
@@ -74,9 +74,9 @@ export default function LedwallTpc({ contests, contestCategory, roundId }: Props
                   entry.is_qualified && !entry.is_live && 'bg-orange-50',
                 )}
               >
-                <td className="px-3 py-2.5 text-center w-10">
+                <td className="px-3 py-3 text-center w-12">
                   <span className={clsx(
-                    'font-display font-bold',
+                    'font-display font-bold text-3xl',
                     entry.is_live ? 'text-red-600'
                       : entry.is_qualified ? 'text-brand-orange'
                       : 'text-gray-300',
@@ -84,25 +84,25 @@ export default function LedwallTpc({ contests, contestCategory, roundId }: Props
                     {idx + 1}
                   </span>
                 </td>
-                <td className="px-3 py-2.5">
+                <td className="px-3 py-3">
                   <div className="flex items-center gap-2">
-                    <span className="text-gray-800 truncate">{entry.tpc_players.name}</span>
+                    <span className="font-bold text-xl text-gray-800 truncate">{entry.tpc_players.name}</span>
                     {entry.is_live && (
                       <span className="flex items-center gap-1 shrink-0">
                         <span className="w-2 h-2 rounded-full animate-pulse bg-red-500" />
-                        <span className="text-xs font-display uppercase text-red-600">LIVE</span>
+                        <span className="text-sm font-display uppercase text-red-600">LIVE</span>
                       </span>
                     )}
                     {entry.is_qualified && !entry.is_live && (
-                      <span className="text-xs font-display uppercase text-brand-orange shrink-0">
+                      <span className="text-sm font-display uppercase text-brand-orange shrink-0">
                         Qualificato
                       </span>
                     )}
                   </div>
                 </td>
-                <td className="px-4 py-2.5 text-center w-24">
+                <td className="px-4 py-3 text-center w-28">
                   <span className={clsx(
-                    'font-display font-bold text-2xl',
+                    'font-display font-bold text-4xl',
                     entry.is_live ? 'text-red-600'
                       : entry.is_qualified ? 'text-brand-orange'
                       : 'text-gray-700',
