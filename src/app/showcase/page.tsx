@@ -126,7 +126,7 @@ function ShowcaseCalendar({ matches, events, theme }: { matches: MatchWithTeams[
                       </td>
                       <td className="px-3 py-2 w-px whitespace-nowrap text-center">
                         {isLive ? (
-                          <span className="flex items-center gap-1">
+                          <span className="flex items-center gap-1 justify-center">
                             <span className="w-1.5 h-1.5 rounded-full animate-pulse bg-red-500" />
                             <span className="font-bold text-red-500">LIVE</span>
                           </span>
@@ -168,7 +168,7 @@ function ShowcaseCalendar({ matches, events, theme }: { matches: MatchWithTeams[
                     </td>
                     <td className="px-3 py-2 w-px whitespace-nowrap text-center">
                       {isLive ? (
-                        <span className="flex items-center gap-1">
+                        <span className="flex items-center gap-1 justify-center">
                           <span className={clsx('w-1.5 h-1.5 rounded-full animate-pulse', lightMode ? 'bg-red-600' : 'bg-red-500')} />
                           <span className={clsx('font-bold', theme.liveText)}>LIVE</span>
                         </span>
