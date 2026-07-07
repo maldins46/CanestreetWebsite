@@ -441,7 +441,10 @@ function SceneConfig({
           <select
             className="input"
             value={cat}
-            onChange={e => onChange({ ...config, category: e.target.value as TeamCategory, group_id: undefined })}
+            onChange={e => {
+              const nextCat = e.target.value as TeamCategory
+              onChange({ ...config, category: nextCat, group_id: groupsForCategory(nextCat)[0]?.id })
+            }}
             disabled={saving}
           >
             {CATEGORY_OPTIONS.map(o => (
@@ -457,7 +460,6 @@ function SceneConfig({
             onChange={e => onChange({ ...config, group_id: e.target.value || undefined })}
             disabled={saving}
           >
-            <option value="">Tutti i gironi</option>
             {catGroups.map(g => (
               <option key={g.id} value={g.id}>Girone {g.name}</option>
             ))}

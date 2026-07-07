@@ -12,6 +12,9 @@ const CATEGORY_LABELS: Record<TeamCategory, string> = {
   u18_m:  'U18 M',
 }
 
+// rank | squadra (fills remaining width) | G | V | S | PF | PS | +/-
+const COLUMN_TEMPLATE = '3.5rem 1fr 3rem 3rem 3rem 4.5rem 4.5rem 4.5rem'
+
 interface Props {
   groups: GroupWithTeams[]
   matches: MatchWithTeams[]
@@ -45,57 +48,56 @@ export default function LedwallStandings({ groups, matches, category, group_id }
         </h2>
       </div>
 
-      <div className="flex-1 overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="text-center px-2 py-2 font-display uppercase text-xs text-gray-400 w-8">#</th>
-              <th className="text-left px-3 py-2 font-display uppercase text-xs text-gray-400">Squadra</th>
-              <th className="text-center px-2 py-2 font-display uppercase text-xs text-gray-400 w-10">G</th>
-              <th className="text-center px-2 py-2 font-display uppercase text-xs text-gray-400 w-10">V</th>
-              <th className="text-center px-2 py-2 font-display uppercase text-xs text-gray-400 w-10">S</th>
-              <th className="text-center px-2 py-2 font-display uppercase text-xs text-gray-400 w-14">PF</th>
-              <th className="text-center px-2 py-2 font-display uppercase text-xs text-gray-400 w-14">PS</th>
-              <th className="text-center px-2 py-2 font-display uppercase text-xs text-gray-400 w-14">+/-</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row, idx) => (
-              <tr
-                key={row.team_id}
-                className={clsx(
-                  'border-b border-gray-100 last:border-0',
-                  idx < 2 && 'bg-orange-50',
-                )}
-              >
-                <td className="px-2 py-3 text-center w-8">
-                  <span className={clsx(
-                    'font-display font-bold text-base',
-                    idx < 2 ? 'text-brand-orange' : 'text-gray-300',
-                  )}>
-                    {idx + 1}
-                  </span>
-                </td>
-                <td className="px-3 py-3 font-body text-gray-800 max-w-0 overflow-hidden">
-                  <span className="block truncate">{row.team_name}</span>
-                </td>
-                <td className="px-2 py-3 text-center text-gray-400 text-xs">{row.played}</td>
-                <td className="px-2 py-3 text-center font-display font-bold text-base text-gray-800">{row.wins}</td>
-                <td className="px-2 py-3 text-center text-gray-400 text-xs">{row.losses}</td>
-                <td className="px-2 py-3 text-center text-gray-400 text-xs">{row.points_for}</td>
-                <td className="px-2 py-3 text-center text-gray-400 text-xs">{row.points_against}</td>
-                <td className={clsx(
-                  'px-2 py-3 text-center text-sm font-display font-bold',
-                  row.point_differential > 0 ? 'text-green-600'
-                    : row.point_differential < 0 ? 'text-red-500'
-                    : 'text-gray-300',
-                )}>
-                  {row.point_differential > 0 ? '+' : ''}{row.point_differential}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="flex-1 min-h-0">
+        <div
+          className="w-full h-full grid"
+          style={{ gridTemplateRows: `auto repeat(${rows.length}, 1fr)` }}
+        >
+          <div className="grid items-center bg-gray-50" style={{ gridTemplateColumns: COLUMN_TEMPLATE }}>
+            <span className="text-center font-display font-bold uppercase text-sm text-gray-600">#</span>
+            <span className="text-left pl-3 font-display font-bold uppercase text-sm text-gray-600">Squadra</span>
+            <span className="text-center font-display font-bold uppercase text-sm text-gray-600">G</span>
+            <span className="text-center font-display font-bold uppercase text-sm text-gray-600">V</span>
+            <span className="text-center font-display font-bold uppercase text-sm text-gray-600">S</span>
+            <span className="text-center font-display font-bold uppercase text-sm text-gray-600">PF</span>
+            <span className="text-center font-display font-bold uppercase text-sm text-gray-600">PS</span>
+            <span className="text-center font-display font-bold uppercase text-sm text-gray-600">+/-</span>
+          </div>
+
+          {rows.map((row, idx) => (
+            <div
+              key={row.team_id}
+              className={clsx(
+                'grid items-center border-b border-gray-100 last:border-0',
+                idx < 2 && 'bg-orange-50',
+              )}
+              style={{ gridTemplateColumns: COLUMN_TEMPLATE }}
+            >
+              <span className={clsx(
+                'text-center font-display font-bold text-4xl',
+                idx < 2 ? 'text-brand-orange' : 'text-gray-300',
+              )}>
+                {idx + 1}
+              </span>
+              <span className="pl-3 min-w-0 overflow-hidden font-body font-bold text-2xl text-gray-800">
+                <span className="block truncate">{row.team_name}</span>
+              </span>
+              <span className="text-center text-lg text-gray-400">{row.played}</span>
+              <span className="text-center font-display font-bold text-3xl text-gray-800">{row.wins}</span>
+              <span className="text-center text-lg text-gray-400">{row.losses}</span>
+              <span className="text-center text-lg text-gray-400">{row.points_for}</span>
+              <span className="text-center text-lg text-gray-400">{row.points_against}</span>
+              <span className={clsx(
+                'text-center font-display font-bold text-2xl',
+                row.point_differential > 0 ? 'text-green-600'
+                  : row.point_differential < 0 ? 'text-red-500'
+                  : 'text-gray-300',
+              )}>
+                {row.point_differential > 0 ? '+' : ''}{row.point_differential}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )
