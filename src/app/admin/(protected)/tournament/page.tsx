@@ -1,12 +1,11 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import type { Edition, GroupWithTeams, MatchWithTeams, TeamCategory, CalendarioEvent } from '@/types'
+import type { Edition, GroupWithTeams, MatchWithTeams, TeamCategory, CalendarioEvent, Group } from '@/types'
 import EditionSwitcher from '@/components/admin/EditionSwitcher'
 import ModeToggle from '@/components/admin/ModeToggle'
 import CategoryFilter from '@/components/admin/CategoryFilter'
 import TournamentGroups from '@/components/admin/TournamentGroups'
 import TournamentCalendar from '@/components/admin/TournamentCalendar'
 import TournamentBracket from '@/components/admin/TournamentBracket'
-import TournamentEvents from '@/components/admin/TournamentEvents'
 import { Suspense } from 'react'
 
 const categoryLabel: Record<TeamCategory, string> = {
@@ -18,7 +17,6 @@ const TOURNAMENT_MODES = [
   { value: 'calendario', label: 'Calendario' },
   { value: 'gironi',     label: 'Gironi' },
   { value: 'tabellone',  label: 'Tabellone Finals' },
-  { value: 'eventi',     label: 'Eventi' },
 ]
 
 interface Props {
@@ -46,6 +44,7 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
   const category = (sp.category as TeamCategory) ?? 'open_m'
 
   let groups: GroupWithTeams[] = []
+  let allGroups: Pick<Group, 'id' | 'name' | 'category'>[] = []
   let approvedTeams: { id: string; name: string; category: string }[] = []
   let groupsWithMatches: string[] = []
   let matches: MatchWithTeams[] = []
@@ -69,6 +68,14 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
       .order('name')
     approvedTeams = teams ?? []
 
+    const { data: allGroupsData } = await supabase
+      .from('groups')
+      .select('id, name, category')
+      .eq('edition_id', activeEdition.id)
+      .order('sort_order')
+      .returns<Pick<Group, 'id' | 'name' | 'category'>[]>()
+    allGroups = allGroupsData ?? []
+
     const { data: groupMatchRows } = await supabase
       .from('matches')
       .select('group_id')
@@ -86,7 +93,7 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
       .returns<MatchWithTeams[]>()
     matches = matchData ?? []
 
-    if (tab === 'eventi' || tab === 'calendario') {
+    if (tab === 'calendario') {
       const { data: eventData } = await supabase
         .from('events')
         .select('*')
@@ -120,19 +127,16 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
         </div>
       </div>
 
-      {/* Category filter — hidden on eventi tab */}
-      {tab !== 'eventi' && (
-        <div className="mb-4">
-          <Suspense>
-            <CategoryFilter
-              showSearch={tab === 'calendario'}
-              searchPlaceholder="Cerca squadra, girone o turno…"
-              hideAll={tab !== 'calendario'}
-              hideEvento={tab !== 'calendario'}
-            />
-          </Suspense>
-        </div>
-      )}
+      <div className="mb-4">
+        <Suspense>
+          <CategoryFilter
+            showSearch={tab === 'calendario'}
+            searchPlaceholder="Cerca squadra, girone o turno…"
+            hideAll={tab !== 'calendario'}
+            hideEvento={tab !== 'calendario'}
+          />
+        </Suspense>
+      </div>
 
       {/* Tab content */}
       {!activeEdition ? (
@@ -155,11 +159,8 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
           category={sp.category as TeamCategory | 'evento' | undefined}
           search={sp.search}
           events={events}
-        />
-      ) : tab === 'eventi' ? (
-        <TournamentEvents
-          editionId={activeEdition.id}
-          events={events}
+          approvedTeams={approvedTeams}
+          allGroups={allGroups}
         />
       ) : (
         <TournamentBracket

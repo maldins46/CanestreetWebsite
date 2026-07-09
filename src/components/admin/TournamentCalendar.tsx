@@ -2,10 +2,10 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import type { MatchWithTeams, TeamCategory, CalendarioEvent } from '@/types'
+import type { MatchWithTeams, TeamCategory, CalendarioEvent, MatchPhase, BracketRound } from '@/types'
 import { CATEGORY_LABELS, CATEGORY_COLORS } from '@/types'
 import clsx from 'clsx'
-import { Trash2, CalendarClock, Info } from 'lucide-react'
+import { Trash2, Locate, Info, Plus, Pencil } from 'lucide-react'
 
 interface Props {
   editionId: string
@@ -13,6 +13,8 @@ interface Props {
   category?: TeamCategory | 'evento'
   search?: string
   events?: CalendarioEvent[]
+  approvedTeams: { id: string; name: string; category: string }[]
+  allGroups: { id: string; name: string; category: TeamCategory }[]
 }
 
 const STATUS_ORDER: Record<string, number> = { completed: 0, in_progress: 1, scheduled: 2 }
@@ -28,7 +30,7 @@ type AdminRow =
   | { type: 'match'; data: MatchWithTeams }
   | { type: 'event'; data: CalendarioEvent }
 
-export default function TournamentCalendar({ editionId, matches, category, search, events }: Props) {
+export default function TournamentCalendar({ editionId, matches, category, search, events, approvedTeams, allGroups }: Props) {
   // evento: events-only table; specific category: matches only; undefined (Tutte): merge both
   const isEventMode = category === 'evento'
   const supabase = createClient()
@@ -38,13 +40,30 @@ export default function TournamentCalendar({ editionId, matches, category, searc
   const [deletingAll, setDeletingAll] = useState(false)
   const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [bulkDate, setBulkDate] = useState('')
-  const [settingDate, setSettingDate] = useState(false)
-  const [dateModalOpen, setDateModalOpen] = useState(false)
+
+  const [matchModalOpen, setMatchModalOpen] = useState(false)
+  const [editingMatchId, setEditingMatchId] = useState<string | null>(null)
+  const [formCategory, setFormCategory] = useState<TeamCategory>('open_m')
+  const [formPhase, setFormPhase] = useState<MatchPhase>('group')
+  const [formGroupId, setFormGroupId] = useState('')
+  const [formBracketRound, setFormBracketRound] = useState<BracketRound | ''>('')
+  const [formTeamHome, setFormTeamHome] = useState('')
+  const [formTeamAway, setFormTeamAway] = useState('')
+  const [formDate, setFormDate] = useState('')
+  const [savingMatch, setSavingMatch] = useState(false)
+
+  const [eventModalOpen, setEventModalOpen] = useState(false)
+  const [editingEventId, setEditingEventId] = useState<string | null>(null)
+  const [formEventName, setFormEventName] = useState('')
+  const [formEventDate, setFormEventDate] = useState('')
+  const [formEventDesc, setFormEventDesc] = useState('')
+  const [savingEvent, setSavingEvent] = useState(false)
 
   const q = search?.trim().toLowerCase() ?? ''
 
   const categoryMatches = matches.filter(m => !category || m.category === category)
+  const categoryGroups = allGroups.filter(g => g.category === formCategory)
+  const categoryTeams = approvedTeams.filter(t => t.category === formCategory)
 
   const filteredMatches = categoryMatches.filter(m => {
     if (!q) return true
@@ -78,6 +97,15 @@ export default function TournamentCalendar({ editionId, matches, category, searc
     }
     return 0
   })
+
+  const liveEntryId = isEventMode
+    ? events?.find(e => e.status === 'in_progress')?.id
+    : allRows.find(r => r.data.status === 'in_progress')?.data.id
+
+  function scrollToLive() {
+    if (!liveEntryId) return
+    document.getElementById(`row-${liveEntryId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
 
   function getScore(matchId: string, side: 'home' | 'away', fallback: number | null) {
     return scores[matchId]?.[side] ?? (fallback != null ? String(fallback) : '')
@@ -143,18 +171,8 @@ export default function TournamentCalendar({ editionId, matches, category, searc
     setSaving(null)
   }
 
-  async function setAllDates() {
-    if (!bulkDate) return
-    setSettingDate(true)
-    setDateModalOpen(false)
-    let q = supabase.from('matches').update({ scheduled_at: fromRomeLocal(bulkDate) }).eq('edition_id', editionId)
-    if (category) q = q.eq('category', category)
-    await q
-    router.refresh()
-    setSettingDate(false)
-  }
-
   async function deleteMatch(matchId: string) {
+    if (!window.confirm('Eliminare questa partita?')) return
     setDeletingId(matchId)
     await supabase.from('matches').delete().eq('id', matchId)
     router.refresh()
@@ -169,6 +187,106 @@ export default function TournamentCalendar({ editionId, matches, category, searc
     await q
     router.refresh()
     setDeletingAll(false)
+  }
+
+  function openAddMatch() {
+    setFormCategory(category && category !== 'evento' ? category : 'open_m')
+    setFormPhase('group')
+    setFormGroupId('')
+    setFormBracketRound('')
+    setFormTeamHome('')
+    setFormTeamAway('')
+    setFormDate('')
+    setEditingMatchId(null)
+    setMatchModalOpen(true)
+  }
+
+  function openEditMatch(match: MatchWithTeams) {
+    setFormCategory(match.category)
+    setFormPhase(match.phase)
+    setFormGroupId(match.group_id ?? '')
+    setFormBracketRound(match.bracket_round ?? '')
+    setFormTeamHome(match.team_home_id ?? '')
+    setFormTeamAway(match.team_away_id ?? '')
+    setFormDate(toDatetimeLocal(match.scheduled_at))
+    setEditingMatchId(match.id)
+    setMatchModalOpen(true)
+  }
+
+  function closeMatchModal() {
+    setMatchModalOpen(false)
+  }
+
+  function handleFormCategoryChange(next: TeamCategory) {
+    setFormCategory(next)
+    setFormGroupId('')
+    setFormTeamHome('')
+    setFormTeamAway('')
+  }
+
+  function handleFormPhaseChange(next: MatchPhase) {
+    setFormPhase(next)
+    setFormGroupId('')
+    setFormBracketRound('')
+  }
+
+  async function saveMatch() {
+    setSavingMatch(true)
+    const payload = {
+      category: formCategory,
+      phase: formPhase,
+      group_id: formPhase === 'group' ? (formGroupId || null) : null,
+      bracket_round: formPhase === 'bracket' ? (formBracketRound || null) : null,
+      team_home_id: formTeamHome || null,
+      team_away_id: formTeamAway || null,
+      scheduled_at: fromRomeLocal(formDate),
+    }
+    if (editingMatchId) {
+      await supabase.from('matches').update(payload).eq('id', editingMatchId)
+    } else {
+      await supabase.from('matches').insert({ edition_id: editionId, ...payload })
+    }
+    setMatchModalOpen(false)
+    router.refresh()
+    setSavingMatch(false)
+  }
+
+  function openAddEvent() {
+    setFormEventName('')
+    setFormEventDate('')
+    setFormEventDesc('')
+    setEditingEventId(null)
+    setEventModalOpen(true)
+  }
+
+  function openEditEvent(event: CalendarioEvent) {
+    setFormEventName(event.name)
+    setFormEventDate(toDatetimeLocal(event.scheduled_at))
+    setFormEventDesc(event.description ?? '')
+    setEditingEventId(event.id)
+    setEventModalOpen(true)
+  }
+
+  function closeEventModal() {
+    setEventModalOpen(false)
+  }
+
+  async function saveEvent() {
+    if (!formEventName.trim()) return
+    setSavingEvent(true)
+    const payload = {
+      name: formEventName.trim(),
+      scheduled_at: fromRomeLocal(formEventDate),
+      description: formEventDesc.trim() || null,
+    }
+    if (editingEventId) {
+      await supabase.from('events').update(payload).eq('id', editingEventId)
+    } else {
+      await supabase.from('events').insert({ edition_id: editionId, ...payload })
+    }
+    setEventModalOpen(false)
+    router.refresh()
+    setSavingEvent(false)
   }
 
   async function cycleEventStatus(event: CalendarioEvent) {
@@ -194,6 +312,7 @@ export default function TournamentCalendar({ editionId, matches, category, searc
   }
 
   async function deleteEvent(eventId: string) {
+    if (!window.confirm('Eliminare questo evento?')) return
     setDeletingId(eventId)
     await supabase.from('events').delete().eq('id', eventId)
     router.refresh()
@@ -206,15 +325,6 @@ export default function TournamentCalendar({ editionId, matches, category, searc
     await supabase.from('events').delete().eq('edition_id', editionId)
     router.refresh()
     setDeletingAll(false)
-  }
-
-  async function setAllEventDates() {
-    if (!bulkDate) return
-    setSettingDate(true)
-    setDateModalOpen(false)
-    await supabase.from('events').update({ scheduled_at: fromRomeLocal(bulkDate) }).eq('edition_id', editionId)
-    router.refresh()
-    setSettingDate(false)
   }
 
   function getPhaseLabel(match: MatchWithTeams) {
@@ -250,13 +360,14 @@ export default function TournamentCalendar({ editionId, matches, category, searc
             : `${categoryMatches.length} ${categoryMatches.length === 1 ? 'partita' : 'partite'}${category ? ` — ${CATEGORY_LABELS[category]}` : ''}`
           }
         </p>
-        <div className="flex items-center gap-3 ml-auto">
+        <div className="flex items-center gap-3 ml-auto flex-wrap justify-end">
           <button
-            onClick={() => setDateModalOpen(true)}
-            disabled={settingDate || (isEventMode ? eventCount === 0 : categoryMatches.length === 0)}
+            onClick={scrollToLive}
+            disabled={!liveEntryId}
             className="btn-ghost text-sm px-4 py-2 whitespace-nowrap"
+            title="Vai alla diretta in corso"
           >
-            {settingDate ? '…' : <><CalendarClock size={14} /> Imposta data a tutte</>}
+            <Locate size={14} /> Vai al live
           </button>
           <button
             onClick={() => setConfirmDeleteModalOpen(true)}
@@ -265,45 +376,24 @@ export default function TournamentCalendar({ editionId, matches, category, searc
           >
             {deletingAll ? '…' : <><Trash2 size={14} /> {isEventMode ? 'Elimina tutti gli eventi' : 'Elimina tutte le partite'}</>}
           </button>
+          {!isEventMode && (
+            <button
+              onClick={openAddMatch}
+              className="btn-primary text-sm px-4 py-2 flex items-center gap-1.5 whitespace-nowrap"
+            >
+              <Plus size={14} /> Aggiungi partita
+            </button>
+          )}
+          {(isEventMode || !category) && (
+            <button
+              onClick={openAddEvent}
+              className="btn-primary text-sm px-4 py-2 flex items-center gap-1.5 whitespace-nowrap"
+            >
+              <Plus size={14} /> Aggiungi evento
+            </button>
+          )}
         </div>
       </div>
-
-      {dateModalOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-          onClick={() => setDateModalOpen(false)}
-        >
-          <div
-            className="card w-full max-w-sm mx-4 p-6"
-            onClick={e => e.stopPropagation()}
-          >
-            <h2 className="font-display font-bold uppercase text-xl text-court-white mb-1">
-              Imposta data e ora
-            </h2>
-            <p className="text-court-gray text-sm mb-5">
-              Verrà applicata a tutte le partite{category && category !== 'evento' ? ` di ${CATEGORY_LABELS[category as TeamCategory]}` : ''}.
-            </p>
-            <input
-              type="datetime-local"
-              value={bulkDate}
-              onChange={e => setBulkDate(e.target.value)}
-              className="input py-2 px-3 text-sm w-full mb-6"
-            />
-            <div className="flex justify-end gap-3">
-              <button onClick={() => setDateModalOpen(false)} className="btn-ghost text-sm px-4 py-2">
-                Annulla
-              </button>
-              <button
-                onClick={isEventMode ? setAllEventDates : setAllDates}
-                disabled={!bulkDate}
-                className="btn-primary text-sm px-4 py-2"
-              >
-                Imposta
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {confirmDeleteModalOpen && (
         <div
@@ -338,10 +428,199 @@ export default function TournamentCalendar({ editionId, matches, category, searc
         </div>
       )}
 
+      {matchModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={closeMatchModal}
+        >
+          <div
+            className="card w-full max-w-md mx-4 p-6"
+            onClick={e => e.stopPropagation()}
+          >
+            <h2 className="font-display font-bold uppercase text-xl text-court-white mb-4">
+              {editingMatchId ? 'Modifica partita' : 'Aggiungi partita'}
+            </h2>
+            <div className="space-y-4">
+              <div>
+                <label className="label">Categoria</label>
+                <select
+                  value={formCategory}
+                  onChange={e => handleFormCategoryChange(e.target.value as TeamCategory)}
+                  className="input py-2 px-3 text-sm w-full"
+                >
+                  {(Object.keys(CATEGORY_LABELS) as TeamCategory[]).map(c => (
+                    <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="label">Fase</label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleFormPhaseChange('group')}
+                    className={clsx('btn-ghost text-sm px-4 py-2 flex-1', formPhase === 'group' && 'border-brand-orange text-brand-orange')}
+                  >
+                    Girone
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleFormPhaseChange('bracket')}
+                    className={clsx('btn-ghost text-sm px-4 py-2 flex-1', formPhase === 'bracket' && 'border-brand-orange text-brand-orange')}
+                  >
+                    Finale
+                  </button>
+                </div>
+              </div>
+
+              {formPhase === 'group' ? (
+                <div>
+                  <label className="label">Girone</label>
+                  <select
+                    value={formGroupId}
+                    onChange={e => setFormGroupId(e.target.value)}
+                    className="input py-2 px-3 text-sm w-full"
+                  >
+                    <option value="">— Nessun girone —</option>
+                    {categoryGroups.map(g => (
+                      <option key={g.id} value={g.id}>{g.name}</option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div>
+                  <label className="label">Turno</label>
+                  <select
+                    value={formBracketRound}
+                    onChange={e => setFormBracketRound(e.target.value as BracketRound)}
+                    className="input py-2 px-3 text-sm w-full"
+                  >
+                    <option value="">— Nessun turno —</option>
+                    {(Object.keys(roundLabels) as BracketRound[]).map(r => (
+                      <option key={r} value={r}>{roundLabels[r]}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div>
+                <label className="label">Squadra casa</label>
+                <select
+                  value={formTeamHome}
+                  onChange={e => setFormTeamHome(e.target.value)}
+                  className="input py-2 px-3 text-sm w-full"
+                >
+                  <option value="">— TBD —</option>
+                  {categoryTeams.map(t => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="label">Squadra ospite</label>
+                <select
+                  value={formTeamAway}
+                  onChange={e => setFormTeamAway(e.target.value)}
+                  className="input py-2 px-3 text-sm w-full"
+                >
+                  <option value="">— TBD —</option>
+                  {categoryTeams.map(t => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="label">Data e ora</label>
+                <input
+                  type="datetime-local"
+                  value={formDate}
+                  onChange={e => setFormDate(e.target.value)}
+                  className="input py-2 px-3 text-sm w-full"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button onClick={closeMatchModal} className="btn-ghost text-sm px-4 py-2">
+                Annulla
+              </button>
+              <button
+                onClick={saveMatch}
+                disabled={savingMatch}
+                className="btn-primary text-sm px-4 py-2"
+              >
+                {savingMatch ? '…' : editingMatchId ? 'Salva' : 'Aggiungi'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {eventModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={closeEventModal}
+        >
+          <div
+            className="card w-full max-w-md mx-4 p-6"
+            onClick={e => e.stopPropagation()}
+          >
+            <h2 className="font-display font-bold uppercase text-xl text-court-white mb-4">
+              {editingEventId ? 'Modifica evento' : 'Aggiungi evento'}
+            </h2>
+            <div className="space-y-4">
+              <div>
+                <label className="label">Nome *</label>
+                <input
+                  type="text"
+                  value={formEventName}
+                  onChange={e => setFormEventName(e.target.value)}
+                  placeholder="Nome evento"
+                  className="input py-2 px-3 text-sm w-full"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="label">Data e ora</label>
+                <input
+                  type="datetime-local"
+                  value={formEventDate}
+                  onChange={e => setFormEventDate(e.target.value)}
+                  className="input py-2 px-3 text-sm w-full"
+                />
+              </div>
+              <div>
+                <label className="label">Descrizione</label>
+                <textarea
+                  value={formEventDesc}
+                  onChange={e => setFormEventDesc(e.target.value)}
+                  rows={3}
+                  placeholder="Descrizione opzionale…"
+                  className="input py-2 px-3 text-sm w-full resize-none"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button onClick={closeEventModal} className="btn-ghost text-sm px-4 py-2">
+                Annulla
+              </button>
+              <button
+                onClick={saveEvent}
+                disabled={savingEvent || !formEventName.trim()}
+                className="btn-primary text-sm px-4 py-2"
+              >
+                {savingEvent ? '…' : editingEventId ? 'Salva' : 'Aggiungi'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {isEventMode ? (
         events!.length === 0 ? (
           <div className="card p-10 text-center">
-            <p className="text-court-gray">Nessun evento. Aggiungili dalla scheda <strong>Eventi</strong>.</p>
+            <p className="text-court-gray">Nessun evento. Aggiungine uno con il pulsante qui sopra.</p>
           </div>
         ) : (
           <div className="card overflow-hidden">
@@ -362,6 +641,7 @@ export default function TournamentCalendar({ editionId, matches, category, searc
                     return (
                       <tr
                         key={event.id}
+                        id={`row-${event.id}`}
                         className={clsx(
                           'border-b border-court-border last:border-b-0',
                           event.status === 'in_progress' && 'bg-red-500/10',
@@ -427,14 +707,23 @@ export default function TournamentCalendar({ editionId, matches, category, searc
                           )}
                         </td>
                         <td className="px-3 py-2 w-px whitespace-nowrap">
-                          <button
-                            onClick={() => deleteEvent(event.id)}
-                            disabled={deletingId === event.id || isSaving}
-                            className="text-court-muted hover:text-red-400 transition-colors p-1"
-                            title="Elimina evento"
-                          >
-                            {deletingId === event.id ? '…' : <Trash2 size={14} />}
-                          </button>
+                          <div className="flex items-center gap-1 justify-end">
+                            <button
+                              onClick={() => openEditEvent(event)}
+                              className="text-court-muted hover:text-court-white transition-colors p-1"
+                              title="Modifica evento"
+                            >
+                              <Pencil size={14} />
+                            </button>
+                            <button
+                              onClick={() => deleteEvent(event.id)}
+                              disabled={deletingId === event.id || isSaving}
+                              className="text-court-muted hover:text-red-400 transition-colors p-1"
+                              title="Elimina evento"
+                            >
+                              {deletingId === event.id ? '…' : <Trash2 size={14} />}
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     )
@@ -473,6 +762,7 @@ export default function TournamentCalendar({ editionId, matches, category, searc
                 return (
                   <tr
                     key={`event-${event.id}`}
+                    id={`row-${event.id}`}
                     className={clsx(
                       'border-b border-court-border last:border-b-0',
                       event.status === 'in_progress' && 'bg-red-500/10',
@@ -525,10 +815,16 @@ export default function TournamentCalendar({ editionId, matches, category, searc
                       )}
                     </td>
                     <td className="px-3 py-2 w-px whitespace-nowrap">
-                      <button onClick={() => deleteEvent(event.id)} disabled={deletingId === event.id || isSaving}
-                        className="text-court-muted hover:text-red-400 transition-colors p-1" title="Elimina evento">
-                        {deletingId === event.id ? '…' : <Trash2 size={14} />}
-                      </button>
+                      <div className="flex items-center gap-1 justify-end">
+                        <button onClick={() => openEditEvent(event)}
+                          className="text-court-muted hover:text-court-white transition-colors p-1" title="Modifica evento">
+                          <Pencil size={14} />
+                        </button>
+                        <button onClick={() => deleteEvent(event.id)} disabled={deletingId === event.id || isSaving}
+                          className="text-court-muted hover:text-red-400 transition-colors p-1" title="Elimina evento">
+                          {deletingId === event.id ? '…' : <Trash2 size={14} />}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 )
@@ -542,6 +838,7 @@ export default function TournamentCalendar({ editionId, matches, category, searc
               return (
                 <tr
                   key={`match-${match.id}`}
+                  id={`row-${match.id}`}
                   className={clsx(
                     'border-b border-court-border last:border-b-0',
                     match.status === 'in_progress' && 'bg-red-500/10',
@@ -636,14 +933,23 @@ export default function TournamentCalendar({ editionId, matches, category, searc
                     )}
                   </td>
                   <td className="px-3 py-2 w-px whitespace-nowrap">
-                    <button
-                      onClick={() => deleteMatch(match.id)}
-                      disabled={deletingId === match.id || isSaving}
-                      className="text-court-muted hover:text-red-400 transition-colors p-1"
-                      title="Elimina partita"
-                    >
-                      {deletingId === match.id ? '…' : <Trash2 size={14} />}
-                    </button>
+                    <div className="flex items-center gap-1 justify-end">
+                      <button
+                        onClick={() => openEditMatch(match)}
+                        className="text-court-muted hover:text-court-white transition-colors p-1"
+                        title="Modifica partita"
+                      >
+                        <Pencil size={14} />
+                      </button>
+                      <button
+                        onClick={() => deleteMatch(match.id)}
+                        disabled={deletingId === match.id || isSaving}
+                        className="text-court-muted hover:text-red-400 transition-colors p-1"
+                        title="Elimina partita"
+                      >
+                        {deletingId === match.id ? '…' : <Trash2 size={14} />}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               )

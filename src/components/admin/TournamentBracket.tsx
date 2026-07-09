@@ -378,7 +378,7 @@ export default function TournamentBracket({
     <div>
       {/* Generation controls */}
       <div className="card flex items-center gap-3 mb-6 flex-wrap px-4 py-3">
-        <div className="flex items-center gap-3 ml-auto">
+        <div className="flex items-center gap-3 ml-auto flex-wrap justify-end">
           <button
             onClick={populateBracket}
             disabled={saving || groups.length === 0 || bracketMatches.length === 0}

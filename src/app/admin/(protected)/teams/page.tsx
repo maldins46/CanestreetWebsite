@@ -191,7 +191,7 @@ export default async function AdminTeamsPage({ searchParams }: Props) {
       {/* Action bar */}
       {activeEdition && !isCheckin && (
         <div className="card flex items-center gap-3 mb-6 flex-wrap px-4 py-3">
-          <div className="flex items-center gap-3 ml-auto">
+          <div className="flex items-center gap-3 ml-auto flex-wrap justify-end">
             <ExportCsvDialog editionId={activeEdition.id} categoryFilter={categoryFilter} />
             <Link
               href={`/admin/teams/new?edition=${activeEdition.id}`}
