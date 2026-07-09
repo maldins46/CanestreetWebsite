@@ -341,6 +341,7 @@ export interface LedwallState {
   transition: LedwallTransition
   launchpad_text: string | null
   launchpad_count: number
+  contextual_slot_seconds: number
   updated_at: string
   updated_by: string | null
 }

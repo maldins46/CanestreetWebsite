@@ -37,6 +37,7 @@ export default function LedwallAdminPage() {
     mode: LedwallMode
     fixed_scene: LedwallScene
     scene_config: LedwallSceneConfig
+    contextual_slot_seconds: number
   } | null>(null)
   const [groups,        setGroups]       = useState<GroupWithTeams[]>([])
   const [contests,      setContests]     = useState<TpcContestFull[]>([])
@@ -71,7 +72,12 @@ export default function LedwallAdminPage() {
       if (st) {
         const ledwallSt = st as LedwallState
         setState(ledwallSt)
-        setDraft({ mode: ledwallSt.mode, fixed_scene: ledwallSt.fixed_scene, scene_config: ledwallSt.scene_config ?? {} })
+        setDraft({
+          mode: ledwallSt.mode,
+          fixed_scene: ledwallSt.fixed_scene,
+          scene_config: ledwallSt.scene_config ?? {},
+          contextual_slot_seconds: ledwallSt.contextual_slot_seconds,
+        })
       }
       setGroups(gr ?? [])
       setContests(tc ?? [])
@@ -95,7 +101,12 @@ export default function LedwallAdminPage() {
 
   async function applyDraft() {
     if (!draft) return
-    await save({ mode: draft.mode, fixed_scene: draft.fixed_scene, scene_config: draft.scene_config })
+    await save({
+      mode: draft.mode,
+      fixed_scene: draft.fixed_scene,
+      scene_config: draft.scene_config,
+      contextual_slot_seconds: draft.contextual_slot_seconds,
+    })
   }
 
   function setTransition(transition: LedwallTransition) { save({ transition }) }
@@ -118,7 +129,8 @@ export default function LedwallAdminPage() {
   const isDirty = draft && state && (
     draft.mode !== state.mode ||
     draft.fixed_scene !== state.fixed_scene ||
-    JSON.stringify(draft.scene_config) !== JSON.stringify(state.scene_config ?? {})
+    JSON.stringify(draft.scene_config) !== JSON.stringify(state.scene_config ?? {}) ||
+    draft.contextual_slot_seconds !== state.contextual_slot_seconds
   )
 
   const groupsForCategory = (cat: TeamCategory) =>
@@ -240,7 +252,21 @@ export default function LedwallAdminPage() {
         {/* ── Scene config ── */}
         <div className="pt-4 border-t border-court-border">
           {draft.mode === 'contextual' ? (
-            <p className="text-court-muted text-sm italic">Nessuna configurazione necessaria per questa scena.</p>
+            <div className="max-w-xs">
+              <label className="label">Durata rotazione (secondi)</label>
+              <input
+                type="number"
+                className="input"
+                min={5}
+                max={120}
+                value={draft.contextual_slot_seconds}
+                onChange={e => {
+                  const n = parseInt(e.target.value, 10)
+                  setDraft(d => ({ ...d!, contextual_slot_seconds: Number.isFinite(n) ? n : d!.contextual_slot_seconds }))
+                }}
+                disabled={saving}
+              />
+            </div>
           ) : (
             <SceneConfig
               scene={draft.fixed_scene}
@@ -402,7 +428,7 @@ export default function LedwallAdminPage() {
       <div className="p-4 bg-court-surface rounded border border-court-border">
         <p className="text-court-gray text-sm">
           <span className="text-brand-orange font-display uppercase tracking-wide">Nota:</span>{' '}
-          Il ledwall si aggiorna ogni ~20 secondi (ogni 2 secondi in modalità bacheca o sponsor fisso). I dati delle scene si aggiornano ogni ~25 secondi.
+          In modalità contestuale il ledwall ruota scena secondo l&apos;intervallo configurato sopra (ogni 2 secondi in modalità bacheca o sponsor fisso). I dati delle scene si aggiornano ogni ~25 secondi.
         </p>
       </div>
     </div>

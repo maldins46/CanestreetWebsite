@@ -259,9 +259,9 @@
 }
 
 /* Ledwall contextual-rotation progress bar — linear fill representing
-   elapsed time within the current CONTEXTUAL_SLOT_MS slot; keyed by
-   rotationSlot in ledwall/page.tsx so it restarts exactly when the
-   rotation advances to the next scene. */
+   elapsed time within the current contextual_slot_seconds slot (admin-
+   configurable, default 20s); keyed by rotationSlot in ledwall/page.tsx
+   so it restarts exactly when the rotation advances to the next scene. */
 @keyframes ledwall-progress-fill {
   0%   { transform: scaleX(0); }
   100% { transform: scaleX(1); }

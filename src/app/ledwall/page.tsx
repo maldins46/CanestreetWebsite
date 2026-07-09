@@ -72,10 +72,6 @@ const STING_PANELS = [
   { widthPct: 4,  color: '#fed7aa', opacity: 1, delayMs: -20 },
 ]
 
-// Cosmetic screen-time-sharing cadence, unrelated to data freshness — do not
-// tie this to any data-refresh interval.
-const CONTEXTUAL_SLOT_MS = 20_000
-
 // Contextual rotation: matches → 4 sponsors → contextual (live-event-driven)
 const CONTEXTUAL_ROTATION = ['matches', 'sponsors', 'contextual'] as const
 
@@ -233,18 +229,20 @@ export default function LedwallPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Contextual rotation — advance slot every 20s when mode = 'contextual'.
-  // Cosmetic screen-time-sharing, independent of data freshness/realtime.
+  // Contextual rotation — advance slot every N seconds (admin-configurable,
+  // default 20s) when mode = 'contextual'. Cosmetic screen-time-sharing,
+  // independent of data freshness/realtime.
   useEffect(() => {
     if (ledwallState?.mode !== 'contextual') {
       setRotationSlot(0)
       return
     }
+    const slotMs = (ledwallState.contextual_slot_seconds ?? 20) * 1000
     const interval = setInterval(() => {
       setRotationSlot(s => (s + 1) % CONTEXTUAL_ROTATION.length)
-    }, CONTEXTUAL_SLOT_MS)
+    }, slotMs)
     return () => clearInterval(interval)
-  }, [ledwallState?.mode])
+  }, [ledwallState?.mode, ledwallState?.contextual_slot_seconds])
 
   // Advance sponsor group whenever the rotation completes a full cycle (wraps back to 0)
   useEffect(() => {
@@ -413,10 +411,11 @@ export default function LedwallPage() {
       </div>
 
       {/* ── Top progress bar — fixed to the physical screen edge (not the
-          scaled stage), fills over CONTEXTUAL_SLOT_MS and restarts each
-          time rotationSlot advances, so it always shows how close the
-          contextual rotation is to switching to the next scene. Only
-          meaningful in contextual mode — fixed mode has no timer. */}
+          scaled stage), fills over the configured contextual slot duration
+          and restarts each time rotationSlot advances, so it always shows
+          how close the contextual rotation is to switching to the next
+          scene. Only meaningful in contextual mode — fixed mode has no
+          timer. */}
       {ledwallState?.mode === 'contextual' && (
         <div
           aria-hidden="true"
@@ -437,7 +436,7 @@ export default function LedwallPage() {
               height: '100%',
               background: '#f97316',
               transformOrigin: 'left center',
-              animation: `ledwall-progress-fill ${CONTEXTUAL_SLOT_MS / 1000}s linear both`,
+              animation: `ledwall-progress-fill ${ledwallState.contextual_slot_seconds ?? 20}s linear both`,
             }}
           />
         </div>
