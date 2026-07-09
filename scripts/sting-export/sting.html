@@ -1,0 +1,80 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>ledwall sting export</title>
+<style>
+  /* Mirrors STING_DURATION_MS = 800 in src/app/ledwall/page.tsx — reference
+     only, the capture script drives the timeline externally via
+     Animation.currentTime, not real-time playback. */
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 1920px;
+    height: 1080px;
+    background: transparent;
+    overflow: hidden;
+  }
+
+  /* Copied verbatim from src/app/globals.css (ledwall-sting, ledwall-sting-wipe) */
+  @keyframes ledwall-sting {
+    0%   { transform: translateX(-120vw) rotate(-3deg);  opacity: 1; }
+    30%  { transform: translateX(0)      rotate(0deg);   opacity: 1; }
+    34%  { transform: translateX(2vw)    rotate(0.5deg); opacity: 1; }
+    38%  { transform: translateX(0)      rotate(0deg);   opacity: 1; }
+    62%  { transform: translateX(0)      rotate(0deg);   opacity: 1; }
+    100% { transform: translateX(120vw)  rotate(3deg);   opacity: 0; }
+  }
+
+  @keyframes ledwall-sting-wipe {
+    0%   { left: -60%; }
+    100% { left: 110%; }
+  }
+
+  #overlay {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .panel {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    clip-path: polygon(18% 0%, 100% 0%, 82% 100%, 0% 100%);
+    animation-name: ledwall-sting-wipe;
+    animation-duration: 0.8s;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    animation-fill-mode: both;
+  }
+
+  .lion-wrap {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .lion-wrap img {
+    height: 90vh;
+    width: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 0 32px rgba(249, 115, 22, 0.6));
+    animation: ledwall-sting 0.8s cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+</style>
+</head>
+<body>
+  <div id="overlay">
+    <!-- STING_PANELS from ledwall/page.tsx: { widthPct: 55, color: '#f97316', opacity: 1, delayMs: 0 }, { widthPct: 4, color: '#fed7aa', opacity: 1, delayMs: -20 } -->
+    <div class="panel" style="width: 55%; background: #f97316; opacity: 1; animation-delay: 0ms;"></div>
+    <div class="panel" style="width: 4%; background: #fed7aa; opacity: 1; animation-delay: -20ms;"></div>
+
+    <div class="lion-wrap">
+      <img src="lion.png" alt="">
+    </div>
+  </div>
+</body>
+</html>

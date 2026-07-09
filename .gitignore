@@ -45,3 +45,7 @@ next-env.d.ts
 
 # Media assets — served from Supabase Storage, no need to track in git
 downloaded-media/
+
+# Generated export artifacts (e.g. ledwall sting video export)
+/exports/
+scripts/sting-export/frames/

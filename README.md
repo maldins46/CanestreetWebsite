@@ -181,6 +181,47 @@ them manually in Studio if needed.
 
 
 
+## Exporting the ledwall "sting" transition as an OBS Stinger
+
+The ledwall (`/ledwall`) has a broadcast-style "sting" scene-transition — a lion
+snaps in, holds, snaps out, with two orange diagonal wipe bars — defined by
+`STING_*` constants in `src/app/ledwall/page.tsx` and the `ledwall-sting` /
+`ledwall-sting-wipe` `@keyframes` in `src/app/globals.css`. `scripts/sting-export/`
+lets you export that same animation as a standalone video with a real alpha
+channel, so it can be dropped straight into OBS as a **Stinger Transition**.
+
+One-time setup:
+
+```bash
+npx playwright install chromium   # downloads the headless browser used to render the animation
+```
+
+(`ffmpeg` must already be installed — `brew install ffmpeg` — used to encode the frames.)
+
+Run the export:
+
+```bash
+npm run export:sting
+```
+
+This renders `scripts/sting-export/sting.html` (a standalone copy of the sting
+markup/CSS/keyframes — no Next.js/Supabase needed) in headless Chromium,
+steps through the animation frame-by-frame at 1920×1080@60fps via the Web
+Animations API for jitter-free timing, screenshots each frame with a
+transparent background, and encodes the sequence into a VP9-with-alpha WebM.
+Output: `exports/ledwall-sting/ledwall-sting.webm` (gitignored — it's a
+generated artifact, re-run the script to regenerate it).
+
+In OBS: **Scene Transitions → + → Stinger** → set the video file to the
+exported `.webm`. WebM (VP9 + alpha) and QuickTime `.mov` (ProRes 4444 + alpha)
+are the two formats OBS can read with real transparency — plain MP4/H.264
+cannot carry an alpha channel, which is why the export doesn't produce one.
+
+**If you change the sting animation** (colors, timing, keyframes) in
+`page.tsx` / `globals.css`, keep `scripts/sting-export/sting.html` in sync
+manually — it's a hand-copied mirror, not generated from the React source —
+then re-run `npm run export:sting`.
+
 ## Deploying to production
 
 1. Create a Supabase project at [supabase.com](https://supabase.com)
