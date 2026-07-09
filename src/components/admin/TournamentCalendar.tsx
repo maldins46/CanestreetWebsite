@@ -4,17 +4,22 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { MatchWithTeams, TeamCategory, CalendarioEvent, MatchPhase, BracketRound } from '@/types'
 import { CATEGORY_LABELS, CATEGORY_COLORS } from '@/types'
+import { toDatetimeLocal, fromRomeLocal } from '@/lib/dateRome'
+import { exportMatchesToCsv } from '@/lib/csvMatchImport'
 import clsx from 'clsx'
-import { Trash2, Locate, Info, Plus, Pencil } from 'lucide-react'
+import { Trash2, Locate, Info, Plus, Pencil, Upload, Download } from 'lucide-react'
+import ImportMatchesCsvModal from './ImportMatchesCsvModal'
 
 interface Props {
   editionId: string
+  editionYear: number
   matches: MatchWithTeams[]
   category?: TeamCategory | 'evento'
   search?: string
   events?: CalendarioEvent[]
   approvedTeams: { id: string; name: string; category: string }[]
   allGroups: { id: string; name: string; category: TeamCategory }[]
+  groupTeams: { group_id: string; team_id: string }[]
 }
 
 const STATUS_ORDER: Record<string, number> = { completed: 0, in_progress: 1, scheduled: 2 }
@@ -30,7 +35,7 @@ type AdminRow =
   | { type: 'match'; data: MatchWithTeams }
   | { type: 'event'; data: CalendarioEvent }
 
-export default function TournamentCalendar({ editionId, matches, category, search, events, approvedTeams, allGroups }: Props) {
+export default function TournamentCalendar({ editionId, editionYear, matches, category, search, events, approvedTeams, allGroups, groupTeams }: Props) {
   // evento: events-only table; specific category: matches only; undefined (Tutte): merge both
   const isEventMode = category === 'evento'
   const supabase = createClient()
@@ -51,6 +56,8 @@ export default function TournamentCalendar({ editionId, matches, category, searc
   const [formTeamAway, setFormTeamAway] = useState('')
   const [formDate, setFormDate] = useState('')
   const [savingMatch, setSavingMatch] = useState(false)
+
+  const [importModalOpen, setImportModalOpen] = useState(false)
 
   const [eventModalOpen, setEventModalOpen] = useState(false)
   const [editingEventId, setEditingEventId] = useState<string | null>(null)
@@ -187,6 +194,17 @@ export default function TournamentCalendar({ editionId, matches, category, searc
     await q
     router.refresh()
     setDeletingAll(false)
+  }
+
+  function exportMatchesCsv() {
+    const csv = exportMatchesToCsv(categoryMatches)
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `partite-${category ?? 'tutte'}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   function openAddMatch() {
@@ -333,21 +351,6 @@ export default function TournamentCalendar({ editionId, matches, category, searc
     return ''
   }
 
-  function toDatetimeLocal(iso: string | null): string {
-    if (!iso) return ''
-    // Show Rome local time in the datetime-local input
-    return new Date(iso).toLocaleString('sv-SE', { timeZone: 'Europe/Rome' }).slice(0, 16).replace(' ', 'T')
-  }
-
-  function fromRomeLocal(localStr: string): string | null {
-    if (!localStr) return null
-    // "YYYY-MM-DDTHH:mm" entered as Rome time → UTC ISO string
-    const asIfUtc = new Date(localStr + ':00Z')
-    const romeEquiv = asIfUtc.toLocaleString('sv-SE', { timeZone: 'Europe/Rome' }).slice(0, 16)
-    const offsetMs = new Date(romeEquiv + ':00Z').getTime() - asIfUtc.getTime()
-    return new Date(asIfUtc.getTime() - offsetMs).toISOString()
-  }
-
   const eventCount = events?.length ?? 0
 
   return (
@@ -374,8 +377,25 @@ export default function TournamentCalendar({ editionId, matches, category, searc
             disabled={deletingAll || (isEventMode ? eventCount === 0 : categoryMatches.length === 0)}
             className="btn-ghost text-sm px-4 py-2 whitespace-nowrap"
           >
-            {deletingAll ? '…' : <><Trash2 size={14} /> {isEventMode ? 'Elimina tutti gli eventi' : 'Elimina tutte le partite'}</>}
+            {deletingAll ? '…' : <><Trash2 size={14} /> {isEventMode ? 'Elimina eventi' : 'Elimina partite'}</>}
           </button>
+          {!isEventMode && (
+            <button
+              onClick={exportMatchesCsv}
+              disabled={categoryMatches.length === 0}
+              className="btn-ghost text-sm px-4 py-2 flex items-center gap-1.5 whitespace-nowrap"
+            >
+              <Download size={14} /> Esporta CSV
+            </button>
+          )}
+          {!isEventMode && (
+            <button
+              onClick={() => setImportModalOpen(true)}
+              className="btn-ghost text-sm px-4 py-2 flex items-center gap-1.5 whitespace-nowrap"
+            >
+              <Upload size={14} /> Importa CSV
+            </button>
+          )}
           {!isEventMode && (
             <button
               onClick={openAddMatch}
@@ -426,6 +446,18 @@ export default function TournamentCalendar({ editionId, matches, category, searc
             </div>
           </div>
         </div>
+      )}
+
+      {importModalOpen && (
+        <ImportMatchesCsvModal
+          onClose={() => setImportModalOpen(false)}
+          editionId={editionId}
+          editionYear={editionYear}
+          approvedTeams={approvedTeams}
+          allGroups={allGroups}
+          groupTeams={groupTeams}
+          existingMatches={matches}
+        />
       )}
 
       {matchModalOpen && (

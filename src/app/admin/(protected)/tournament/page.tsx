@@ -49,6 +49,7 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
   let groupsWithMatches: string[] = []
   let matches: MatchWithTeams[] = []
   let events: CalendarioEvent[] = []
+  let groupTeams: { group_id: string; team_id: string }[] = []
 
   if (activeEdition) {
     const { data: g } = await supabase
@@ -75,6 +76,14 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
       .order('sort_order')
       .returns<Pick<Group, 'id' | 'name' | 'category'>[]>()
     allGroups = allGroupsData ?? []
+
+    if (allGroups.length > 0) {
+      const { data: groupTeamsData } = await supabase
+        .from('group_teams')
+        .select('group_id, team_id')
+        .in('group_id', allGroups.map(g => g.id))
+      groupTeams = groupTeamsData ?? []
+    }
 
     const { data: groupMatchRows } = await supabase
       .from('matches')
@@ -155,12 +164,14 @@ export default async function AdminTorneoPage({ searchParams }: Props) {
       ) : tab === 'calendario' ? (
         <TournamentCalendar
           editionId={activeEdition.id}
+          editionYear={activeEdition.year}
           matches={matches}
           category={sp.category as TeamCategory | 'evento' | undefined}
           search={sp.search}
           events={events}
           approvedTeams={approvedTeams}
           allGroups={allGroups}
+          groupTeams={groupTeams}
         />
       ) : (
         <TournamentBracket
