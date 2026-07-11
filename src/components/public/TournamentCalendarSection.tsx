@@ -150,9 +150,7 @@ export default function TournamentCalendarSection({ matches, events }: Props) {
               className={clsx(
                 'px-4 py-1.5 font-display uppercase tracking-wide text-xs border transition-colors',
                 cat === opt.value
-                  ? opt.value === 'evento'
-                    ? 'bg-teal-500 border-teal-500 text-white'
-                    : 'bg-brand-orange border-brand-orange text-white'
+                  ? 'bg-brand-orange border-brand-orange text-white'
                   : 'border-court-border text-court-muted hover:border-court-muted hover:text-court-white',
               )}
             >
