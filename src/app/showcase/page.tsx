@@ -10,6 +10,7 @@ import clsx from 'clsx'
 import { resolveContextualShowcaseMode } from '@/lib/showcase'
 import { fetchTournamentSnapshot } from '@/lib/tournamentData'
 import { patchMatches, patchTpcEntries, patchEvents } from '@/lib/tournamentRealtimePatchers'
+import { computeStandings } from '@/lib/standings'
 
 // Coarse safety-net poll — self-heals a silently-dead realtime websocket on
 // the venue's cellular SIM connection. Not the primary update mechanism.
@@ -221,61 +222,6 @@ function ShowcaseCalendar({ matches, events, theme }: { matches: MatchWithTeams[
 
 // ─── Standings Component ───────────────────────────────────────────────────────────
 
-function computeStandings(matches: MatchWithTeams[], teams: { id: string; name: string }[]) {
-  const teamStats = new Map<string, { played: number; wins: number; losses: number; pf: number; ps: number }>()
-
-  for (const team of teams) {
-    teamStats.set(team.id, { played: 0, wins: 0, losses: 0, pf: 0, ps: 0 })
-  }
-
-  for (const m of matches) {
-    if (m.status !== 'completed' || m.score_home == null || m.score_away == null) continue
-
-    const home = m.team_home_id
-    const away = m.team_away_id
-    if (!home || !away) continue
-
-    const homeStats = teamStats.get(home) || { played: 0, wins: 0, losses: 0, pf: 0, ps: 0 }
-    const awayStats = teamStats.get(away) || { played: 0, wins: 0, losses: 0, pf: 0, ps: 0 }
-
-    homeStats.played++
-    awayStats.played++
-    homeStats.pf += m.score_home
-    homeStats.ps += m.score_away
-    awayStats.pf += m.score_away
-    awayStats.ps += m.score_home
-
-    if (m.score_home > m.score_away) {
-      homeStats.wins++
-      awayStats.losses++
-    } else {
-      homeStats.losses++
-      awayStats.wins++
-    }
-
-    teamStats.set(home, homeStats)
-    teamStats.set(away, awayStats)
-  }
-
-  const rows = Array.from(teamStats.entries())
-    .map(([teamId, stats]) => {
-      const team = teams.find(t => t.id === teamId)
-      return {
-        team_id: teamId,
-        team_name: team?.name ?? 'Sconosciuta',
-        played: stats.played,
-        wins: stats.wins,
-        losses: stats.losses,
-        pf: stats.pf,
-        ps: stats.ps,
-        point_differential: stats.pf - stats.ps,
-      }
-    })
-    .sort((a, b) => b.wins - a.wins || b.point_differential - a.point_differential)
-
-  return rows
-}
-
 // Estimate rendered height of one girone section (group header + col header + team rows)
 function estimateGroupHeight(group: GroupWithTeams): number {
   const teamCount = group.group_teams.filter(gt => gt.teams).length
@@ -467,8 +413,8 @@ function ShowcaseStandings({ groups, matches, category, theme, carousel }: {
                       </td>
                       <td className={clsx('py-2 px-3 text-center font-semibold w-px whitespace-nowrap', theme.tableText)}>{row.wins}</td>
                       <td className={clsx('py-2 px-3 text-center w-px whitespace-nowrap', theme.textMuted)}>{row.losses}</td>
-                      <td className={clsx('py-2 px-3 text-center w-px whitespace-nowrap', theme.textMuted)}>{row.pf}</td>
-                      <td className={clsx('py-2 px-3 text-center w-px whitespace-nowrap', theme.textMuted)}>{row.ps}</td>
+                      <td className={clsx('py-2 px-3 text-center w-px whitespace-nowrap', theme.textMuted)}>{row.points_for}</td>
+                      <td className={clsx('py-2 px-3 text-center w-px whitespace-nowrap', theme.textMuted)}>{row.points_against}</td>
                       <td className="py-2 px-3 text-center w-px whitespace-nowrap">
                         <span className={clsx(
                           'font-display font-bold',

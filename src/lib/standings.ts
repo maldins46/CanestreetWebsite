@@ -2,7 +2,7 @@ import type { Match, StandingsRow } from '@/types'
 
 /**
  * Compute group standings from completed matches.
- * Sorting: wins DESC → point_differential DESC → points_for DESC
+ * Sorting: wins DESC → point_differential DESC → points_for DESC → team_name ASC
  */
 export function computeStandings(
   matches: Match[],
@@ -59,6 +59,7 @@ export function computeStandings(
     b.wins - a.wins
     || b.point_differential - a.point_differential
     || b.points_for - a.points_for
+    || a.team_name.localeCompare(b.team_name)
   )
 
   return rows
