@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { computeStandings } from '@/lib/standings'
-import type { GroupWithTeams, MatchWithTeams, Match, BracketRound, TeamCategory } from '@/types'
+import type { GroupWithTeams, MatchWithTeams, Match, BracketRound, TeamCategory, StandingsRow } from '@/types'
 import clsx from 'clsx'
 import { Trophy, ListOrdered } from 'lucide-react'
 
@@ -230,6 +230,58 @@ function DesktopBracket({ rounds, byRound, categoryTeams, editingSlot, setEditin
   )
 }
 
+// ─── Preview modal slot (editable team + "why" reason) ────────────────────────
+
+interface PreviewSlotProps {
+  matchId: string
+  slot: 'home' | 'away'
+  teamId: string | null
+  categoryTeams: { id: string; name: string }[]
+  teamInfo: Map<string, { groupName: string; groupPosition: number; stats: StandingsRow }>
+  editingSlot: { matchId: string; slot: 'home' | 'away' } | null
+  setEditingSlot: (s: { matchId: string; slot: 'home' | 'away' } | null) => void
+  onChange: (matchId: string, slot: 'home' | 'away', teamId: string) => void
+}
+
+function PreviewSlot({ matchId, slot, teamId, categoryTeams, teamInfo, editingSlot, setEditingSlot, onChange }: PreviewSlotProps) {
+  const team = teamId ? categoryTeams.find(t => t.id === teamId) : null
+  const info = teamId ? teamInfo.get(teamId) : undefined
+  const isEditing = editingSlot?.matchId === matchId && editingSlot.slot === slot
+
+  return (
+    <div className="px-3 py-2 border border-court-border">
+      {isEditing ? (
+        <select
+          className="input py-0.5 px-1 text-xs w-full"
+          autoFocus
+          defaultValue=""
+          onChange={e => onChange(matchId, slot, e.target.value)}
+          onBlur={() => setEditingSlot(null)}
+        >
+          <option value="">— Seleziona —</option>
+          <option value="__clear__">— Rimuovi squadra —</option>
+          {categoryTeams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+        </select>
+      ) : (
+        <button
+          className="text-left w-full hover:text-brand-orange transition-colors font-body text-sm"
+          onClick={() => setEditingSlot({ matchId, slot })}
+        >
+          {team ? team.name : <span className="italic opacity-50 text-court-muted">TBD</span>}
+        </button>
+      )}
+      {info && (
+        <ul className="text-xs text-court-muted mt-1 list-disc list-inside space-y-0.5">
+          <li>{info.groupPosition}° classificato, Girone {info.groupName}</li>
+          <li>{info.stats.wins} Vinte, {info.stats.losses} Perse</li>
+          <li>Differenza canestri {info.stats.point_differential > 0 ? '+' : ''}{info.stats.point_differential}</li>
+          <li>Punti Fatti {info.stats.points_for}</li>
+        </ul>
+      )}
+    </div>
+  )
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function TournamentBracket({
@@ -241,6 +293,8 @@ export default function TournamentBracket({
   const [editingSlot, setEditingSlot]     = useState<{ matchId: string; slot: 'home' | 'away' } | null>(null)
   const [bracketSize, setBracketSize]     = useState<4 | 8 | 16>(4)
   const [formatModalOpen, setFormatModalOpen] = useState(false)
+  const [preview, setPreview] = useState<{ matchId: string; homeTeamId: string | null; awayTeamId: string | null }[] | null>(null)
+  const [previewEditingSlot, setPreviewEditingSlot] = useState<{ matchId: string; slot: 'home' | 'away' } | null>(null)
 
   const categoryTeams = approvedTeams.filter(t => t.category === category)
 
@@ -256,6 +310,20 @@ export default function TournamentBracket({
   }
   const rounds = roundOrder.filter(r => byRound.has(r))
 
+  // Standings per group + a lookup of every team's group/position/stats, used both to
+  // compute the "populate from standings" proposal and to explain it in the preview modal.
+  const groupStandings = groups.map(g => {
+    const gMatches = groupMatches.filter(m => m.group_id === g.id)
+    const gTeams   = g.group_teams.flatMap(gt => gt.teams ? [{ id: gt.teams.id, name: gt.teams.name }] : [])
+    return { group: g, standings: computeStandings(gMatches, gTeams) }
+  })
+  const teamInfo = new Map<string, { groupName: string; groupPosition: number; stats: StandingsRow }>()
+  for (const gs of groupStandings) {
+    gs.standings.forEach((row, i) => {
+      teamInfo.set(row.team_id, { groupName: gs.group.name, groupPosition: i + 1, stats: row })
+    })
+  }
+
   async function overrideTeam(matchId: string, slot: 'home' | 'away', teamId: string) {
     if (!teamId) { setEditingSlot(null); return }
     setSaving(true)
@@ -267,26 +335,19 @@ export default function TournamentBracket({
     setSaving(false)
   }
 
-  async function populateBracket() {
+  function computePreview() {
     if (bracketMatches.length === 0) {
       alert('Genera prima un tabellone vuoto.')
       return
     }
-    if (!window.confirm('Popolare il tabellone con le squadre dalle classifiche? Le squadre attuali del primo turno verranno sovrascritte.')) return
 
     // Derive bracket size from the existing bracket structure
     const firstRound        = rounds[0]
     const firstRoundMatches = byRound.get(firstRound) ?? []
     const derivedSize       = firstRoundMatches.length * 2
 
-    const groupStandings = groups.map(g => {
-      const gMatches = groupMatches.filter(m => m.group_id === g.id)
-      const gTeams   = g.group_teams.flatMap(gt => gt.teams ? [{ id: gt.teams.id, name: gt.teams.name }] : [])
-      return { group: g, standings: computeStandings(gMatches, gTeams) }
-    })
-
     const teamsPerGroup = Math.ceil(derivedSize / Math.max(groups.length, 1))
-    const qualifiers: { id: string; name: string }[] = []
+    const qualifiers: string[] = []
 
     for (let pos = 0; pos < teamsPerGroup; pos++) {
       const atPosition = groupStandings
@@ -298,23 +359,50 @@ export default function TournamentBracket({
           b.points_for - a.points_for
         )
       for (const row of atPosition) {
-        if (qualifiers.length < derivedSize) qualifiers.push({ id: row.team_id, name: row.team_name })
+        if (qualifiers.length < derivedSize) qualifiers.push(row.team_id)
       }
     }
-    while (qualifiers.length < derivedSize) qualifiers.push({ id: '', name: '' })
+    while (qualifiers.length < derivedSize) qualifiers.push('')
 
-    // Update only team slots on first-round matches, leaving everything else intact
+    setPreview(firstRoundMatches.map((match, pos) => {
+      const seedA = pos
+      const seedB = firstRoundMatches.length * 2 - 1 - pos
+      return {
+        matchId: match.id,
+        homeTeamId: qualifiers[seedA] || null,
+        awayTeamId: qualifiers[seedB] || null,
+      }
+    }))
+  }
+
+  function setPreviewSlot(matchId: string, slot: 'home' | 'away', teamId: string) {
+    setPreview(prev => {
+      if (!prev) return prev
+      const value = teamId === '__clear__' || !teamId ? null : teamId
+      return prev.map(entry => {
+        if (entry.matchId === matchId) return { ...entry, [slot === 'home' ? 'homeTeamId' : 'awayTeamId']: value }
+        // Swap out of whichever other slot currently holds the picked team
+        if (value) {
+          if (entry.homeTeamId === value) return { ...entry, homeTeamId: null }
+          if (entry.awayTeamId === value) return { ...entry, awayTeamId: null }
+        }
+        return entry
+      })
+    })
+    setPreviewEditingSlot(null)
+  }
+
+  async function confirmPreview() {
+    if (!preview) return
     setSaving(true)
-    for (let pos = 0; pos < firstRoundMatches.length; pos++) {
-      const match  = firstRoundMatches[pos]
-      const seedA  = pos
-      const seedB  = firstRoundMatches.length * 2 - 1 - pos
+    for (const entry of preview) {
       await supabase.from('matches').update({
-        team_home_id: qualifiers[seedA]?.id || null,
-        team_away_id: qualifiers[seedB]?.id || null,
-      }).eq('id', match.id)
+        team_home_id: entry.homeTeamId,
+        team_away_id: entry.awayTeamId,
+      }).eq('id', entry.matchId)
     }
     setSaving(false)
+    setPreview(null)
     router.refresh()
   }
 
@@ -380,7 +468,7 @@ export default function TournamentBracket({
       <div className="card flex items-center gap-3 mb-6 flex-wrap px-4 py-3">
         <div className="flex items-center gap-3 ml-auto flex-wrap justify-end">
           <button
-            onClick={populateBracket}
+            onClick={computePreview}
             disabled={saving || groups.length === 0 || bracketMatches.length === 0}
             className="btn-ghost text-sm px-4 py-2 whitespace-nowrap"
           >
@@ -443,6 +531,69 @@ export default function TournamentBracket({
                 className="btn-primary text-sm px-4 py-2"
               >
                 Genera
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Preview modal: proposed seeding from standings, editable before approval */}
+      {preview && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={() => setPreview(null)}
+        >
+          <div
+            className="card w-full max-w-2xl mx-4 p-6 max-h-[85vh] overflow-y-auto"
+            onClick={e => e.stopPropagation()}
+          >
+            <h2 className="font-display font-bold uppercase text-xl text-court-white mb-1">
+              Anteprima tabellone
+            </h2>
+            <p className="text-court-gray text-sm mb-5">
+              Squadre proposte in base alle classifiche dei gironi. Clicca su una squadra per cambiarla prima di confermare.
+            </p>
+
+            <div className="space-y-3 mb-6">
+              {preview.map((entry, i) => (
+                <div key={entry.matchId} className="border border-court-border p-3">
+                  <p className="text-xs text-court-muted uppercase tracking-wide mb-2">Match {i + 1}</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <PreviewSlot
+                      matchId={entry.matchId}
+                      slot="home"
+                      teamId={entry.homeTeamId}
+                      categoryTeams={categoryTeams}
+                      teamInfo={teamInfo}
+                      editingSlot={previewEditingSlot}
+                      setEditingSlot={setPreviewEditingSlot}
+                      onChange={setPreviewSlot}
+                    />
+                    <PreviewSlot
+                      matchId={entry.matchId}
+                      slot="away"
+                      teamId={entry.awayTeamId}
+                      categoryTeams={categoryTeams}
+                      teamInfo={teamInfo}
+                      editingSlot={previewEditingSlot}
+                      setEditingSlot={setPreviewEditingSlot}
+                      onChange={setPreviewSlot}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setPreview(null)} className="btn-ghost text-sm px-4 py-2">
+                Annulla
+              </button>
+              <button
+                onClick={confirmPreview}
+                disabled={saving}
+                className="btn-primary text-sm px-4 py-2"
+              >
+                Conferma
               </button>
             </div>
           </div>
