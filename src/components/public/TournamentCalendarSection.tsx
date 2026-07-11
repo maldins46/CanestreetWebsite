@@ -66,6 +66,12 @@ export default function TournamentCalendarSection({ matches, events }: Props) {
   const validValues = categories.map(c => c.value)
   const cat: FilterCat = catParam && validValues.includes(catParam) ? catParam : 'all'
 
+  const visibleCategories = categories.filter(opt => {
+    if (opt.value === 'all') return true
+    if (opt.value === 'evento') return events.length > 0
+    return matches.some(m => m.category === opt.value)
+  })
+
   function setCat(value: FilterCat) {
     const params = new URLSearchParams(searchParams.toString())
     params.set('cat', value)
@@ -137,7 +143,7 @@ export default function TournamentCalendarSection({ matches, events }: Props) {
       {/* Search + category pills */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
         <div className="flex gap-2 flex-wrap order-last sm:order-first">
-          {categories.map(opt => (
+          {visibleCategories.map(opt => (
             <button
               key={opt.value}
               onClick={() => setCat(opt.value)}

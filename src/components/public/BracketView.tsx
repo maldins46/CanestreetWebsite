@@ -307,10 +307,13 @@ export default function BracketSection({ matches }: BracketSectionProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
 
+  const bracketMatches = matches.filter(m => m.phase === 'bracket')
+  const presentCategories = categoryOrder.filter(cat => bracketMatches.some(m => m.category === cat))
+
   const catParam = searchParams.get('cat') as TeamCategory | null
-  const selectedCat: TeamCategory = catParam && (categoryOrder as string[]).includes(catParam)
-    ? catParam as TeamCategory
-    : 'open_m'
+  const selectedCat: TeamCategory = catParam && presentCategories.includes(catParam)
+    ? catParam
+    : (presentCategories[0] ?? 'open_m')
 
   function setSelectedCat(value: TeamCategory) {
     const params = new URLSearchParams(searchParams.toString())
@@ -318,14 +321,13 @@ export default function BracketSection({ matches }: BracketSectionProps) {
     router.replace(`/tournament?${params}`)
   }
 
-  const bracketMatches = matches.filter(m => m.phase === 'bracket')
   const filteredMatches = bracketMatches.filter(m => m.category === selectedCat)
 
   return (
     <div>
       {/* Category pills */}
       <div className="flex gap-2 flex-wrap mb-6">
-        {categoryOrder.map(cat => (
+        {presentCategories.map(cat => (
           <button
             key={cat}
             onClick={() => setSelectedCat(cat)}

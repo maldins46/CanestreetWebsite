@@ -139,10 +139,12 @@ export default function StandingsSection({ groups, matches }: StandingsSectionPr
   const searchParams = useSearchParams()
   const router = useRouter()
 
+  const presentCategories = categoryOrder.filter(cat => groups.some(g => g.category === cat))
+
   const catParam = searchParams.get('cat') as TeamCategory | null
-  const selectedCat: TeamCategory = catParam && (categoryOrder as string[]).includes(catParam)
-    ? catParam as TeamCategory
-    : 'open_m'
+  const selectedCat: TeamCategory = catParam && presentCategories.includes(catParam)
+    ? catParam
+    : (presentCategories[0] ?? 'open_m')
 
   function setSelectedCat(value: TeamCategory) {
     const params = new URLSearchParams(searchParams.toString())
@@ -159,7 +161,7 @@ export default function StandingsSection({ groups, matches }: StandingsSectionPr
     <div>
       {/* Category pills */}
       <div className="flex gap-2 flex-wrap mb-6">
-        {categoryOrder.map(cat => (
+        {presentCategories.map(cat => (
           <button
             key={cat}
             onClick={() => setSelectedCat(cat)}
