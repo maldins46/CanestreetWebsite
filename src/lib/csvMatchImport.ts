@@ -29,7 +29,7 @@ export function parseCsvFile(file: File): Promise<CsvParseResult> {
       skipEmptyLines: true,
       transformHeader: h => h.trim().toLowerCase(),
       complete: results => {
-        const errors: string[] = results.errors.map(e => e.message)
+        const errors: string[] = results.errors.filter(e => e.type !== 'FieldMismatch').map(e => e.message)
         const fields = results.meta.fields ?? []
         const missing = REQUIRED_COLUMNS.filter(c => !fields.includes(c))
         if (missing.length > 0) {
