@@ -49,6 +49,7 @@ export type CsvDateFormat =
   | 'YYYY-MM-DD'
   | 'DD/MM/YYYY'
   | 'DD-MM-YYYY'
+  | 'DD/MM'
   | 'DD Month'
   | 'DayOfWeek DD'
 
@@ -85,6 +86,12 @@ export function parseCsvDateTime(
     d = Number(match[1])
     m = Number(match[2])
     y = Number(match[3])
+  } else if (format === 'DD/MM') {
+    const match = s.match(/^(\d{1,2})\/(\d{1,2})$/)
+    if (!match) return { iso: null, error: `data non valida (attesa DD/MM): "${dateStr}"` }
+    y = editionYear
+    d = Number(match[1])
+    m = Number(match[2])
   } else if (format === 'DD Month') {
     const match = s.match(/^(\d{1,2})\s+([a-zà-ù]+)$/i)
     if (!match) return { iso: null, error: `data non valida (attesa "DD Mese"): "${dateStr}"` }
@@ -128,6 +135,7 @@ export function detectCsvDateFormat(sample: string): CsvDateFormat {
   if (/^\d{4}\/\d{2}\/\d{2}$/.test(s)) return 'YYYY/MM/DD'
   if (/^\d{2}-\d{2}-\d{4}$/.test(s)) return 'DD-MM-YYYY'
   if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return 'DD/MM/YYYY'
+  if (/^\d{1,2}\/\d{1,2}$/.test(s)) return 'DD/MM'
   if (/^\d{1,2}\s+[a-zà-ù]+$/i.test(s)) return 'DD Month'
   if (/^[a-zà-ù]+\s+\d{1,2}$/i.test(s)) return 'DayOfWeek DD'
   return 'DD Month'

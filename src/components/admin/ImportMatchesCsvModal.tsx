@@ -48,6 +48,7 @@ const DATE_FORMAT_OPTIONS: { value: CsvDateFormat; label: string }[] = [
   { value: 'YYYY/MM/DD', label: 'YYYY/MM/DD' },
   { value: 'DD-MM-YYYY', label: 'DD-MM-YYYY' },
   { value: 'DD/MM/YYYY', label: 'DD/MM/YYYY' },
+  { value: 'DD/MM', label: 'DD/MM' },
   { value: 'DD Month', label: 'DD Mese' },
   { value: 'DayOfWeek DD', label: 'Giorno DD' },
 ]
