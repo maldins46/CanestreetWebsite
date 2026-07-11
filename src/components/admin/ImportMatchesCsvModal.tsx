@@ -340,7 +340,7 @@ export default function ImportMatchesCsvModal({
           <ul className="list-disc list-outside pl-5 space-y-1 text-court-gray text-sm mb-4">
             <li><code className="text-court-light">date</code>: il giorno della partita. Il formato viene riconosciuto automaticamente; l&apos;orario deve rispettare <code className="text-court-light">HH:mm</code>.</li>
             <li><code className="text-court-light">home_result</code> / <code className="text-court-light">away_result</code>: risultati della partita, facoltativi. Se valorizzati, la partita viene importata già come terminata con quel risultato.</li>
-            <li><code className="text-court-light">round_name</code>: si aspetta il nome del girone (es. Girone A) o del turno (es. Quarti, Semifinali, Finali).</li>
+            <li><code className="text-court-light">round_name</code>: si aspetta il nome del girone (es. Girone A o semplicemente A) o del turno (es. Quarti, Semifinali, Finali).</li>
             <li><code className="text-court-light">category</code> si aspetta il nome della categoria (Open M, Open F, U14 M, U16 M, U18 M).</li>
             <li>Puoi correggere formati e refusi nel passaggio successivo.</li>
           </ul>

@@ -144,9 +144,10 @@ export function resolveRound(
   if (key in BRACKET_TOKENS) {
     return { phase: 'bracket', groupId: null, bracketRound: BRACKET_TOKENS[key], status: 'matched' }
   }
+  // Accepts both the "Girone X" form and a bare group name/letter ("X").
   const groupMatch = raw.trim().match(/^girone\s+(.+)$/i)
-  if (groupMatch && category) {
-    const label = groupMatch[1]
+  const label = groupMatch ? groupMatch[1] : raw.trim()
+  if (label && category) {
     const candidates = allGroups.filter(g => g.category === category)
     const exact = candidates.find(g => fuzzyEquals(g.name, label))
     if (exact) return { phase: 'group', groupId: exact.id, bracketRound: null, status: 'matched' }
