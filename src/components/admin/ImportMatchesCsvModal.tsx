@@ -14,8 +14,10 @@ import {
   isHardUnresolved,
   resolveTeam,
   resolveRound,
+  computeBracketLinks,
   norm,
   EXPORT_COLUMNS,
+  BRACKET_ROUND_ORDER,
   type RawCsvRow,
   type ParsedMatchRow,
   type ImportContext,
@@ -212,32 +214,59 @@ export default function ImportMatchesCsvModal({
   async function handleImport() {
     setImporting(true)
     setImportError(null)
-    const payloads = rows
-      .filter(r => !r.excluded)
-      .map(r => ({
+    const includedRows = rows.filter(r => !r.excluded)
+    const bracketLinks = computeBracketLinks(includedRows)
+
+    const payloads = includedRows.map(r => {
+      const link = bracketLinks.get(r.rowIndex)
+      return {
+        ...(link ? { id: link.id } : {}),
         edition_id: editionId,
         category: r.category,
         phase: r.phase,
         group_id: r.phase === 'group' ? r.groupId : null,
         bracket_round: r.phase === 'bracket' ? r.bracketRound : null,
+        bracket_position: link?.bracket_position ?? null,
+        next_match_id: link?.next_match_id ?? null,
+        next_match_slot: link?.next_match_slot ?? null,
         team_home_id: r.homeTeamId,
         team_away_id: r.awayTeamId,
         scheduled_at: r.scheduledAt,
         score_home: r.scoreHome,
         score_away: r.scoreAway,
         status: r.scoreHome != null && r.scoreAway != null ? 'completed' : 'scheduled',
-      }))
+        rowIndex: r.rowIndex,
+      }
+    })
     if (payloads.length === 0) {
       setImporting(false)
       return
     }
-    const { error } = await supabase.from('matches').insert(payloads)
-    if (error) {
-      setImportError(error.message)
-      setImporting(false)
-      return
+
+    // Linked bracket rows must be inserted "final" first, then each shallower round in turn,
+    // so next_match_id always points at an already-committed row. Everything else (group rows
+    // and unlinked bracket rows) has no such dependency and can go in a single batch.
+    const linkedRowIndexes = new Set(bracketLinks.keys())
+    const catchAll = payloads.filter(p => !linkedRowIndexes.has(p.rowIndex))
+    const batches: typeof payloads[] = []
+    for (const round of [...BRACKET_ROUND_ORDER].reverse()) {
+      const batch = payloads.filter(p => linkedRowIndexes.has(p.rowIndex) && p.bracket_round === round)
+      if (batch.length > 0) batches.push(batch)
     }
-    setImportedCount(payloads.length)
+    if (catchAll.length > 0) batches.push(catchAll)
+
+    let imported = 0
+    for (const batch of batches) {
+      const { error } = await supabase.from('matches').insert(batch.map(({ rowIndex: _rowIndex, ...rest }) => rest))
+      if (error) {
+        setImportError(error.message)
+        setImporting(false)
+        return
+      }
+      imported += batch.length
+    }
+
+    setImportedCount(imported)
     setStep('done')
     setImporting(false)
     router.refresh()

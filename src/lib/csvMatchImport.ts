@@ -156,6 +156,98 @@ export function resolveRound(
 }
 
 // ------------------------------------------------------------
+// Bracket linking (bracket_position / next_match_id / next_match_slot)
+// ------------------------------------------------------------
+
+export const BRACKET_ROUND_ORDER: BracketRound[] = ['round_of_16', 'quarterfinal', 'semifinal', 'final']
+
+export interface BracketLink {
+  id: string
+  bracket_position: number
+  next_match_id: string | null
+  next_match_slot: 'home' | 'away' | null
+}
+
+interface BracketLinkRow {
+  rowIndex: number
+  category: TeamCategory | null
+  phase: MatchPhase | null
+  bracketRound: BracketRound | null
+}
+
+/**
+ * Links CSV bracket rows into a tree (bracket_position / next_match_id / next_match_slot),
+ * mirroring generateEmptyBracket()'s pos/2 + odd/even slot convention (TournamentBracket.tsx),
+ * but only for categories whose bracket rows in THIS upload form a complete, gap-free bracket:
+ * exactly 1 final, and if present, exactly 2 semifinal / 4 quarterfinal / 8 round_of_16 rows,
+ * with no missing round in between. Categories that don't match one of those exact shapes are
+ * left out of the returned map entirely, so their bracket rows import unlinked (bracket_round
+ * only), same as before this function existed.
+ *
+ * Position within a round is taken from each row's order of appearance in `rows` (CSV order).
+ */
+export function computeBracketLinks(rows: BracketLinkRow[]): Map<number, BracketLink> {
+  const links = new Map<number, BracketLink>()
+
+  const byCategory = new Map<TeamCategory, BracketLinkRow[]>()
+  for (const r of rows) {
+    if (r.phase !== 'bracket' || !r.category || !r.bracketRound) continue
+    if (!byCategory.has(r.category)) byCategory.set(r.category, [])
+    byCategory.get(r.category)!.push(r)
+  }
+
+  for (const catRows of Array.from(byCategory.values())) {
+    const byRound = new Map<BracketRound, BracketLinkRow[]>()
+    for (const round of BRACKET_ROUND_ORDER) byRound.set(round, [])
+    for (const r of catRows) byRound.get(r.bracketRound!)!.push(r)
+
+    if (byRound.get('final')!.length !== 1) continue // no root to anchor the tree
+
+    let shallowestIndex = BRACKET_ROUND_ORDER.length - 1 // 'final', confirmed present above
+    let invalid = false
+    for (let idx = BRACKET_ROUND_ORDER.length - 2; idx >= 0; idx--) {
+      const count = byRound.get(BRACKET_ROUND_ORDER[idx])!.length
+      const expected = 2 ** (BRACKET_ROUND_ORDER.length - 1 - idx)
+      if (count === expected) {
+        shallowestIndex = idx
+        continue
+      }
+      if (count === 0) break // rounds shallower than this must also be empty (checked below)
+      invalid = true
+      break
+    }
+    if (invalid) continue
+    for (let idx = shallowestIndex - 1; idx >= 0; idx--) {
+      if (byRound.get(BRACKET_ROUND_ORDER[idx])!.length !== 0) { invalid = true; break }
+    }
+    if (invalid) continue
+
+    const ids = new Map<number, string>() // rowIndex -> id
+    for (let idx = BRACKET_ROUND_ORDER.length - 1; idx >= shallowestIndex; idx--) {
+      for (const r of byRound.get(BRACKET_ROUND_ORDER[idx])!) ids.set(r.rowIndex, crypto.randomUUID())
+    }
+
+    let previousRound: BracketLinkRow[] = []
+    for (let idx = BRACKET_ROUND_ORDER.length - 1; idx >= shallowestIndex; idx--) {
+      const current = byRound.get(BRACKET_ROUND_ORDER[idx])!
+      const isFinal = idx === BRACKET_ROUND_ORDER.length - 1
+      current.forEach((r, pos) => {
+        const parent = isFinal ? null : previousRound[Math.floor(pos / 2)]
+        links.set(r.rowIndex, {
+          id: ids.get(r.rowIndex)!,
+          bracket_position: pos,
+          next_match_id: parent ? ids.get(parent.rowIndex)! : null,
+          next_match_slot: parent ? (pos % 2 === 0 ? 'home' : 'away') : null,
+        })
+      })
+      previousRound = current
+    }
+  }
+
+  return links
+}
+
+// ------------------------------------------------------------
 // Row model
 // ------------------------------------------------------------
 
