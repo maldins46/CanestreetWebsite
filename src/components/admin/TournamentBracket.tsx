@@ -43,12 +43,12 @@ const roundOrder: BracketRound[] = ['round_of_16', 'quarterfinal', 'semifinal', 
 // ─── Official FIBA 3x3 girone-to-bracket crossing rules ───────────────────────
 // Only these two configurations (feeding an 8-team quarterfinal bracket) have an
 // official crossing; any other groups-count/bracket-size combo is unsupported.
+// Both scenarios rank the qualifiers (vittorie -> punti fatti -> alfabetico) into
+// seeds 1-8 and cross with classic 8-seed tennis bracketing — 4 gironi qualify
+// 8 teams directly (1st + 2nd of each), 3 gironi qualify 6 directly and top up
+// to 8 with the 2 best third-placed teams (wildcards).
 
 type SeedingScenario = 'four-groups' | 'three-groups' | null
-
-// [homeGroupIdx, awayGroupIdx] per QF bracket_position (0=A, 1=B, 2=C, 3=D by sort_order):
-// home = 1° of homeGroupIdx, away = 2° of awayGroupIdx.
-const FOUR_GROUP_CROSSING: [number, number][] = [[0, 3], [2, 1], [1, 2], [3, 0]]
 
 // [homeSeed, awaySeed] per QF bracket_position, seeds 1-8 from the merged cross-group ranking.
 const EIGHT_SEED_CROSSING: [number, number][] = [[1, 8], [4, 5], [2, 7], [3, 6]]
@@ -381,37 +381,34 @@ export default function TournamentBracket({
       return
     }
 
-    let slots: { home: string | null; away: string | null }[]
-    const newSeedInfo = new Map<string, SeedInfo>()
+    // Direct qualifiers: 1st + 2nd of every girone (8 teams for 4 gironi, 6 for 3 gironi).
+    const direct = groupStandings.flatMap(gs => [gs.standings[0], gs.standings[1]].filter((r): r is StandingsRow => Boolean(r)))
 
-    if (seedingScenario === 'four-groups') {
-      // Fixed official crossing: 1°A-2°D, 1°C-2°B, 1°B-2°C, 1°D-2°A
-      slots = FOUR_GROUP_CROSSING.map(([homeIdx, awayIdx]) => ({
-        home: groupStandings[homeIdx]?.standings[0]?.team_id ?? null,
-        away: groupStandings[awayIdx]?.standings[1]?.team_id ?? null,
-      }))
-    } else {
-      // 6 direct qualifiers (1st + 2nd of each girone) + best 2 third-placed teams,
-      // merged into one ranking of 8 (vittorie -> punti fatti -> alfabetico), then
-      // crossed with classic 8-seed tennis bracketing.
-      const direct = groupStandings.flatMap(gs => [gs.standings[0], gs.standings[1]].filter((r): r is StandingsRow => Boolean(r)))
+    // 3-gironi only: top up to 8 with the best 2 third-placed teams (wildcards).
+    const wildcardIds = new Set<string>()
+    let pool = direct
+    if (seedingScenario === 'three-groups') {
       const thirds = groupStandings.map(gs => gs.standings[2]).filter((r): r is StandingsRow => Boolean(r))
       const wildcards = rankCrossGroup(thirds).slice(0, 2)
-      const wildcardIds = new Set(wildcards.map(r => r.team_id))
-      const pool = rankCrossGroup([...direct, ...wildcards])
-
-      const bySeed = new Map<number, string>()
-      pool.forEach((row, i) => {
-        const seed = i + 1
-        bySeed.set(seed, row.team_id)
-        newSeedInfo.set(row.team_id, { seed, isWildcard: wildcardIds.has(row.team_id) })
-      })
-
-      slots = EIGHT_SEED_CROSSING.map(([homeSeed, awaySeed]) => ({
-        home: bySeed.get(homeSeed) ?? null,
-        away: bySeed.get(awaySeed) ?? null,
-      }))
+      wildcards.forEach(w => wildcardIds.add(w.team_id))
+      pool = [...direct, ...wildcards]
     }
+
+    // Merge into one ranking of 8 (vittorie -> punti fatti -> alfabetico), then cross
+    // with classic 8-seed tennis bracketing: 1v8, 4v5, 2v7, 3v6.
+    const ranked = rankCrossGroup(pool)
+    const newSeedInfo = new Map<string, SeedInfo>()
+    const bySeed = new Map<number, string>()
+    ranked.forEach((row, i) => {
+      const seed = i + 1
+      bySeed.set(seed, row.team_id)
+      newSeedInfo.set(row.team_id, { seed, isWildcard: wildcardIds.has(row.team_id) })
+    })
+
+    const slots = EIGHT_SEED_CROSSING.map(([homeSeed, awaySeed]) => ({
+      home: bySeed.get(homeSeed) ?? null,
+      away: bySeed.get(awaySeed) ?? null,
+    }))
 
     setSeedInfo(newSeedInfo)
     setPreview(firstRoundMatches.map((match, i) => ({
