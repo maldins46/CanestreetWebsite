@@ -81,6 +81,13 @@ function byPointsThenName(a: StandingsRow, b: StandingsRow): number {
   return b.points_for - a.points_for || a.team_name.localeCompare(b.team_name)
 }
 
+/** Ranks teams across different gironi, where scontri diretti isn't meaningful (no shared matches). */
+export function rankCrossGroup(rows: StandingsRow[]): StandingsRow[] {
+  return [...rows].sort((a, b) =>
+    b.wins - a.wins || b.points_for - a.points_for || a.team_name.localeCompare(b.team_name)
+  )
+}
+
 /**
  * Orders rows by wins DESC, breaking ties on wins via scontri diretti
  * (differenza canestri is intentionally never used):

@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { computeStandings } from '@/lib/standings'
+import { computeStandings, rankCrossGroup } from '@/lib/standings'
 import type { GroupWithTeams, MatchWithTeams, Match, BracketRound, TeamCategory, StandingsRow } from '@/types'
 import clsx from 'clsx'
 import { Trophy, ListOrdered } from 'lucide-react'
@@ -39,6 +39,24 @@ const roundLabels: Record<BracketRound, string> = {
 }
 
 const roundOrder: BracketRound[] = ['round_of_16', 'quarterfinal', 'semifinal', 'final']
+
+// ─── Official FIBA 3x3 girone-to-bracket crossing rules ───────────────────────
+// Only these two configurations (feeding an 8-team quarterfinal bracket) have an
+// official crossing; any other groups-count/bracket-size combo is unsupported.
+
+type SeedingScenario = 'four-groups' | 'three-groups' | null
+
+// [homeGroupIdx, awayGroupIdx] per QF bracket_position (0=A, 1=B, 2=C, 3=D by sort_order):
+// home = 1° of homeGroupIdx, away = 2° of awayGroupIdx.
+const FOUR_GROUP_CROSSING: [number, number][] = [[0, 3], [2, 1], [1, 2], [3, 0]]
+
+// [homeSeed, awaySeed] per QF bracket_position, seeds 1-8 from the merged cross-group ranking.
+const EIGHT_SEED_CROSSING: [number, number][] = [[1, 8], [4, 5], [2, 7], [3, 6]]
+
+interface SeedInfo {
+  seed: number
+  isWildcard: boolean
+}
 
 // ─── Admin bracket card ───────────────────────────────────────────────────────
 
@@ -238,14 +256,16 @@ interface PreviewSlotProps {
   teamId: string | null
   categoryTeams: { id: string; name: string }[]
   teamInfo: Map<string, { groupName: string; groupPosition: number; stats: StandingsRow }>
+  seedInfo: Map<string, SeedInfo>
   editingSlot: { matchId: string; slot: 'home' | 'away' } | null
   setEditingSlot: (s: { matchId: string; slot: 'home' | 'away' } | null) => void
   onChange: (matchId: string, slot: 'home' | 'away', teamId: string) => void
 }
 
-function PreviewSlot({ matchId, slot, teamId, categoryTeams, teamInfo, editingSlot, setEditingSlot, onChange }: PreviewSlotProps) {
+function PreviewSlot({ matchId, slot, teamId, categoryTeams, teamInfo, seedInfo, editingSlot, setEditingSlot, onChange }: PreviewSlotProps) {
   const team = teamId ? categoryTeams.find(t => t.id === teamId) : null
   const info = teamId ? teamInfo.get(teamId) : undefined
+  const seed = teamId ? seedInfo.get(teamId) : undefined
   const isEditing = editingSlot?.matchId === matchId && editingSlot.slot === slot
 
   return (
@@ -274,8 +294,12 @@ function PreviewSlot({ matchId, slot, teamId, categoryTeams, teamInfo, editingSl
         <ul className="text-xs text-court-muted mt-1 list-disc list-inside space-y-0.5">
           <li>{info.groupPosition}° classificato, Girone {info.groupName}</li>
           <li>{info.stats.wins} Vinte, {info.stats.losses} Perse</li>
-          <li>Differenza canestri {info.stats.point_differential > 0 ? '+' : ''}{info.stats.point_differential}</li>
           <li>Punti Fatti {info.stats.points_for}</li>
+          {seed && (
+            <li>
+              Seed {seed.seed} di 8{seed.isWildcard ? ' — ripescaggio miglior terza classificata' : ''}
+            </li>
+          )}
         </ul>
       )}
     </div>
@@ -295,6 +319,7 @@ export default function TournamentBracket({
   const [formatModalOpen, setFormatModalOpen] = useState(false)
   const [preview, setPreview] = useState<{ matchId: string; homeTeamId: string | null; awayTeamId: string | null }[] | null>(null)
   const [previewEditingSlot, setPreviewEditingSlot] = useState<{ matchId: string; slot: 'home' | 'away' } | null>(null)
+  const [seedInfo, setSeedInfo] = useState<Map<string, SeedInfo>>(new Map())
 
   const categoryTeams = approvedTeams.filter(t => t.category === category)
 
@@ -309,6 +334,17 @@ export default function TournamentBracket({
     arr.sort((a, b) => (a.bracket_position ?? 0) - (b.bracket_position ?? 0))
   }
   const rounds = roundOrder.filter(r => byRound.has(r))
+
+  // Bracket size actually persisted on the board (source of truth, not the bracketSize UI state)
+  const firstRound        = rounds[0]
+  const firstRoundMatches = byRound.get(firstRound) ?? []
+  const derivedSize       = firstRoundMatches.length * 2
+
+  // Only these two girone-count/bracket-size combos have an official FIBA crossing rule.
+  const seedingScenario: SeedingScenario =
+    groups.length === 4 && derivedSize === 8 ? 'four-groups'
+    : groups.length === 3 && derivedSize === 8 ? 'three-groups'
+    : null
 
   // Standings per group + a lookup of every team's group/position/stats, used both to
   // compute the "populate from standings" proposal and to explain it in the preview modal.
@@ -340,39 +376,49 @@ export default function TournamentBracket({
       alert('Genera prima un tabellone vuoto.')
       return
     }
-
-    // Derive bracket size from the existing bracket structure
-    const firstRound        = rounds[0]
-    const firstRoundMatches = byRound.get(firstRound) ?? []
-    const derivedSize       = firstRoundMatches.length * 2
-
-    const teamsPerGroup = Math.ceil(derivedSize / Math.max(groups.length, 1))
-    const qualifiers: string[] = []
-
-    for (let pos = 0; pos < teamsPerGroup; pos++) {
-      const atPosition = groupStandings
-        .map(gs => gs.standings[pos])
-        .filter(Boolean)
-        .sort((a, b) =>
-          b.wins - a.wins ||
-          b.point_differential - a.point_differential ||
-          b.points_for - a.points_for
-        )
-      for (const row of atPosition) {
-        if (qualifiers.length < derivedSize) qualifiers.push(row.team_id)
-      }
+    if (!seedingScenario) {
+      alert('La generazione automatica supporta solo 3 o 4 gironi con tabellone da 8 squadre. Assegna le squadre manualmente.')
+      return
     }
-    while (qualifiers.length < derivedSize) qualifiers.push('')
 
-    setPreview(firstRoundMatches.map((match, pos) => {
-      const seedA = pos
-      const seedB = firstRoundMatches.length * 2 - 1 - pos
-      return {
-        matchId: match.id,
-        homeTeamId: qualifiers[seedA] || null,
-        awayTeamId: qualifiers[seedB] || null,
-      }
-    }))
+    let slots: { home: string | null; away: string | null }[]
+    const newSeedInfo = new Map<string, SeedInfo>()
+
+    if (seedingScenario === 'four-groups') {
+      // Fixed official crossing: 1°A-2°D, 1°C-2°B, 1°B-2°C, 1°D-2°A
+      slots = FOUR_GROUP_CROSSING.map(([homeIdx, awayIdx]) => ({
+        home: groupStandings[homeIdx]?.standings[0]?.team_id ?? null,
+        away: groupStandings[awayIdx]?.standings[1]?.team_id ?? null,
+      }))
+    } else {
+      // 6 direct qualifiers (1st + 2nd of each girone) + best 2 third-placed teams,
+      // merged into one ranking of 8 (vittorie -> punti fatti -> alfabetico), then
+      // crossed with classic 8-seed tennis bracketing.
+      const direct = groupStandings.flatMap(gs => [gs.standings[0], gs.standings[1]].filter((r): r is StandingsRow => Boolean(r)))
+      const thirds = groupStandings.map(gs => gs.standings[2]).filter((r): r is StandingsRow => Boolean(r))
+      const wildcards = rankCrossGroup(thirds).slice(0, 2)
+      const wildcardIds = new Set(wildcards.map(r => r.team_id))
+      const pool = rankCrossGroup([...direct, ...wildcards])
+
+      const bySeed = new Map<number, string>()
+      pool.forEach((row, i) => {
+        const seed = i + 1
+        bySeed.set(seed, row.team_id)
+        newSeedInfo.set(row.team_id, { seed, isWildcard: wildcardIds.has(row.team_id) })
+      })
+
+      slots = EIGHT_SEED_CROSSING.map(([homeSeed, awaySeed]) => ({
+        home: bySeed.get(homeSeed) ?? null,
+        away: bySeed.get(awaySeed) ?? null,
+      }))
+    }
+
+    setSeedInfo(newSeedInfo)
+    setPreview(firstRoundMatches.map((match, i) => ({
+      matchId: match.id,
+      homeTeamId: slots[i]?.home ?? null,
+      awayTeamId: slots[i]?.away ?? null,
+    })))
   }
 
   function setPreviewSlot(matchId: string, slot: 'home' | 'away', teamId: string) {
@@ -392,6 +438,11 @@ export default function TournamentBracket({
     setPreviewEditingSlot(null)
   }
 
+  function closePreview() {
+    setPreview(null)
+    setSeedInfo(new Map())
+  }
+
   async function confirmPreview() {
     if (!preview) return
     setSaving(true)
@@ -402,7 +453,7 @@ export default function TournamentBracket({
       }).eq('id', entry.matchId)
     }
     setSaving(false)
-    setPreview(null)
+    closePreview()
     router.refresh()
   }
 
@@ -466,10 +517,16 @@ export default function TournamentBracket({
     <div>
       {/* Generation controls */}
       <div className="card flex items-center gap-3 mb-6 flex-wrap px-4 py-3">
+        {groups.length > 0 && bracketMatches.length > 0 && !seedingScenario && (
+          <p className="text-xs text-court-muted">
+            La generazione automatica supporta solo 3 o 4 gironi con tabellone da 8 squadre.
+            Assegna le squadre manualmente.
+          </p>
+        )}
         <div className="flex items-center gap-3 ml-auto flex-wrap justify-end">
           <button
             onClick={computePreview}
-            disabled={saving || groups.length === 0 || bracketMatches.length === 0}
+            disabled={saving || groups.length === 0 || bracketMatches.length === 0 || !seedingScenario}
             className="btn-ghost text-sm px-4 py-2 whitespace-nowrap"
           >
             <ListOrdered size={14} /> Popola con le classifiche
@@ -541,7 +598,7 @@ export default function TournamentBracket({
       {preview && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-          onClick={() => setPreview(null)}
+          onClick={closePreview}
         >
           <div
             className="card w-full max-w-2xl mx-4 p-6 max-h-[85vh] overflow-y-auto"
@@ -557,7 +614,9 @@ export default function TournamentBracket({
             <div className="space-y-3 mb-6">
               {preview.map((entry, i) => (
                 <div key={entry.matchId} className="border border-court-border p-3">
-                  <p className="text-xs text-court-muted uppercase tracking-wide mb-2">Match {i + 1}</p>
+                  <p className="text-xs text-court-muted uppercase tracking-wide mb-2">
+                    {roundLabels[firstRound]} {i + 1}
+                  </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <PreviewSlot
                       matchId={entry.matchId}
@@ -565,6 +624,7 @@ export default function TournamentBracket({
                       teamId={entry.homeTeamId}
                       categoryTeams={categoryTeams}
                       teamInfo={teamInfo}
+                      seedInfo={seedInfo}
                       editingSlot={previewEditingSlot}
                       setEditingSlot={setPreviewEditingSlot}
                       onChange={setPreviewSlot}
@@ -575,6 +635,7 @@ export default function TournamentBracket({
                       teamId={entry.awayTeamId}
                       categoryTeams={categoryTeams}
                       teamInfo={teamInfo}
+                      seedInfo={seedInfo}
                       editingSlot={previewEditingSlot}
                       setEditingSlot={setPreviewEditingSlot}
                       onChange={setPreviewSlot}
@@ -585,7 +646,7 @@ export default function TournamentBracket({
             </div>
 
             <div className="flex justify-end gap-3">
-              <button onClick={() => setPreview(null)} className="btn-ghost text-sm px-4 py-2">
+              <button onClick={closePreview} className="btn-ghost text-sm px-4 py-2">
                 Annulla
               </button>
               <button
