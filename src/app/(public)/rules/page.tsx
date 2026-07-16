@@ -362,7 +362,7 @@ export default function RegolamentoPage() {
             <ul className="flex flex-col gap-2">
               {[
                 'Fase a gironi seguita da eliminazione diretta.',
-                'Classifica dei gironi: vittorie → punti segnati → differenza punti → ordine alfabetico.',
+                'Classifica dei gironi: vittorie → scontri diretti → punti segnati → ordine alfabetico.',
                 'Il ritardo all\'appello del proprio match comporta la sconfitta a tavolino.',
                 'Tenuta sportiva idonea obbligatoria.',
                 'Fair play obbligatorio verso avversari, arbitri e organizzatori.',

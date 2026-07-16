@@ -1,6 +1,7 @@
 'use client'
 
 import clsx from 'clsx'
+import { Swords } from 'lucide-react'
 import type { GroupWithTeams, MatchWithTeams, TeamCategory } from '@/types'
 import { computeStandings } from '@/lib/standings'
 
@@ -12,8 +13,8 @@ const CATEGORY_LABELS: Record<TeamCategory, string> = {
   u18_m:  'U18 M',
 }
 
-// rank | squadra (fills remaining width) | G | V | S | PF | PS | +/-
-const COLUMN_TEMPLATE = '3.5rem 1fr 3rem 3rem 3rem 4.5rem 4.5rem 4.5rem'
+// rank | squadra (fills remaining width) | G | V | S | PF | PS | SD
+const COLUMN_TEMPLATE = '3.5rem 1fr 3rem 3rem 3rem 4.5rem 4.5rem 3.5rem'
 
 interface Props {
   groups: GroupWithTeams[]
@@ -61,7 +62,7 @@ export default function LedwallStandings({ groups, matches, category, group_id }
             <span className="text-center px-3 py-3 font-display font-bold uppercase text-sm text-gray-600">S</span>
             <span className="text-center px-3 py-3 font-display font-bold uppercase text-sm text-gray-600">PF</span>
             <span className="text-center px-3 py-3 font-display font-bold uppercase text-sm text-gray-600">PS</span>
-            <span className="text-center px-3 py-3 font-display font-bold uppercase text-sm text-gray-600">+/-</span>
+            <span className="text-center px-3 py-3 font-display font-bold uppercase text-sm text-gray-600">SD</span>
           </div>
 
           {rows.map((row, idx) => (
@@ -87,13 +88,17 @@ export default function LedwallStandings({ groups, matches, category, group_id }
               <span className="text-center text-lg text-gray-400">{row.losses}</span>
               <span className="text-center text-lg text-gray-400">{row.points_for}</span>
               <span className="text-center text-lg text-gray-400">{row.points_against}</span>
-              <span className={clsx(
-                'text-center font-display font-bold text-2xl',
-                row.point_differential > 0 ? 'text-green-600'
-                  : row.point_differential < 0 ? 'text-red-500'
-                  : 'text-gray-300',
-              )}>
-                {row.point_differential > 0 ? '+' : ''}{row.point_differential}
+              <span className="flex items-center justify-center">
+                {row.head_to_head_note ? (
+                  <span title={row.head_to_head_note}>
+                    <Swords
+                      size={20}
+                      className={row.head_to_head_favorable ? 'text-brand-orange' : 'text-gray-300'}
+                    />
+                  </span>
+                ) : (
+                  <span className="text-2xl text-gray-300">—</span>
+                )}
               </span>
             </div>
           ))}

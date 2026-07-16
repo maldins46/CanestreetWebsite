@@ -7,6 +7,7 @@ import type {
   TpcContestFull, Sponsor, TeamCategory, CalendarioEvent, ShowcaseMode, Match, TpcEntry,
 } from '@/types'
 import clsx from 'clsx'
+import { Swords } from 'lucide-react'
 import { resolveContextualShowcaseMode } from '@/lib/showcase'
 import { fetchTournamentSnapshot } from '@/lib/tournamentData'
 import { patchMatches, patchTpcEntries, patchEvents } from '@/lib/tournamentRealtimePatchers'
@@ -397,7 +398,7 @@ function ShowcaseStandings({ groups, matches, category, theme, carousel }: {
                     <th className={clsx('text-center py-2 px-3 font-display uppercase w-px whitespace-nowrap', theme.textMuted)}>S</th>
                     <th className={clsx('text-center py-2 px-3 font-display uppercase w-px whitespace-nowrap', theme.textMuted)}>PF</th>
                     <th className={clsx('text-center py-2 px-3 font-display uppercase w-px whitespace-nowrap', theme.textMuted)}>PS</th>
-                    <th className={clsx('text-center py-2 px-3 font-display uppercase w-px whitespace-nowrap', theme.textMuted)}>+/-</th>
+                    <th className={clsx('text-center py-2 px-3 font-display uppercase w-px whitespace-nowrap', theme.textMuted)}>SD</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -416,12 +417,16 @@ function ShowcaseStandings({ groups, matches, category, theme, carousel }: {
                       <td className={clsx('py-2 px-3 text-center w-px whitespace-nowrap', theme.textMuted)}>{row.points_for}</td>
                       <td className={clsx('py-2 px-3 text-center w-px whitespace-nowrap', theme.textMuted)}>{row.points_against}</td>
                       <td className="py-2 px-3 text-center w-px whitespace-nowrap">
-                        <span className={clsx(
-                          'font-display font-bold',
-                          row.point_differential > 0 ? 'text-green-600' : row.point_differential < 0 ? 'text-red-600' : theme.textMuted
-                        )}>
-                          {row.point_differential > 0 ? `+${row.point_differential}` : row.point_differential}
-                        </span>
+                        {row.head_to_head_note ? (
+                          <span className="inline-block" title={row.head_to_head_note}>
+                            <Swords
+                              size={12}
+                              className={row.head_to_head_favorable ? 'text-brand-orange' : theme.textMuted}
+                            />
+                          </span>
+                        ) : (
+                          <span className={theme.textMuted}>—</span>
+                        )}
                       </td>
                     </tr>
                   ))}

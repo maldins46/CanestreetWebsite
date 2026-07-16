@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Trash2, Plus, ChevronDown, ChevronUp } from 'lucide-react'
+import { Trash2, Plus, ChevronDown, ChevronUp, Swords } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { GroupWithTeams, MatchWithTeams, TeamCategory } from '@/types'
 import { computeStandings } from '@/lib/standings'
@@ -207,7 +207,7 @@ export default function TournamentGroups({ editionId, category, groups, approved
                                   <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">S</th>
                                   <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">PF</th>
                                   <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">PS</th>
-                                  <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">+/-</th>
+                                  <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">SD</th>
                                   <th className="w-px" />
                                 </tr>
                               </thead>
@@ -244,14 +244,20 @@ export default function TournamentGroups({ editionId, category, groups, approved
                                         <span className="font-body text-court-gray">{row.points_against}</span>
                                       </td>
                                       <td className="text-center px-3 py-2.5 w-px whitespace-nowrap">
-                                        <span className={clsx(
-                                          'font-body font-semibold text-sm',
-                                          row.point_differential > 0 ? 'text-green-400'
-                                            : row.point_differential < 0 ? 'text-red-400'
-                                            : 'text-court-muted',
-                                        )}>
-                                          {row.point_differential > 0 ? `+${row.point_differential}` : row.point_differential}
-                                        </span>
+                                        {row.head_to_head_note ? (
+                                          <span
+                                            className="inline-block"
+                                            title={row.head_to_head_note}
+                                            aria-label={row.head_to_head_note}
+                                          >
+                                            <Swords
+                                              size={13}
+                                              className={row.head_to_head_favorable ? 'text-brand-orange' : 'text-court-muted'}
+                                            />
+                                          </span>
+                                        ) : (
+                                          <span className="font-body text-court-muted">—</span>
+                                        )}
                                       </td>
                                       <td className="px-3 py-2.5 w-px whitespace-nowrap">
                                         {gt && (

@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation'
 import clsx from 'clsx'
+import { Swords } from 'lucide-react'
 import { computeStandings } from '@/lib/standings'
 import type { GroupWithTeams, MatchWithTeams, StandingsRow, TeamCategory } from '@/types'
 
@@ -51,7 +52,7 @@ export function StandingsTable({ groupName, standings, qualifyCount = 2 }: Stand
                   PS
                 </th>
                 <th className="font-display uppercase tracking-wide text-xs text-court-muted text-center px-3 py-2 whitespace-nowrap w-px">
-                  +/-
+                  SD
                 </th>
               </tr>
             </thead>
@@ -92,20 +93,20 @@ export function StandingsTable({ groupName, standings, qualifyCount = 2 }: Stand
                       <span className="font-body text-court-gray">{row.points_against}</span>
                     </td>
                     <td className="text-center px-3 py-2.5 w-px whitespace-nowrap">
-                      <span
-                        className={clsx(
-                          'font-body font-semibold text-sm',
-                          row.point_differential > 0
-                            ? 'text-green-400'
-                            : row.point_differential < 0
-                              ? 'text-red-400'
-                              : 'text-court-muted',
-                        )}
-                      >
-                        {row.point_differential > 0
-                          ? `+${row.point_differential}`
-                          : row.point_differential}
-                      </span>
+                      {row.head_to_head_note ? (
+                        <span
+                          className="inline-block"
+                          title={row.head_to_head_note}
+                          aria-label={row.head_to_head_note}
+                        >
+                          <Swords
+                            size={13}
+                            className={row.head_to_head_favorable ? 'text-brand-orange' : 'text-court-muted'}
+                          />
+                        </span>
+                      ) : (
+                        <span className="font-body text-court-muted">—</span>
+                      )}
                     </td>
                   </tr>
                 )

@@ -225,6 +225,10 @@ export interface StandingsRow {
   points_for: number
   points_against: number
   point_differential: number
+  /** Set when this row's position was decided by a wins-tie resolved via scontri diretti. */
+  head_to_head_note?: string
+  /** true = won more scontri diretti than lost within the tied group, false = lost more (or it was a wash). */
+  head_to_head_favorable?: boolean
 }
 
 // ============================================================
