@@ -82,13 +82,16 @@ function byPointsThenName(a: StandingsRow, b: StandingsRow): number {
 }
 
 /**
- * Ranks teams across different gironi (same girone finishing position, or the
- * pool of third-placed wildcards), where scontri diretti isn't meaningful (no
- * shared matches) and wins aren't a useful discriminator (they're already tied
- * on standing). Ranked by punti fatti, then alfabetico.
+ * Ranks teams across different gironi that share the same girone finishing
+ * position (or the pool of third-placed wildcards), where scontri diretti
+ * isn't meaningful (no shared matches). Ranked by vittorie, then punti fatti,
+ * then alfabetico — e.g. a girone winner who only won via scontri diretti
+ * (fewer wins than a girone won outright) ranks below one who swept their girone.
  */
 export function rankCrossGroup(rows: StandingsRow[]): StandingsRow[] {
-  return [...rows].sort((a, b) => b.points_for - a.points_for || a.team_name.localeCompare(b.team_name))
+  return [...rows].sort((a, b) =>
+    b.wins - a.wins || b.points_for - a.points_for || a.team_name.localeCompare(b.team_name)
+  )
 }
 
 /**
