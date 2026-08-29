@@ -47,10 +47,10 @@ export default async function RegisterPage() {
       ) : (
         <div className="card p-8 text-center">
           <p className="font-display uppercase text-court-muted text-sm tracking-wide">
-            Le iscrizioni non sono ancora aperte.
+            Le iscrizioni non sono aperte al momento.
           </p>
           <p className="text-court-muted text-xs mt-2">
-            Segui i nostri canali per ricevere aggiornamenti sull&apos;apertura delle iscrizioni.
+            Segui i nostri canali per rimanere aggiornato sulle iscrizioni.
           </p>
         </div>
       )}
