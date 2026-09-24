@@ -28,7 +28,6 @@ export default async function HomePage() {
     .single<Edition>()
   if (editionErr && editionErr.code !== 'PGRST116') console.error('[home] editions query failed:', editionErr)
 
-  const year = edition?.year ?? new Date().getFullYear() - 1
   const isRegistrationOpen = edition?.registration_open === true
 
   const [
@@ -143,7 +142,7 @@ export default async function HomePage() {
                 className="btn-ghost text-base px-8 py-4 inline-flex items-center justify-center gap-2 bg-court-black/60 backdrop-blur-sm w-full sm:w-auto"
               >
                 <Play className="w-4 h-4" />
-                Aftermovie 2025
+                Aftermovie
               </a>
             </div>
 
@@ -387,7 +386,7 @@ export default async function HomePage() {
           {isRegistrationOpen ? (
             <>
               <p className="text-court-gray text-lg mb-8 max-w-md mx-auto">
-                Registra la tua squadra per l&apos;edizione {year}. I posti sono
+                Registra la tua squadra per la prossima edizione. I posti sono
                 limitati!
               </p>
               <Link href="/register" className="btn-primary text-base px-10 py-4">
@@ -397,8 +396,8 @@ export default async function HomePage() {
           ) : (
             <>
               <p className="text-court-gray text-lg mb-8 max-w-md mx-auto">
-                Le iscrizioni per l&apos;edizione {year} non sono aperte al
-                momento. Scopri le edizioni passate!
+                Le iscrizioni non sono aperte al momento. Scopri le edizioni
+                passate!
               </p>
               <Link href="/editions" className="btn-primary text-base px-10 py-4">
                 Scopri le edizioni
