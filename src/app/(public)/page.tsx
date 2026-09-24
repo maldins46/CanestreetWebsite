@@ -29,6 +29,7 @@ export default async function HomePage() {
   if (editionErr && editionErr.code !== 'PGRST116') console.error('[home] editions query failed:', editionErr)
 
   const year = edition?.year ?? new Date().getFullYear() - 1
+  const isRegistrationOpen = edition?.registration_open === true
 
   const [
     { data: news, error: newsErr },
@@ -126,9 +127,15 @@ export default async function HomePage() {
               className="flex flex-col sm:flex-row gap-4 animate-slide-up"
               style={{ animationDelay: '0.28s', animationFillMode: 'both' }}
             >
-              <Link href="/register" className="btn-primary text-base px-8 py-4 justify-center w-full sm:w-auto">
-                Iscriviti ora
-              </Link>
+              {isRegistrationOpen ? (
+                <Link href="/register" className="btn-primary text-base px-8 py-4 justify-center w-full sm:w-auto">
+                  Iscriviti ora
+                </Link>
+              ) : (
+                <Link href="/editions" className="btn-primary text-base px-8 py-4 justify-center w-full sm:w-auto">
+                  Scopri le edizioni
+                </Link>
+              )}
               <a
                 href={AFTERMOVIE_URL}
                 target="_blank"
@@ -377,13 +384,27 @@ export default async function HomePage() {
           <h2 className="heading-section text-3xl md:text-4xl text-court-white mb-4">
             Pronto a scendere in campo?
           </h2>
-          <p className="text-court-gray text-lg mb-8 max-w-md mx-auto">
-            Registra la tua squadra per l&apos;edizione {year}. I posti sono
-            limitati!
-          </p>
-          <Link href="/register" className="btn-primary text-base px-10 py-4">
-            Registra la squadra
-          </Link>
+          {isRegistrationOpen ? (
+            <>
+              <p className="text-court-gray text-lg mb-8 max-w-md mx-auto">
+                Registra la tua squadra per l&apos;edizione {year}. I posti sono
+                limitati!
+              </p>
+              <Link href="/register" className="btn-primary text-base px-10 py-4">
+                Registra la squadra
+              </Link>
+            </>
+          ) : (
+            <>
+              <p className="text-court-gray text-lg mb-8 max-w-md mx-auto">
+                Le iscrizioni per l&apos;edizione {year} non sono aperte al
+                momento. Scopri le edizioni passate!
+              </p>
+              <Link href="/editions" className="btn-primary text-base px-10 py-4">
+                Scopri le edizioni
+              </Link>
+            </>
+          )}
         </div>
       </section>
     </>
